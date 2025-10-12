@@ -49,20 +49,19 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Add docker-compose.yml at root level
 
 #### 1.3 Docker Infrastructure
-- [ ] Create docker-compose.yml with all services:
-  - [ ] PostgreSQL container (port 5432)
-  - [ ] Redis container (port 6379)
-  - [ ] Spring Boot API Gateway (port 8080)
-  - [ ] Spring Boot Learning Service (port 8081)
-  - [ ] Spring Boot Gamification Service (port 8082)
-  - [ ] Spring Boot Code Execution Service (port 8083)
-  - [ ] React frontend dev server (port 5173)
-- [ ] Configure Docker networks for service isolation
-- [ ] Set up volume mounts for database persistence
-- [ ] Create health check endpoints for all services
+- [x] Create docker-compose.yml with infrastructure services:
+  - [x] PostgreSQL container (port 5432)
+  - [x] Redis container (port 6379)
+  - [x] RabbitMQ container (ports 5672, 15672)
+  - [x] Keycloak container (port 8180)
+- [x] Configure Docker networks for service isolation
+- [x] Set up volume mounts for database persistence
+- [x] Create health check endpoints for all services
 - [ ] Test `docker-compose up` brings up all services
-- [ ] Create `docker-compose.dev.yml` for development overrides
-- [ ] Document startup order and dependencies
+- [ ] Create `docker-compose.dev.yml` for development overrides (optional)
+- [x] Document startup order and dependencies
+
+**Note**: Backend Spring Boot services and React frontend will be run locally via IDE/terminal during development (not in docker-compose). This allows for faster development with hot-reload and debugging capabilities.
 
 ---
 

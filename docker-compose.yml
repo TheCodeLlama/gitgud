@@ -1,0 +1,111 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17-alpine
+    container_name: gitgud-postgres
+    environment:
+      POSTGRES_DB: gitgud
+      POSTGRES_USER: gitgud_user
+      POSTGRES_PASSWORD: gitgud_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gitgud-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gitgud_user -d gitgud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: gitgud-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - gitgud-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # RabbitMQ Message Queue (for code execution jobs)
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: gitgud-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: gitgud_user
+      RABBITMQ_DEFAULT_PASS: gitgud_dev_password
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - gitgud-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # Keycloak (OAuth/Identity Provider)
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4.0
+    container_name: gitgud-keycloak
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: gitgud_user
+      KC_DB_PASSWORD: gitgud_dev_password
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8180
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HTTP_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8080" # Mapped to 8180 to avoid conflict with Spring Boot
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    networks:
+      - gitgud-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+    command: start-dev
+
+volumes:
+  postgres_data:
+    name: gitgud-postgres-data
+  redis_data:
+    name: gitgud-redis-data
+  rabbitmq_data:
+    name: gitgud-rabbitmq-data
+  keycloak_data:
+    name: gitgud-keycloak-data
+
+networks:
+  gitgud-network:
+    name: gitgud-network
+    driver: bridge
