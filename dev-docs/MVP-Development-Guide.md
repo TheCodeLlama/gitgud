@@ -35,8 +35,8 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 **Note**: PostgreSQL, Redis, RabbitMQ, Keycloak, and all backend services will run in Docker containers. They will be defined in `docker-compose.yml`.
 
 #### 1.2 Repository Structure
-- [ ] Initialize git repository with proper .gitignore
-- [ ] Create monorepo structure:
+- [x] Initialize git repository with proper .gitignore
+- [x] Create monorepo structure:
   ```
   /backend          # Spring Boot services
   /frontend         # React SPA
@@ -44,9 +44,9 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
   /dev-docs         # Documentation
   /scripts          # Utility scripts
   ```
-- [ ] Set up environment variable templates (.env.example)
-- [ ] Create README with setup instructions
-- [ ] Add docker-compose.yml at root level
+- [x] Set up environment variable templates (.env.example)
+- [x] Create README with setup instructions
+- [x] Add docker-compose.yml at root level
 
 #### 1.3 Docker Infrastructure
 - [ ] Create docker-compose.yml with all services:
