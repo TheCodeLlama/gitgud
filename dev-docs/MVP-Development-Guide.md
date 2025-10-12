@@ -57,8 +57,7 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Configure Docker networks for service isolation
 - [x] Set up volume mounts for database persistence
 - [x] Create health check endpoints for all services
-- [ ] Test `docker-compose up` brings up all services
-- [ ] Create `docker-compose.dev.yml` for development overrides (optional)
+- [x] Test `docker-compose up` brings up all services
 - [x] Document startup order and dependencies
 
 **Note**: Backend Spring Boot services and React frontend will be run locally via IDE/terminal during development (not in docker-compose). This allows for faster development with hot-reload and debugging capabilities.
