@@ -88,7 +88,10 @@ public class DevDataBootstrapper implements ApplicationRunner {
             "public class Main {\n    public static void main(String[] args) {\n        String name = \"John\";\n        int age = 25;\n        boolean isStudent = true;\n        System.out.println(name);\n        System.out.println(age);\n        System.out.println(isStudent);\n    }\n}",
             2,
             true,
-            List.of()
+            List.of(
+                // Visible test case - users can see input but not expected output
+                new TestCaseData("", "John\n25\ntrue", false, 1, 1)
+            )
         );
 
         // Spring Boot Basics Module
@@ -114,7 +117,10 @@ public class DevDataBootstrapper implements ApplicationRunner {
             "import org.springframework.web.bind.annotation.*;\n\n@RestController\npublic class HelloController {\n    \n    @GetMapping(\"/hello\")\n    public String hello() {\n        return \"Hello from Spring Boot!\";\n    }\n}",
             1,
             true,
-            List.of()
+            List.of(
+                // Visible test case - check that the endpoint returns correct string
+                new TestCaseData("", "Hello from Spring Boot!", false, 1, 1)
+            )
         );
 
         log.info("Modules and lessons seeded successfully!");

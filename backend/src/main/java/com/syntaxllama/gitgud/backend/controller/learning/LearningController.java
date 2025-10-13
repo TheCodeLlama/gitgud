@@ -6,6 +6,7 @@ import com.syntaxllama.gitgud.backend.dto.learning.LessonDTO;
 import com.syntaxllama.gitgud.backend.dto.learning.ModuleDTO;
 import com.syntaxllama.gitgud.backend.dto.learning.ModuleDetailDTO;
 import com.syntaxllama.gitgud.backend.dto.learning.OverallProgressDTO;
+import com.syntaxllama.gitgud.backend.dto.learning.TestCaseDTO;
 import com.syntaxllama.gitgud.backend.dto.learning.UpdateProgressRequest;
 import com.syntaxllama.gitgud.backend.dto.learning.UserProgressDTO;
 import com.syntaxllama.gitgud.backend.model.Module;
@@ -130,6 +131,22 @@ public class LearningController extends BaseController {
 
         LessonDTO lesson = lessonService.getLessonById(id);
         return ResponseEntity.ok(ApiResponse.success(lesson));
+    }
+
+    /**
+     * Get visible test cases for a lesson.
+     * Public endpoint - no authentication required.
+     * Returns only non-hidden test cases without expected output for security.
+     *
+     * @param lessonId Lesson ID
+     * @return List of visible test cases (expected output hidden)
+     */
+    @GetMapping("/lessons/{lessonId}/testcases")
+    public ResponseEntity<ApiResponse<List<TestCaseDTO>>> getTestCasesForLesson(@PathVariable UUID lessonId) {
+        log.info("GET /api/v1/learning/lessons/{}/testcases", lessonId);
+
+        List<TestCaseDTO> testCases = lessonService.getVisibleTestCasesForLesson(lessonId);
+        return ResponseEntity.ok(ApiResponse.success(testCases));
     }
 
     /**

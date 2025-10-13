@@ -194,15 +194,15 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Create endpoint for "continue where you left off"
 
 #### 3.4 Test Cases & Validation
-- [ ] Create TestCase entity:
-  - [ ] Lesson ID
-  - [ ] Input/expected output
-  - [ ] Hidden flag (visible to user or not)
-  - [ ] Weight/points
-- [ ] Seed test cases for sample lessons
-- [ ] Create DTO for test case responses (hide expected output)
-- [ ] Implement test case retrieval logic
-- [ ] Design test case format (JSON structure)
+- [x] Create TestCase entity:
+  - [x] Lesson ID
+  - [x] Input/expected output
+  - [x] Hidden flag (visible to user or not)
+  - [x] Weight/points
+- [x] Seed test cases for sample lessons
+- [x] Create DTO for test case responses (hide expected output)
+- [x] Implement test case retrieval logic
+- [x] Design test case format (JSON structure)
 
 ---
 

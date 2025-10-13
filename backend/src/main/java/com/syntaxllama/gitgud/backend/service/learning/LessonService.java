@@ -1,9 +1,12 @@
 package com.syntaxllama.gitgud.backend.service.learning;
 
 import com.syntaxllama.gitgud.backend.dto.learning.LessonDTO;
+import com.syntaxllama.gitgud.backend.dto.learning.TestCaseDTO;
 import com.syntaxllama.gitgud.backend.exception.ResourceNotFoundException;
 import com.syntaxllama.gitgud.backend.model.Lesson;
+import com.syntaxllama.gitgud.backend.model.TestCase;
 import com.syntaxllama.gitgud.backend.repository.LessonRepository;
+import com.syntaxllama.gitgud.backend.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,7 @@ import java.util.stream.Collectors;
 public class LessonService {
 
     private final LessonRepository lessonRepository;
+    private final TestCaseRepository testCaseRepository;
 
     /**
      * Get a single lesson by ID.
@@ -53,6 +57,54 @@ public class LessonService {
 
         return lessons.stream()
                 .map(LessonDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get visible (non-hidden) test cases for a lesson.
+     * This is a public endpoint - only returns test cases marked as visible to users.
+     * Expected outputs are hidden for security reasons.
+     *
+     * @param lessonId The lesson ID
+     * @return List of visible test cases (without expected output)
+     */
+    @Transactional(readOnly = true)
+    public List<TestCaseDTO> getVisibleTestCasesForLesson(UUID lessonId) {
+        log.debug("Fetching visible test cases for lesson: {}", lessonId);
+
+        // Verify lesson exists
+        if (!lessonRepository.existsById(lessonId)) {
+            throw new ResourceNotFoundException("Lesson not found with id: " + lessonId);
+        }
+
+        List<TestCase> testCases = testCaseRepository.findByLessonIdAndIsHiddenFalseOrderByDisplayOrderAsc(lessonId);
+
+        return testCases.stream()
+                .map(TestCaseDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all test cases for a lesson, including hidden ones.
+     * This should only be used internally for code execution validation,
+     * NOT exposed to public endpoints.
+     *
+     * @param lessonId The lesson ID
+     * @return List of all test cases with expected output
+     */
+    @Transactional(readOnly = true)
+    public List<TestCaseDTO.TestCaseWithOutputDTO> getAllTestCasesForLesson(UUID lessonId) {
+        log.debug("Fetching all test cases (including hidden) for lesson: {}", lessonId);
+
+        // Verify lesson exists
+        if (!lessonRepository.existsById(lessonId)) {
+            throw new ResourceNotFoundException("Lesson not found with id: " + lessonId);
+        }
+
+        List<TestCase> testCases = testCaseRepository.findByLessonIdOrderByDisplayOrderAsc(lessonId);
+
+        return testCases.stream()
+                .map(TestCaseDTO::fromEntityWithOutput)
                 .collect(Collectors.toList());
     }
 }
