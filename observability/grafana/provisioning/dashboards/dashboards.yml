@@ -1,0 +1,14 @@
+apiVersion: 1
+
+providers:
+  # Dashboard provider for JSON files in the dashboards directory
+  - name: 'GitGud Dashboards'
+    orgId: 1
+    folder: 'GitGud'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
+      foldersFromFilesStructure: true

@@ -95,6 +95,89 @@ services:
     restart: unless-stopped
     command: start-dev
 
+  # Loki (Log Aggregation)
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: gitgud-loki
+    ports:
+      - "${LOKI_PORT}:3100"
+    volumes:
+      - loki_data:/loki
+      - ./observability/loki-config.yml:/etc/loki/local-config.yaml
+    networks:
+      - gitgud-network
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Promtail (Log Shipper for Loki)
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: gitgud-promtail
+    volumes:
+      - ./observability/promtail-config.yml:/etc/promtail/config.yml
+      - /var/log:/var/log:ro
+      - ./backend/logs:/app/logs:ro
+    networks:
+      - gitgud-network
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  # Prometheus (Metrics Collection)
+  prometheus:
+    image: prom/prometheus:v2.54.0
+    container_name: gitgud-prometheus
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - gitgud-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Grafana (Visualization)
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: gitgud-grafana
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: false
+      GF_SERVER_ROOT_URL: http://localhost:${GRAFANA_PORT}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - gitgud-network
+    depends_on:
+      - prometheus
+      - loki
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
 volumes:
   postgres_data:
     name: gitgud-postgres-data
@@ -104,6 +187,12 @@ volumes:
     name: gitgud-rabbitmq-data
   keycloak_data:
     name: gitgud-keycloak-data
+  loki_data:
+    name: gitgud-loki-data
+  prometheus_data:
+    name: gitgud-prometheus-data
+  grafana_data:
+    name: gitgud-grafana-data
 
 networks:
   gitgud-network:

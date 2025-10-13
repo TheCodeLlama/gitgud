@@ -1,0 +1,38 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Scrape logs from the Spring Boot application
+  - job_name: gitgud-backend
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: gitgud-backend
+          __path__: /app/logs/*.log
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3})\s+\[(?P<thread>[^\]]+)\]\s+(?P<level>\S+)\s+(?P<logger>\S+)\s+-\s+(?P<message>.*)$'
+      - labels:
+          level:
+          logger:
+          thread:
+      - timestamp:
+          source: timestamp
+          format: '2006-01-02 15:04:05.000'
+
+  # Scrape system logs (optional - can be commented out if not needed)
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          __path__: /var/log/*.log
