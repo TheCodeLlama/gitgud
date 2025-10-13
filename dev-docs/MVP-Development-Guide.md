@@ -180,18 +180,18 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Support multi-file lesson templates (future-proof structure)
 
 #### 3.3 Progress Tracking
-- [ ] Create UserProgress entity:
-  - [ ] User ID, Lesson ID
-  - [ ] Status (not_started, in_progress, completed)
-  - [ ] Started_at, completed_at timestamps
-  - [ ] Attempts count
-  - [ ] Best score
-- [ ] Implement POST /api/learning/progress (update progress)
-- [ ] Implement GET /api/learning/progress (user's overall progress)
-- [ ] Implement GET /api/learning/progress/{lessonId} (specific lesson)
-- [ ] Add streak calculation logic (consecutive days)
-- [ ] Implement progress percentage calculation
-- [ ] Create endpoint for "continue where you left off"
+- [x] Create UserProgress entity:
+  - [x] User ID, Lesson ID
+  - [x] Status (not_started, in_progress, completed)
+  - [x] Started_at, completed_at timestamps
+  - [x] Attempts count
+  - [x] Best score
+- [x] Implement POST /api/learning/progress (update progress)
+- [x] Implement GET /api/learning/progress (user's overall progress)
+- [x] Implement GET /api/learning/progress/{lessonId} (specific lesson)
+- [x] Add streak calculation logic (consecutive days)
+- [x] Implement progress percentage calculation
+- [x] Create endpoint for "continue where you left off"
 
 #### 3.4 Test Cases & Validation
 - [ ] Create TestCase entity:

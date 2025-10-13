@@ -5,6 +5,9 @@ import com.syntaxllama.gitgud.backend.dto.ApiResponse;
 import com.syntaxllama.gitgud.backend.dto.learning.LessonDTO;
 import com.syntaxllama.gitgud.backend.dto.learning.ModuleDTO;
 import com.syntaxllama.gitgud.backend.dto.learning.ModuleDetailDTO;
+import com.syntaxllama.gitgud.backend.dto.learning.OverallProgressDTO;
+import com.syntaxllama.gitgud.backend.dto.learning.UpdateProgressRequest;
+import com.syntaxllama.gitgud.backend.dto.learning.UserProgressDTO;
 import com.syntaxllama.gitgud.backend.model.Module;
 import com.syntaxllama.gitgud.backend.model.User;
 import com.syntaxllama.gitgud.backend.security.AuthenticationUtil;
@@ -30,6 +33,7 @@ public class LearningController extends BaseController {
 
     private final ModuleService moduleService;
     private final LessonService lessonService;
+    private final com.syntaxllama.gitgud.backend.service.learning.ProgressService progressService;
     private final com.syntaxllama.gitgud.backend.service.UserSyncService userSyncService;
 
     /**
@@ -128,8 +132,77 @@ public class LearningController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(lesson));
     }
 
-    // TODO: Implement remaining endpoints:
-    // GET /api/v1/learning/progress - Get user's overall progress
-    // GET /api/v1/learning/progress/{lessonId} - Get progress for specific lesson
-    // POST /api/v1/learning/progress - Update user progress
+    /**
+     * Update user progress for a lesson.
+     * Requires authentication.
+     *
+     * @param request Progress update request
+     * @return Updated progress
+     */
+    @PostMapping("/progress")
+    public ResponseEntity<ApiResponse<UserProgressDTO>> updateProgress(@RequestBody UpdateProgressRequest request) {
+        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+                .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exception.UnauthorizedException("User not authenticated"));
+
+        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        log.info("POST /api/v1/learning/progress - user: {}, lesson: {}", currentUser.getId(), request.getLessonId());
+
+        UserProgressDTO progress = progressService.updateProgress(currentUser, request);
+        return ResponseEntity.ok(ApiResponse.success(progress));
+    }
+
+    /**
+     * Get user's overall progress summary.
+     * Requires authentication.
+     *
+     * @return Overall progress with statistics
+     */
+    @GetMapping("/progress")
+    public ResponseEntity<ApiResponse<OverallProgressDTO>> getOverallProgress() {
+        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+                .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exception.UnauthorizedException("User not authenticated"));
+
+        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        log.info("GET /api/v1/learning/progress - user: {}", currentUser.getId());
+
+        OverallProgressDTO progress = progressService.getOverallProgress(currentUser);
+        return ResponseEntity.ok(ApiResponse.success(progress));
+    }
+
+    /**
+     * Get progress for a specific lesson.
+     * Requires authentication.
+     *
+     * @param lessonId Lesson ID
+     * @return User's progress for this lesson, or null if no progress exists
+     */
+    @GetMapping("/progress/{lessonId}")
+    public ResponseEntity<ApiResponse<UserProgressDTO>> getProgressForLesson(@PathVariable UUID lessonId) {
+        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+                .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exception.UnauthorizedException("User not authenticated"));
+
+        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        log.info("GET /api/v1/learning/progress/{} - user: {}", lessonId, currentUser.getId());
+
+        UserProgressDTO progress = progressService.getProgressForLesson(currentUser, lessonId);
+        return ResponseEntity.ok(ApiResponse.success(progress));
+    }
+
+    /**
+     * Get the lesson where user should continue learning.
+     * Requires authentication.
+     *
+     * @return Lesson ID to continue, or null if no lesson found
+     */
+    @GetMapping("/continue")
+    public ResponseEntity<ApiResponse<UUID>> getContinueLesson() {
+        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+                .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exception.UnauthorizedException("User not authenticated"));
+
+        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        log.info("GET /api/v1/learning/continue - user: {}", currentUser.getId());
+
+        UUID lessonId = progressService.getContinueLesson(currentUser);
+        return ResponseEntity.ok(ApiResponse.success(lessonId));
+    }
 }
