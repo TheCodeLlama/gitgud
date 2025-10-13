@@ -99,46 +99,59 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Configure JPA entities matching schema
 - [x] Set up Spring Data JPA repositories
 
-#### 2.3 Initial API
-- [ ] Set up basic routing
-- [ ] Configure routes to all services:
-  - `/api/auth/**` → Auth service
-  - `/api/learning/**` → Learning service
-  - `/api/gamification/**` → Gamification service
-  - `/api/execute/**` → Code execution service
-- [ ] Add CORS configuration for React frontend
-- [ ] Implement global exception handler
+#### 2.3 REST Controllers & Configuration
+- [ ] Create controller package structure:
+  - [ ] `controller.auth` - User profile endpoints
+  - [ ] `controller.learning` - Modules, lessons, progress endpoints
+  - [ ] `controller.gamification` - XP, achievements, stats endpoints
+  - [ ] `controller.execution` - Code execution endpoints
+- [ ] Add CORS configuration for React frontend (http://localhost:5173)
+- [ ] Implement global exception handler (@ControllerAdvice)
 - [ ] Add request/response logging filter
-- [ ] Configure rate limiting (basic, in-memory)
-- [ ] Test routing to all downstream services
+- [ ] Configure rate limiting (basic, in-memory with Bucket4j)
+- [ ] Set up API versioning strategy (URL path: /api/v1/)
+- [ ] Create common response wrapper DTOs
 
-#### 2.4 Authentication
-- [ ] Implement user registration endpoint:
-  - [ ] Email/username validation
-  - [ ] Password hashing (BCrypt)
-  - [ ] Save user to database
-  - [ ] Return JWT token
-- [ ] Implement login endpoint:
-  - [ ] Credential verification
-  - [ ] JWT token generation
-  - [ ] Refresh token support
-- [ ] Create JWT utility class:
-  - [ ] Token generation
-  - [ ] Token validation
-  - [ ] Claims extraction
-- [ ] Implement OAuth2 integration (Google):
-  - [ ] OAuth2 client configuration
-  - [ ] Callback handler
-  - [ ] User creation/linking
-- [ ] Add GitHub OAuth2 support
-- [ ] Create authentication filter/interceptor
-- [ ] Implement "me" endpoint (get current user)
-- [ ] Add password reset flow (email later, stub for now)
-- [ ] Write unit tests for auth logic
+#### 2.4 Authentication (Keycloak Integration)
+- [ ] Configure Keycloak realm:
+  - [ ] Create GitGud realm in Keycloak admin console
+  - [ ] Configure client application (Spring Boot backend)
+  - [ ] Set up OAuth2/OIDC settings
+  - [ ] Enable user registration
+- [ ] Add Spring Security dependencies:
+  - [ ] spring-boot-starter-security
+  - [ ] spring-boot-starter-oauth2-resource-server
+  - [ ] spring-boot-starter-oauth2-client
+- [ ] Configure Spring Security for Keycloak:
+  - [ ] Add OAuth2 resource server configuration
+  - [ ] Configure JWT token validation
+  - [ ] Set up CORS for frontend
+  - [ ] Configure public vs protected endpoints
+- [ ] Implement user synchronization:
+  - [ ] Create endpoint to sync Keycloak user to local User entity
+  - [ ] Extract user info from JWT (keycloak_id, email, username)
+  - [ ] Create User record on first login if not exists
+  - [ ] Update User record on subsequent logins
+- [ ] Configure OAuth2 providers in Keycloak:
+  - [ ] Google OAuth2 identity provider
+  - [ ] GitHub OAuth2 identity provider
+- [ ] Implement "me" endpoint (GET /api/auth/me):
+  - [ ] Extract user from JWT token
+  - [ ] Return user profile data
+  - [ ] Include stats and progress summary
+- [ ] Create authentication utility:
+  - [ ] Helper to get current authenticated user
+  - [ ] Extract user ID from security context
+- [ ] Write unit tests for auth integration
+- [ ] Test OAuth2 login flows (Google, GitHub)
+
+**Note**: Keycloak handles all password hashing, token generation, and OAuth2 flows. The backend only validates tokens and syncs user data.
 
 ---
 
-### 3. Learning
+### 3. Learning Service (Modules, Lessons, Progress)
+
+**Note**: In the monolithic architecture, this "service" is implemented as a set of controllers (`LearningController`), service classes, and repositories within the single Spring Boot application, not as a separate microservice.
 
 #### 3.1 Module Management
 - [ ] Create Module entity and repository
@@ -193,7 +206,9 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 
 ---
 
-### 4. Gamification
+### 4. Gamification Service (XP, Levels, Achievements)
+
+**Note**: In the monolithic architecture, this "service" is implemented as controllers (`GamificationController`), service classes, and repositories within the single Spring Boot application, not as a separate microservice.
 
 #### 4.1 XP System
 - [ ] Create UserStats entity:
@@ -268,7 +283,9 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 
 ---
 
-### 5. Code Execution Service
+### 5. Code Execution Module (Sandboxed Code Runner)
+
+**Note**: In the monolithic architecture, this "service" is implemented as controllers (`CodeExecutionController`), service classes, and worker components within the single Spring Boot application, not as a separate microservice. Code execution uses Docker containers for sandboxing, but the orchestration is handled within the monolith.
 
 #### 5.1 Code Execution Infrastructure
 - [ ] Research Docker-in-Docker security (or Docker socket mounting)
@@ -1000,9 +1017,9 @@ At the end of Phase 1A, you should have:
 | Phase | Duration | Description |
 |-------|----------|-------------|
 | **Weeks 1-2** | Setup & Infrastructure | Docker, databases, project structure |
-| **Weeks 3-4** | Backend Foundation | Auth, API Gateway, basic services |
-| **Weeks 5-6** | Learning Service | Modules, lessons, progress tracking |
-| **Weeks 7-8** | Gamification Service | XP, levels, achievements |
+| **Weeks 3-4** | Backend Foundation | Keycloak integration, REST controllers, config |
+| **Weeks 5-6** | Learning Module | Modules, lessons, progress tracking |
+| **Weeks 7-8** | Gamification Module | XP, levels, achievements |
 | **Weeks 9-10** | Code Execution | Docker sandbox, test runner |
 | **Weeks 11-12** | Frontend Setup | React app, routing, layout |
 | **Weeks 13-14** | Core UI Components | Dashboard, module browser, profile |
