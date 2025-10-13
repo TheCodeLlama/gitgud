@@ -2,11 +2,13 @@ package com.syntaxllama.gitgud.backend.controller.learning;
 
 import com.syntaxllama.gitgud.backend.controller.BaseController;
 import com.syntaxllama.gitgud.backend.dto.ApiResponse;
+import com.syntaxllama.gitgud.backend.dto.learning.LessonDTO;
 import com.syntaxllama.gitgud.backend.dto.learning.ModuleDTO;
 import com.syntaxllama.gitgud.backend.dto.learning.ModuleDetailDTO;
 import com.syntaxllama.gitgud.backend.model.Module;
 import com.syntaxllama.gitgud.backend.model.User;
 import com.syntaxllama.gitgud.backend.security.AuthenticationUtil;
+import com.syntaxllama.gitgud.backend.service.learning.LessonService;
 import com.syntaxllama.gitgud.backend.service.learning.ModuleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ import java.util.UUID;
 public class LearningController extends BaseController {
 
     private final ModuleService moduleService;
+    private final LessonService lessonService;
     private final com.syntaxllama.gitgud.backend.service.UserSyncService userSyncService;
 
     /**
@@ -95,9 +98,37 @@ public class LearningController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(recommendedModule));
     }
 
+    /**
+     * Get all lessons in a module.
+     * Public endpoint - no authentication required.
+     *
+     * @param moduleId Module ID
+     * @return List of lessons in module
+     */
+    @GetMapping("/modules/{moduleId}/lessons")
+    public ResponseEntity<ApiResponse<List<LessonDTO>>> getLessonsByModule(@PathVariable UUID moduleId) {
+        log.info("GET /api/v1/learning/modules/{}/lessons", moduleId);
+
+        List<LessonDTO> lessons = lessonService.getLessonsByModule(moduleId);
+        return ResponseEntity.ok(ApiResponse.success(lessons));
+    }
+
+    /**
+     * Get a single lesson by ID with full content.
+     * Public endpoint - no authentication required.
+     *
+     * @param id Lesson ID
+     * @return Lesson details with content and starter code
+     */
+    @GetMapping("/lessons/{id}")
+    public ResponseEntity<ApiResponse<LessonDTO>> getLessonById(@PathVariable UUID id) {
+        log.info("GET /api/v1/learning/lessons/{}", id);
+
+        LessonDTO lesson = lessonService.getLessonById(id);
+        return ResponseEntity.ok(ApiResponse.success(lesson));
+    }
+
     // TODO: Implement remaining endpoints:
-    // GET /api/v1/learning/modules/{moduleId}/lessons - List lessons in module
-    // GET /api/v1/learning/lessons/{id} - Get lesson by ID
     // GET /api/v1/learning/progress - Get user's overall progress
     // GET /api/v1/learning/progress/{lessonId} - Get progress for specific lesson
     // POST /api/v1/learning/progress - Update user progress

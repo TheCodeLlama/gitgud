@@ -166,18 +166,18 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Add API for "recommended next module"
 
 #### 3.2 Lesson Management
-- [ ] Create Lesson entity with fields:
-  - [ ] Title, description, content (Markdown/HTML)
-  - [ ] Lesson type (tutorial, challenge, project)
-  - [ ] XP reward
-  - [ ] Difficulty rating
-  - [ ] Starter code template
-  - [ ] Solution code (hidden)
-- [ ] Implement GET /api/learning/lessons/{id}
-- [ ] Create lesson content renderer (support Markdown)
-- [ ] Implement GET /api/learning/modules/{moduleId}/lessons
-- [ ] Add lesson completion criteria definition
-- [ ] Support multi-file lesson templates (future-proof structure)
+- [x] Create Lesson entity with fields:
+  - [x] Title, description, content (Markdown/HTML)
+  - [x] Lesson type (tutorial, challenge, project)
+  - [x] XP reward
+  - [x] Difficulty rating
+  - [x] Starter code template
+  - [x] Solution code (hidden)
+- [x] Implement GET /api/learning/lessons/{id}
+- [x] Create lesson content renderer (support Markdown)
+- [x] Implement GET /api/learning/modules/{moduleId}/lessons
+- [x] Add lesson completion criteria definition
+- [x] Support multi-file lesson templates (future-proof structure)
 
 #### 3.3 Progress Tracking
 - [ ] Create UserProgress entity:
