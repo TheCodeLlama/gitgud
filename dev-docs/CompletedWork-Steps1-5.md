@@ -491,7 +491,7 @@ Successfully tagged gitgud-java-executor:latest
 
 ### Immediate Next Steps
 1. **Frontend Development** (Step 6):
-   - React SPA with Vite and TypeScript
+   - React SPA with Vite (JavaScript)
    - Monaco code editor integration
    - Lesson page with split view
    - Dashboard with gamification elements

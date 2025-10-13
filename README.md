@@ -9,7 +9,7 @@ GitGud combines the best aspects of coding challenge platforms with game mechani
 ## Tech Stack
 
 - **Backend**: Spring Boot 3.5.6, Java 25, Maven
-- **Frontend**: React 19, Vite, TypeScript
+- **Frontend**: React 19, Vite
 - **Database**: PostgreSQL 17 (managed with Hibernate DDL)
 - **Authentication**: Keycloak 27 (OAuth2/OIDC)
 - **Cache**: Redis 7 (execution results, sessions)
@@ -128,36 +128,36 @@ Frontend will start on `http://localhost:5173`
 
 ```
 GitGud/
-├── backend/                    # Spring Boot monolithic application
+├── backend/                            # Spring Boot monolithic application
 │   ├── src/main/java/.../backend/
-│   │   ├── controller/        # REST endpoints
-│   │   │   ├── auth/          # User authentication and profile
-│   │   │   ├── learning/      # Modules, lessons, progress
-│   │   │   ├── gamification/  # XP, achievements, stats
-│   │   │   └── execution/     # Code execution API
-│   │   ├── service/           # Business logic
-│   │   │   └── execution/     # Code execution, Docker orchestration, output comparison
-│   │   ├── model/             # JPA entities (10 tables, UUID keys)
-│   │   ├── repository/        # Spring Data JPA repositories
-│   │   ├── dto/               # Request/response DTOs
-│   │   │   └── execution/     # Code execution DTOs
-│   │   ├── exception/         # Custom exceptions & GlobalExceptionHandler
-│   │   ├── config/            # Security, CORS, RabbitMQ, Redis, Docker
-│   │   └── security/          # Keycloak JWT converter, AuthenticationUtil
-│   ├── src/test/resources/    # Test resources
-│   │   └── malicious-code-tests/  # Security test cases
+│   │   ├── controller/                 # REST endpoints
+│   │   │   ├── auth/                   # User authentication and profile
+│   │   │   ├── learning/               # Modules, lessons, progress
+│   │   │   ├── gamification/           # XP, achievements, stats
+│   │   │   └── execution/              # Code execution API
+│   │   ├── service/                    # Business logic
+│   │   │   └── execution/              # Code execution, Docker orchestration, output comparison
+│   │   ├── model/                      # JPA entities (10 tables, UUID keys)
+│   │   ├── repository/                 # Spring Data JPA repositories
+│   │   ├── dto/                        # Request/response DTOs
+│   │   │   └── execution/              # Code execution DTOs
+│   │   ├── exception/                  # Custom exceptions & GlobalExceptionHandler
+│   │   ├── config/                     # Security, CORS, RabbitMQ, Redis, Docker
+│   │   └── security/                   # Keycloak JWT converter, AuthenticationUtil
+│   ├── src/test/resources/             # Test resources
+│   │   └── malicious-code-tests/       # Security test cases
 │   └── pom.xml
-├── frontend/                   # React SPA with TypeScript
-├── docker/                     # Docker configurations
-│   ├── java-executor/         # Hardened Java execution container
-│   └── keycloak/              # Keycloak realm configuration
-├── dev-docs/                   # Development documentation
-│   ├── MVP-Development-Guide.md       # Full development roadmap
-│   ├── CodeExecutionAPI.md            # API reference
-│   └── DockerCodeExecutionResearch.md # Security research
-├── observability/              # Grafana/Prometheus/Loki configs
-├── docker-compose.yml          # Infrastructure services
-└── .env.example                # Environment template
+├── frontend/                           # React SPA with JavaScript
+├── docker/                             # Docker configurations
+│   ├── java-executor/                  # Hardened Java execution container
+│   └── keycloak/                       # Keycloak realm configuration
+├── dev-docs/                           # Development documentation
+│   ├── MVP-Development-Guide.md        # Full development roadmap
+│   ├── CodeExecutionAPI.md             # API reference
+│   └── DockerCodeExecutionResearch.md  # Security research
+├── observability/                      # Grafana/Prometheus/Loki configs
+├── docker-compose.yml                  # Infrastructure services
+└── .env.example                        # Environment template
 ```
 
 ## Development Workflow
