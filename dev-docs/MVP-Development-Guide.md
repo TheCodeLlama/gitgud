@@ -288,7 +288,7 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 **Note**: In the monolithic architecture, this "service" is implemented as controllers (`CodeExecutionController`), service classes, and worker components within the single Spring Boot application, not as a separate microservice. Code execution uses Docker containers for sandboxing, but the orchestration is handled within the monolith.
 
 #### 5.1 Code Execution Infrastructure
-- [ ] Research Docker-in-Docker security (or Docker socket mounting)
+- [x] Research Docker-in-Docker security (or Docker socket mounting) [DockerCodeExecutionResearch.md]
 - [ ] Create execution request DTO:
   - [ ] Language (Java 25)
   - [ ] Source code
