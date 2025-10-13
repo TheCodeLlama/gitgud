@@ -2,12 +2,17 @@ package com.syntaxllama.gitgud.backend.controller.gamification;
 
 import com.syntaxllama.gitgud.backend.controller.BaseController;
 import com.syntaxllama.gitgud.backend.dto.ApiResponse;
+import com.syntaxllama.gitgud.backend.dto.gamification.AchievementDTO;
 import com.syntaxllama.gitgud.backend.dto.gamification.AwardXpRequest;
+import com.syntaxllama.gitgud.backend.dto.gamification.UserAchievementDTO;
 import com.syntaxllama.gitgud.backend.dto.gamification.UserStatsDTO;
 import com.syntaxllama.gitgud.backend.dto.gamification.XpAwardResult;
 import com.syntaxllama.gitgud.backend.model.User;
+
+import java.util.List;
 import com.syntaxllama.gitgud.backend.security.AuthenticationUtil;
 import com.syntaxllama.gitgud.backend.service.UserSyncService;
+import com.syntaxllama.gitgud.backend.service.gamification.AchievementService;
 import com.syntaxllama.gitgud.backend.service.gamification.XpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 public class GamificationController extends BaseController {
 
     private final XpService xpService;
+    private final AchievementService achievementService;
     private final UserSyncService userSyncService;
 
     /**
@@ -73,9 +79,39 @@ public class GamificationController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    /**
+     * Get all available achievements.
+     * Public endpoint - no authentication required.
+     *
+     * @return List of all achievements
+     */
+    @GetMapping("/achievements")
+    public ResponseEntity<ApiResponse<List<AchievementDTO>>> getAllAchievements() {
+        log.info("GET /api/v1/gamification/achievements");
+
+        List<AchievementDTO> achievements = achievementService.getAllAchievements();
+        return ResponseEntity.ok(ApiResponse.success(achievements));
+    }
+
+    /**
+     * Get achievements earned by the authenticated user.
+     * Requires authentication.
+     *
+     * @return List of user's earned achievements
+     */
+    @GetMapping("/achievements/user")
+    public ResponseEntity<ApiResponse<List<UserAchievementDTO>>> getUserAchievements() {
+        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+                .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exception.UnauthorizedException("User not authenticated"));
+
+        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        log.info("GET /api/v1/gamification/achievements/user - user: {}", currentUser.getId());
+
+        List<UserAchievementDTO> userAchievements = achievementService.getUserAchievements(currentUser);
+        return ResponseEntity.ok(ApiResponse.success(userAchievements));
+    }
+
     // TODO: Implement remaining endpoints:
-    // GET /api/v1/gamification/achievements - List all achievements
-    // GET /api/v1/gamification/achievements/{userId} - Get user's achievements
     // GET /api/v1/gamification/levels - Get level metadata
     // GET /api/v1/gamification/profile - Get user profile
     // PUT /api/v1/gamification/profile - Update user profile

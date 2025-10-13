@@ -234,25 +234,25 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
   - [x] Store in database
 
 #### 4.2 Achievement System
-- [ ] Create Achievement entity:
-  - [ ] Name, description, icon
-  - [ ] Criteria (JSON/enum)
-  - [ ] XP reward
-  - [ ] Rarity tier
-- [ ] Create UserAchievement join table
-- [ ] Seed initial achievements:
-  - [ ] "First Steps" - Complete first lesson
-  - [ ] "Week Warrior" - 7-day streak
-  - [ ] "Fast Learner" - Complete lesson in one attempt
-  - [ ] "Spring Initiate" - Complete Spring Boot basics
-  - [ ] "Code Warrior" - Complete 10 challenges
-- [ ] Implement achievement checking service:
-  - [ ] Event-based triggers (lesson complete, streak update)
-  - [ ] Batch check all potential achievements
-  - [ ] Award achievements (idempotent)
-- [ ] Create GET /api/gamification/achievements (all achievements)
-- [ ] Create GET /api/gamification/achievements/{userId} (user's achievements)
-- [ ] Implement achievement notification system (return on award)
+- [x] Create Achievement entity:
+  - [x] Name, description, icon
+  - [x] Criteria (JSON/enum)
+  - [x] XP reward
+  - [x] Rarity tier
+- [x] Create UserAchievement join table
+- [x] Seed initial achievements:
+  - [x] "First Steps" - Complete first lesson
+  - [x] "Week Warrior" - 7-day streak
+  - [x] "Fast Learner" - Complete lesson in one attempt
+  - [x] "Spring Initiate" - Complete Spring Boot basics
+  - [x] "Code Warrior" - Complete 10 challenges
+- [x] Implement achievement checking service:
+  - [x] Event-based triggers (lesson complete, streak update)
+  - [x] Batch check all potential achievements
+  - [x] Award achievements (idempotent)
+- [x] Create GET /api/gamification/achievements (all achievements)
+- [x] Create GET /api/gamification/achievements/{userId} (user's achievements)
+- [x] Implement achievement notification system (return on award)
 
 #### 4.3 Level System
 - [ ] Define level progression formula (exponential):

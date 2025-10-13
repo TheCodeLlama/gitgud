@@ -54,4 +54,9 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, UUID
            "AND up.lesson.module.id = :moduleId " +
            "AND up.status = 'COMPLETED'")
     long countCompletedLessonsByUserAndModule(@Param("userId") UUID userId, @Param("moduleId") UUID moduleId);
+
+    /**
+     * Check if user has any lessons with specific status and attempts count.
+     */
+    boolean existsByUserIdAndStatusAndAttemptsCount(UUID userId, UserProgress.Status status, Integer attemptsCount);
 }
