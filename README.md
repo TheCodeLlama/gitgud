@@ -9,11 +9,12 @@ GitGud combines the best aspects of coding challenge platforms with game mechani
 ## Tech Stack
 
 - **Backend**: Spring Boot 3.5.6, Java 25, Maven
-- **Frontend**: React 19, Vite
+- **Frontend**: React 19, Vite, TypeScript
 - **Database**: PostgreSQL 17 (managed with Hibernate DDL)
 - **Authentication**: Keycloak 27 (OAuth2/OIDC)
-- **Cache**: Redis 7
-- **Message Queue**: RabbitMQ 4
+- **Cache**: Redis 7 (execution results, sessions)
+- **Message Queue**: RabbitMQ 4 (asynchronous code execution)
+- **Code Execution**: Docker containers with security hardening
 - **Observability**: Prometheus, Grafana, Loki
 - **Containerization**: Docker & Docker Compose
 
@@ -129,17 +130,33 @@ Frontend will start on `http://localhost:5173`
 GitGud/
 ├── backend/                    # Spring Boot monolithic application
 │   ├── src/main/java/.../backend/
-│   │   ├── controller/        # REST endpoints (auth, learning, gamification, execution)
-│   │   ├── model/             # JPA entities (10 tables, UUID keys, BaseEntity pattern)
+│   │   ├── controller/        # REST endpoints
+│   │   │   ├── auth/          # User authentication and profile
+│   │   │   ├── learning/      # Modules, lessons, progress
+│   │   │   ├── gamification/  # XP, achievements, stats
+│   │   │   └── execution/     # Code execution API
+│   │   ├── service/           # Business logic
+│   │   │   └── execution/     # Code execution, Docker orchestration, output comparison
+│   │   ├── model/             # JPA entities (10 tables, UUID keys)
 │   │   ├── repository/        # Spring Data JPA repositories
-│   │   ├── dto/               # ApiResponse, ErrorResponse
+│   │   ├── dto/               # Request/response DTOs
+│   │   │   └── execution/     # Code execution DTOs
 │   │   ├── exception/         # Custom exceptions & GlobalExceptionHandler
-│   │   └── config/            # CORS, logging, DevDataBootstrapper
+│   │   ├── config/            # Security, CORS, RabbitMQ, Redis, Docker
+│   │   └── security/          # Keycloak JWT converter, AuthenticationUtil
+│   ├── src/test/resources/    # Test resources
+│   │   └── malicious-code-tests/  # Security test cases
 │   └── pom.xml
-├── frontend/                   # React SPA (planned)
-├── dev-docs/                   # Development documentation & ERD
+├── frontend/                   # React SPA with TypeScript
+├── docker/                     # Docker configurations
+│   ├── java-executor/         # Hardened Java execution container
+│   └── keycloak/              # Keycloak realm configuration
+├── dev-docs/                   # Development documentation
+│   ├── MVP-Development-Guide.md       # Full development roadmap
+│   ├── CodeExecutionAPI.md            # API reference
+│   └── DockerCodeExecutionResearch.md # Security research
 ├── observability/              # Grafana/Prometheus/Loki configs
-├── docker-compose.yml          # Infrastructure services (PostgreSQL, Redis, etc.)
+├── docker-compose.yml          # Infrastructure services
 └── .env.example                # Environment template
 ```
 
@@ -244,6 +261,60 @@ Use IntelliJ IDEA's built-in database tools to connect to PostgreSQL:
 - **Username**: admin
 - **Password**: password
 
+## Code Execution
+
+GitGud executes user-submitted Java code in hardened Docker containers with comprehensive security measures.
+
+### Quick Start
+
+**Build the execution container:**
+```bash
+cd docker/java-executor
+docker build -t gitgud-java-executor:latest .
+```
+
+**Submit code for execution:**
+```bash
+curl -X POST http://localhost:8080/api/v1/execute/run \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "language": "java",
+    "sourceCode": "public class Main { public static void main(String[] args) { System.out.println(\"Hello\"); } }",
+    "lessonId": "YOUR_LESSON_UUID"
+  }'
+```
+
+**Poll for results:**
+```bash
+curl http://localhost:8080/api/v1/execute/result/JOB_ID \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Security Features
+
+All code runs in isolated Docker containers with:
+- **Network isolation**: No internet access
+- **Memory limits**: 256MB max (no swap)
+- **CPU limits**: 0.5 cores
+- **Timeout**: 5 seconds hard limit
+- **Read-only filesystem**: Except /tmp (100MB tmpfs)
+- **Process limits**: 50 max (prevents fork bombs)
+- **No privileges**: All capabilities dropped, no-new-privileges
+- **Non-root execution**: Runs as UID 1000
+
+### Test Cases
+
+Security test cases are provided in `backend/src/test/resources/malicious-code-tests/`:
+- Infinite loops (timeout test)
+- Memory bombs (memory limit test)
+- Fork bombs (PID limit test)
+- Network access attempts (network isolation test)
+- File system writes (read-only filesystem test)
+- Huge output (output truncation test)
+
+See `dev-docs/CodeExecutionAPI.md` for complete API documentation.
+
 ## Keycloak Setup
 
 After starting Keycloak for the first time:
@@ -319,15 +390,71 @@ docker-compose exec <service-name> <command>
 
 **Current Phase**: MVP Phase 1A - Foundation (Local Development)
 
-**Completed**:
-- Infrastructure setup (Docker Compose with PostgreSQL, Redis, RabbitMQ, Keycloak, observability)
-- Database schema with 10 JPA entities using UUID keys and BaseEntity pattern
-- REST API structure with controllers, DTOs, and global exception handling
-- CORS configuration and request logging
+### ✅ Completed (Steps 1-5)
 
-**Next**: Keycloak authentication integration (Step 2.4)
+#### Infrastructure & Backend Foundation (Steps 1-2)
+- ✅ Docker Compose with PostgreSQL, Redis, RabbitMQ, Keycloak
+- ✅ Observability stack (Prometheus, Grafana, Loki)
+- ✅ Database schema with 10 JPA entities using UUID keys
+- ✅ Spring Boot monolithic application structure
+- ✅ REST API with controllers, DTOs, global exception handling
+- ✅ CORS configuration and request logging
+- ✅ Rate limiting with Bucket4j
+- ✅ Keycloak OAuth2/OIDC authentication integration
+- ✅ User synchronization (Keycloak → local database)
+- ✅ JWT token validation and user context management
 
-See `dev-docs/MVP-Development-Guide.md` for detailed development roadmap and task checklist.
+#### Learning Module (Step 3)
+- ✅ Module and Lesson management APIs
+- ✅ User progress tracking
+- ✅ Test case system with hidden/visible test cases
+- ✅ DevDataBootstrapper for sample data seeding
+
+#### Gamification System (Step 4)
+- ✅ XP and leveling system
+- ✅ Achievement system with criteria checking
+- ✅ User stats tracking (streak, total XP, level)
+- ✅ User profiles with avatar selection
+- ✅ Level-based progression and unlocks
+
+#### Code Execution Module (Step 5) ⭐️
+- ✅ **Secure Docker sandbox** with comprehensive hardening:
+  - Network isolation (--network none)
+  - Memory limits (256MB, no swap)
+  - CPU limits (0.5 cores)
+  - PID limits (50 processes to prevent fork bombs)
+  - Read-only filesystem with tmpfs
+  - Non-root user execution
+  - 5-second timeout enforcement
+  - All capabilities dropped
+- ✅ **RabbitMQ-based asynchronous job processing**
+- ✅ **Redis caching** for execution results (1-hour TTL)
+- ✅ **Advanced output comparison**:
+  - Whitespace normalization (line endings, spacing)
+  - Numeric tolerance for floating-point values
+  - Exact match mode
+- ✅ **Partial credit XP system** (proportional to tests passed)
+- ✅ **Compilation and runtime error handling**
+- ✅ **Timeout and resource limit enforcement**
+- ✅ **Output truncation** (10KB limit to prevent memory exhaustion)
+- ✅ **Database submission tracking** (all code submissions persisted)
+- ✅ **Security testing** (infinite loops, memory bombs, network attempts, etc.)
+- ✅ **REST API** with job submission and polling
+
+### 📚 Documentation
+- ✅ Complete API documentation (`dev-docs/CodeExecutionAPI.md`)
+- ✅ Docker security research and hardening guide
+- ✅ MVP development guide with detailed task checklist
+- ✅ Malicious code security test cases with README
+
+### 🔜 Next Steps (Step 6+)
+- Frontend React application
+- Lesson content creation (Java fundamentals, Spring Boot basics)
+- Integration testing
+- User interface and Monaco editor integration
+
+See `dev-docs/MVP-Development-Guide.md` for detailed development roadmap.
+See `dev-docs/CodeExecutionAPI.md` for code execution API reference.
 
 ## Contributing
 

@@ -351,23 +351,23 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
   - [x] XP awarded
 
 #### 5.4 Test Case Execution
-- [ ] Implement test runner in Java:
-  - [ ] Load user code
-  - [ ] Run against each test case
-  - [ ] Capture assertion results
-  - [ ] Handle exceptions gracefully
-- [ ] Create test case output comparison:
-  - [ ] Exact match
-  - [ ] Whitespace normalization
-  - [ ] Numeric tolerance (for floats)
-- [ ] Implement partial credit logic:
-  - [ ] Award XP for passed test cases
-  - [ ] Calculate percentage complete
+- [x] Implement test runner in Java:
+  - [x] Load user code
+  - [x] Run against each test case
+  - [x] Capture assertion results
+  - [x] Handle exceptions gracefully
+- [x] Create test case output comparison:
+  - [x] Exact match
+  - [x] Whitespace normalization
+  - [x] Numeric tolerance (for floats)
+- [x] Implement partial credit logic:
+  - [x] Award XP for passed test cases
+  - [x] Calculate percentage complete
 - [ ] Add code quality checks (optional for MVP):
   - [ ] Checkstyle integration
   - [ ] Basic complexity analysis
-- [ ] Store submission in database:
-  - [ ] User ID, lesson ID, code, result, timestamp
+- [x] Store submission in database:
+  - [x] User ID, lesson ID, code, result, timestamp
 
 ---
 

@@ -2,8 +2,14 @@ package com.syntaxllama.gitgud.backend.service.execution;
 
 import com.syntaxllama.gitgud.backend.config.RabbitMQConfig;
 import com.syntaxllama.gitgud.backend.dto.execution.*;
+import com.syntaxllama.gitgud.backend.model.Lesson;
+import com.syntaxllama.gitgud.backend.model.Submission;
 import com.syntaxllama.gitgud.backend.model.TestCase;
+import com.syntaxllama.gitgud.backend.model.User;
+import com.syntaxllama.gitgud.backend.repository.LessonRepository;
+import com.syntaxllama.gitgud.backend.repository.SubmissionRepository;
 import com.syntaxllama.gitgud.backend.repository.TestCaseRepository;
+import com.syntaxllama.gitgud.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -25,6 +31,10 @@ public class CodeExecutionWorker {
     private final DockerExecutorService dockerExecutor;
     private final TestCaseRepository testCaseRepository;
     private final CodeExecutionService executionService;
+    private final OutputComparisonService comparisonService;
+    private final SubmissionRepository submissionRepository;
+    private final UserRepository userRepository;
+    private final LessonRepository lessonRepository;
 
     /**
      * Listen for code execution jobs from RabbitMQ queue.
@@ -68,6 +78,9 @@ public class CodeExecutionWorker {
             boolean allPassed = passedTests == testCases.size();
             ExecutionStatus status = allPassed ? ExecutionStatus.COMPLETED : ExecutionStatus.FAILED;
 
+            // Calculate XP with partial credit (proportional to tests passed)
+            int xpAwarded = calculatePartialCreditXp(passedTests, testCases.size());
+
             // Build final result
             ExecutionResult result = ExecutionResult.builder()
                     .jobId(job.getJobId())
@@ -79,11 +92,14 @@ public class CodeExecutionWorker {
                     .executionTimeMs(totalExecutionTime)
                     .startedAt(job.getSubmittedAt())
                     .completedAt(LocalDateTime.now())
-                    .xpAwarded(allPassed ? calculateXp(testCases.size()) : 0)
+                    .xpAwarded(xpAwarded)
                     .build();
 
             // Store result in Redis
             executionService.storeResult(job.getJobId(), result);
+
+            // Save submission to database
+            saveSubmission(job, result);
 
             log.info("Job {} completed: {}/{} tests passed", job.getJobId(), passedTests, testCases.size());
 
@@ -147,17 +163,24 @@ public class CodeExecutionWorker {
                         .build();
             }
 
-            // Compare output with expected
-            String actualOutput = output.getOutput().trim();
-            String expectedOutput = testCase.getExpectedOutput().trim();
-            boolean passed = actualOutput.equals(expectedOutput);
+            // Compare output with expected using whitespace normalization
+            String actualOutput = output.getOutput();
+            String expectedOutput = testCase.getExpectedOutput();
+
+            // Try whitespace-normalized comparison first
+            boolean passed = comparisonService.compareWithWhitespaceNormalization(expectedOutput, actualOutput);
+
+            // If that fails, try numeric tolerance comparison
+            if (!passed) {
+                passed = comparisonService.compareWithNumericTolerance(expectedOutput, actualOutput);
+            }
 
             return TestCaseResult.builder()
                     .testCaseId(testCase.getId())
                     .passed(passed)
                     .input(testCase.getInput())
-                    .expectedOutput(expectedOutput)
-                    .actualOutput(actualOutput)
+                    .expectedOutput(expectedOutput.trim())
+                    .actualOutput(actualOutput.trim())
                     .errorMessage(passed ? null : "Output does not match expected")
                     .executionTimeMs(executionTime)
                     .build();
@@ -193,11 +216,98 @@ public class CodeExecutionWorker {
     }
 
     /**
-     * Calculate XP awarded based on number of test cases passed.
-     * Basic formula for MVP - can be enhanced later.
+     * Save submission to database for historical tracking.
+     * Stores user code, execution results, and metadata.
+     *
+     * @param job The execution job
+     * @param result The execution result
      */
-    private Integer calculateXp(int testCaseCount) {
+    private void saveSubmission(CodeExecutionJob job, ExecutionResult result) {
+        try {
+            // Fetch user and lesson entities
+            User user = userRepository.findById(job.getUserId())
+                    .orElse(null);
+            Lesson lesson = lessonRepository.findById(job.getLessonId())
+                    .orElse(null);
+
+            if (user == null || lesson == null) {
+                log.warn("Cannot save submission for job {}: user or lesson not found", job.getJobId());
+                return;
+            }
+
+            // Determine submission status
+            Submission.Status status;
+            if (result.getStatus() == ExecutionStatus.COMPLETED && result.getPassed()) {
+                status = Submission.Status.PASSED;
+            } else if (result.getStatus() == ExecutionStatus.COMPLETED) {
+                status = Submission.Status.FAILED;
+            } else if (result.getStatus() == ExecutionStatus.FAILED) {
+                status = Submission.Status.ERROR;
+            } else {
+                status = Submission.Status.PENDING;
+            }
+
+            // Create submission entity
+            Submission submission = new Submission();
+            submission.setUser(user);
+            submission.setLesson(lesson);
+            submission.setCode(job.getSourceCode());
+            submission.setStatus(status);
+            submission.setPassedTests(result.getTestsPassed());
+            submission.setTotalTests(result.getTotalTests());
+            submission.setExecutionTimeMs(result.getExecutionTimeMs());
+            submission.setErrorMessage(result.getErrorMessage());
+            submission.setConsoleOutput(result.getConsoleOutput());
+            submission.setXpAwarded(result.getXpAwarded());
+            submission.setSubmittedAt(job.getSubmittedAt());
+
+            // Save to database
+            submissionRepository.save(submission);
+
+            log.info("Saved submission for user {} and lesson {} (status: {})",
+                    user.getId(), lesson.getId(), status);
+
+        } catch (Exception e) {
+            // Don't fail the job if submission save fails - result is already in Redis
+            log.error("Failed to save submission for job {}: {}", job.getJobId(), e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Calculate XP with partial credit based on proportion of tests passed.
+     * Awards proportional XP even if not all tests pass.
+     *
+     * Formula:
+     * - Base XP per test case: 10 XP
+     * - Partial credit: (passedTests / totalTests) * totalPossibleXP
+     * - Minimum 0 XP if no tests pass
+     *
+     * Examples:
+     * - 5/5 tests passed: 50 XP (100%)
+     * - 4/5 tests passed: 40 XP (80%)
+     * - 1/5 tests passed: 10 XP (20%)
+     * - 0/5 tests passed: 0 XP (0%)
+     *
+     * @param passedTests Number of tests that passed
+     * @param totalTests Total number of tests
+     * @return XP awarded (rounded down to nearest integer)
+     */
+    private Integer calculatePartialCreditXp(int passedTests, int totalTests) {
+        if (totalTests == 0 || passedTests == 0) {
+            return 0;
+        }
+
         // Base XP: 10 per test case
-        return testCaseCount * 10;
+        int baseXpPerTest = 10;
+        int totalPossibleXp = totalTests * baseXpPerTest;
+
+        // Calculate proportional XP
+        double proportion = (double) passedTests / totalTests;
+        int xpAwarded = (int) Math.floor(proportion * totalPossibleXp);
+
+        log.debug("XP calculation: {}/{} tests passed = {} XP ({}%)",
+            passedTests, totalTests, xpAwarded, (int)(proportion * 100));
+
+        return xpAwarded;
     }
 }
