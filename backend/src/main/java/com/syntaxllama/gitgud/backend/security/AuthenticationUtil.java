@@ -1,10 +1,14 @@
 package com.syntaxllama.gitgud.backend.security;
 
+import com.syntaxllama.gitgud.backend.model.User;
+import com.syntaxllama.gitgud.backend.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
+import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
@@ -12,11 +16,11 @@ import java.util.Optional;
  * Utility class for extracting authenticated user information from JWT tokens.
  */
 @Slf4j
+@Component
+@RequiredArgsConstructor
 public class AuthenticationUtil {
 
-    private AuthenticationUtil() {
-        // Utility class, prevent instantiation
-    }
+    private final UserRepository userRepository;
 
     /**
      * Get the current authentication from SecurityContext.
@@ -94,5 +98,17 @@ public class AuthenticationUtil {
         return getCurrentAuthentication()
                 .map(Authentication::isAuthenticated)
                 .orElse(false);
+    }
+
+    /**
+     * Get the current authenticated User entity.
+     * Looks up the user by their Keycloak ID from the JWT.
+     */
+    public User getCurrentUser() {
+        String keycloakId = getCurrentKeycloakUserId()
+                .orElseThrow(() -> new RuntimeException("No authenticated user found"));
+
+        return userRepository.findByKeycloakId(keycloakId)
+                .orElseThrow(() -> new RuntimeException("User not found in database: " + keycloakId));
     }
 }

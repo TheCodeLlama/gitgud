@@ -34,6 +34,34 @@ spring:
           issuer-uri: ${KEYCLOAK_ISSUER_URI}
           jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
 
+  # RabbitMQ Configuration
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 10
+        acknowledge-mode: auto
+        retry:
+          enabled: true
+          initial-interval: 3000
+          max-attempts: 3
+
+  # Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
 # Server Configuration
 server:
   port: ${BACKEND_PORT}
@@ -65,11 +93,24 @@ management:
       application: ${spring.application.name}
       environment: ${ACTIVE_PROFILE}
 
+# Code Execution Configuration
+code:
+  execution:
+    timeout:
+      seconds: ${CODE_EXECUTION_TIMEOUT_SECONDS}
+    max:
+      memory:
+        mb: ${CODE_EXECUTION_MAX_MEMORY_MB}
+    docker:
+      host: unix:///var/run/docker.sock
+      timeout: 30
+      image: ${CODE_EXECUTION_DOCKER_IMAGE}
+
 # Logging Configuration
 logging:
   level:
-    root: ${LOG_LEVEL}
-    com.syntaxllama.gitgud: ${LOG_LEVEL}
+    root: ${ROOT_LOG_LEVEL}
+    com.syntaxllama.gitgud: ${GITGUD_LOG_LEVEL}
     org.springframework.web: ${WEB_LOG_LEVEL}
     org.hibernate.SQL: ${SQL_LOG_LEVEL}
     org.hibernate.type.descriptor.sql.BasicBinder: ${SQL_BINDER_LOG_LEVEL}

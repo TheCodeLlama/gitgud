@@ -289,22 +289,23 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 
 #### 5.1 Code Execution Infrastructure
 - [x] Research Docker-in-Docker security (or Docker socket mounting) [DockerCodeExecutionResearch.md]
-- [ ] Create execution request DTO:
-  - [ ] Language (Java 25)
-  - [ ] Source code
-  - [ ] Lesson ID
-  - [ ] User ID
-  - [ ] Test case IDs
-- [ ] Set up RabbitMQ or in-memory queue for execution jobs:
-  - [ ] Execution request queue
-  - [ ] Result queue
-- [ ] Create execution worker service:
-  - [ ] Listen for execution requests
-  - [ ] Spin up Docker container
-  - [ ] Compile and run code
-  - [ ] Capture output and errors
-  - [ ] Compare against test cases
-  - [ ] Return results
+- [x] Create execution request DTO:
+  - [x] Language (Java 25)
+  - [x] Source code
+  - [x] Lesson ID
+  - [x] User ID
+  - [x] Test case IDs
+- [x] Set up RabbitMQ queue for execution jobs:
+  - [x] Execution request queue
+  - [x] Dead letter queue for failed jobs
+  - [x] Redis for result caching
+- [x] Create execution worker service:
+  - [x] Listen for execution requests from RabbitMQ
+  - [x] Spin up hardened Docker container
+  - [x] Compile and run code
+  - [x] Capture output and errors
+  - [x] Compare against test cases
+  - [x] Store results in Redis
 
 #### 5.2 Docker Sandbox
 - [ ] Create Java execution Dockerfile:
