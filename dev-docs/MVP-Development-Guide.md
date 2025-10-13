@@ -331,24 +331,24 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Implement output truncation (prevent huge outputs)
 
 #### 5.3 Code Execution API
-- [ ] Create POST /api/execute/run endpoint:
-  - [ ] Accept code, lesson ID, test case IDs
-  - [ ] Validate request (code length limits)
-  - [ ] Enqueue execution job
-  - [ ] Return job ID
-- [ ] Create GET /api/execute/result/{jobId} (polling):
-  - [ ] Return status: pending, running, completed, failed
-  - [ ] Return results when ready
+- [x] Create POST /api/execute/run endpoint:
+  - [x] Accept code, lesson ID, test case IDs
+  - [x] Validate request (code length limits)
+  - [x] Enqueue execution job
+  - [x] Return job ID
+- [x] Create GET /api/execute/result/{jobId} (polling):
+  - [x] Return status: pending, running, completed, failed
+  - [x] Return results when ready
 - [ ] Implement WebSocket for real-time results (optional):
   - [ ] Connect to /api/execute/ws
   - [ ] Stream output as it happens
-- [ ] Create execution result DTO:
-  - [ ] Passed/failed status
-  - [ ] Test case results (individual)
-  - [ ] Execution time
-  - [ ] Error messages
-  - [ ] Console output
-  - [ ] XP awarded
+- [x] Create execution result DTO:
+  - [x] Passed/failed status
+  - [x] Test case results (individual)
+  - [x] Execution time
+  - [x] Error messages
+  - [x] Console output
+  - [x] XP awarded
 
 #### 5.4 Test Case Execution
 - [ ] Implement test runner in Java:
