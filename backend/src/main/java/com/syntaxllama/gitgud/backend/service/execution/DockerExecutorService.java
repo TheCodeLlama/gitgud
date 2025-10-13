@@ -33,8 +33,11 @@ public class DockerExecutorService {
     @Value("${code.execution.max.memory.mb:256}")
     private int maxMemoryMb;
 
-    @Value("${code.execution.docker.image:openjdk:25-slim}")
+    @Value("${code.execution.docker.image:gitgud-java-executor:latest}")
     private String dockerImage;
+
+    // Maximum output size to prevent memory exhaustion (10KB)
+    private static final int MAX_OUTPUT_SIZE = 10 * 1024;
 
     /**
      * Execute Java code in a secure Docker container.
@@ -130,14 +133,15 @@ public class DockerExecutorService {
                 .withTmpFs(java.util.Map.of(
                         "/tmp", "rw,noexec,nosuid,size=100m",
                         "/home/coderunner", "rw,noexec,nosuid,size=50m"
-                ));
+                ))
+                // Security options (no-new-privileges prevents privilege escalation)
+                .withSecurityOpts(java.util.List.of("no-new-privileges"));
 
         CreateContainerResponse container = dockerClient.createContainerCmd(dockerImage)
                 .withHostConfig(hostConfig)
                 // Run as non-root user (UID 1000)
                 .withUser("1000:1000")
                 .withWorkingDir("/home/coderunner")
-                // Security options
                 .withCmd("sleep", "3600") // Keep container alive
                 .exec();
 
@@ -242,6 +246,10 @@ public class DockerExecutorService {
             String stdoutStr = stdout.toString(StandardCharsets.UTF_8);
             String stderrStr = stderr.toString(StandardCharsets.UTF_8);
 
+            // Truncate output if too large to prevent memory issues
+            stdoutStr = truncateOutput(stdoutStr);
+            stderrStr = truncateOutput(stderrStr);
+
             return ExecutionOutput.builder()
                     .success(exitCode == 0)
                     .output(stdoutStr)
@@ -298,6 +306,20 @@ public class DockerExecutorService {
         } catch (DockerException e) {
             log.warn("Failed to remove container {}: {}", containerId, e.getMessage());
         }
+    }
+
+    /**
+     * Truncate output to prevent memory exhaustion from huge outputs.
+     * Limits output to MAX_OUTPUT_SIZE bytes.
+     */
+    private String truncateOutput(String output) {
+        if (output == null) {
+            return "";
+        }
+        if (output.length() <= MAX_OUTPUT_SIZE) {
+            return output;
+        }
+        return output.substring(0, MAX_OUTPUT_SIZE) + "\n... (output truncated, exceeded " + MAX_OUTPUT_SIZE + " bytes)";
     }
 
     /**

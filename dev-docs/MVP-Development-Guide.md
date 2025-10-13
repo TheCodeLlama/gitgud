@@ -308,27 +308,27 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
   - [x] Store results in Redis
 
 #### 5.2 Docker Sandbox
-- [ ] Create Java execution Dockerfile:
-  - [ ] Base: openjdk:25-slim
-  - [ ] Security: non-root user, no network
-  - [ ] Resource limits: CPU, memory
-  - [ ] Timeout enforcement
-- [ ] Build and test Docker image locally
-- [ ] Implement container lifecycle management:
-  - [ ] Create container with code volume
-  - [ ] Execute with timeout
-  - [ ] Cleanup container after execution
-- [ ] Add resource limits:
-  - [ ] Max execution time: 60 seconds
-  - [ ] Max memory: 512MB
-  - [ ] No network access
-  - [ ] No file system writes outside /tmp
-- [ ] Test malicious code scenarios:
-  - [ ] Infinite loops
-  - [ ] High memory usage
-  - [ ] File system access attempts
-  - [ ] Network calls
-- [ ] Implement output truncation (prevent huge outputs)
+- [x] Create Java execution Dockerfile:
+  - [x] Base: openjdk:25-slim
+  - [x] Security: non-root user, no network
+  - [x] Resource limits: CPU, memory
+  - [x] Timeout enforcement
+- [x] Build and test Docker image locally
+- [x] Implement container lifecycle management:
+  - [x] Create container with code volume
+  - [x] Execute with timeout
+  - [x] Cleanup container after execution
+- [x] Add resource limits:
+  - [x] Max execution time: 5 seconds
+  - [x] Max memory: 256MB
+  - [x] No network access
+  - [x] No file system writes outside /tmp
+- [x] Test malicious code scenarios:
+  - [x] Infinite loops
+  - [x] High memory usage
+  - [x] File system access attempts
+  - [x] Network calls
+- [x] Implement output truncation (prevent huge outputs)
 
 #### 5.3 Code Execution API
 - [ ] Create POST /api/execute/run endpoint:
