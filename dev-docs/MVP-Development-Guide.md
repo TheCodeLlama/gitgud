@@ -92,15 +92,12 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
   - [ ] User_Achievements table
   - [ ] Submissions table
   - [ ] Test_Cases table
-- [ ] Set up Flyway or Liquibase for migrations
-- [ ] Create V1__initial_schema.sql migration
-- [ ] Add seed data script for development:
+- [ ] Add seed data class called DevDataBootstrapper for development:
   - [ ] Sample lessons
   - [ ] Test users
   - [ ] Achievement definitions
 - [ ] Configure JPA entities matching schema
 - [ ] Set up Spring Data JPA repositories
-- [ ] Test database connectivity from all services
 
 #### 2.3 API Gateway
 - [ ] Set up Spring Cloud Gateway or basic routing
