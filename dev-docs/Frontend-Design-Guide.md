@@ -1,13 +1,13 @@
 # Frontend Design Guide (MVP)
 
-A minimalist, monochromatic design system with orange accents. Optimized for clarity, speed, and accessibility. Dark mode only. Built to align with the MVP stack: React + Vite (JavaScript), Tailwind CSS, React Router, React Query, Axios, Zustand/Redux, and Monaco Editor.
+A minimalist, mostly monochrome design system (black, white, and gray) with a single orange accent for emphasis. Optimized for clarity, speed, and accessibility. Dark mode only. Built to align with the MVP stack: React + Vite (JavaScript), Tailwind CSS, React Router, React Query, Axios, Zustand/Redux, and Monaco Editor.
 
 ---
 
 ## 1. Design Principles
 - Clarity over decoration: favor whitespace, clear hierarchy, and readable typography.
 - Consistency: one scale for spacing, radii, and typography.
-- Contrast-driven: grayscale UI with a single accent color for hierarchy and actions.
+- Contrast-driven: grayscale UI with hierarchy via contrast, typography weight, and spacing; a single orange accent is used for primary actions and key highlights.
 - Accessible by default: AA/AAA contrast targets, visible focus states, reduced motion preferences respected.
 - Progressive disclosure: show essentials first, reveal details on demand.
 - Mobile-first, responsive: design for small screens first; scale up.
@@ -15,26 +15,20 @@ A minimalist, monochromatic design system with orange accents. Optimized for cla
 ---
 
 ## 2. Color System
-Monochrome neutrals with a single orange accent. Ensure sufficient contrast in dark mode.
-
-- Accent (Orange):
-  - Primary: `#F97316` (Tailwind orange-500)
-  - Hover: `#EA580C` (orange-600)
-
+Strictly monochromatic: black, white, and gray only. Ensure sufficient contrast in dark mode.
 
 - Dark Mode Neutrals:
-  - Background: `#0B1220` (near slate-950)
-  - Surface: `#0F172A` (slate-900)
-  - Muted Surface: `#111827` (slate-800)
-  - Border: `#1F2937` (slate-700)
-  - Text Primary: `#E5E7EB` (slate-200)
-  - Text Secondary: `#9CA3AF` (slate-400)
+  - Background (App): `#0B0B0B` (near-black)
+  - Surface (Cards/Containers): `#111317`
+  - Muted Surface: `#161A1E`
+  - Border: `#262B31`
+  - Text Primary: `#F5F6F7` (near-white)
+  - Text Secondary: `#9CA3AF` (muted gray)
 
-- Semantic (derived, minimal):
-  - Success: `#10B981` (green-500)
-  - Warning: `#F59E0B` (amber-500)
-  - Error: `#EF4444` (red-500)
-  - Info: `#38BDF8` (sky-400)
+- Notes:
+  - Single accent color (Orange): `#F97316` (base), `#EA580C` (hover). Use sparingly for primary actions, links, progress, and key highlights. Avoid using accent for large surfaces.
+  - Grayscale remains the foundation; rely on hierarchy, weight, spacing, and icons for most emphasis.
+  - For rare emphasis outside actions, an inverted grayscale treatment (e.g., near-white chip with dark text) is acceptable but secondary to orange accent usage.
 
 ---
 
@@ -68,18 +62,22 @@ Example variables (add to a global CSS file, e.g., `src/styles/theme.css`):
 
 ```css
 :root {
-  --bg: #0B1220;
-  --surface: #0F172A;
-  --surface-muted: #111827;
-  --border: #1F2937;
-  --text: #E5E7EB;
+  --bg: #0B0B0B;
+  --surface: #111317;
+  --surface-muted: #161A1E;
+  --border: #262B31;
+  --text: #F5F6F7;
   --text-muted: #9CA3AF;
-  --accent: #F97316;
-  --accent-hover: #EA580C;
-  --success: #10B981;
-  --warning: #F59E0B;
-  --error: #EF4444;
-  --info: #38BDF8;
+
+  /* Accent (orange) */
+  --accent: #F97316;        /* primary accent */
+  --accent-hover: #EA580C;  /* hover state */
+  --accent-ring: rgba(249, 115, 22, 0.7);
+
+  /* Monochrome action tokens */
+  --interactive: #E5E7EB;        /* button bg, toggles */
+  --interactive-hover: #D1D5DB;  /* hover state */
+  --focus-ring: #FFFFFF;         /* focus outline */
 }
 
 /* Apply tokens */
@@ -106,7 +104,12 @@ export default {
         border: 'var(--border)',
         text: 'var(--text)',
         textMuted: 'var(--text-muted)',
-        accent: 'var(--accent)'
+        accent: 'var(--accent)',
+        accentHover: 'var(--accent-hover)',
+        accentRing: 'var(--accent-ring)',
+        interactive: 'var(--interactive)',
+        interactiveHover: 'var(--interactive-hover)',
+        focusRing: 'var(--focus-ring)'
       },
       borderRadius: {
         md: '6px',
@@ -145,17 +148,17 @@ Use Tailwind utilities; keep variants limited for MVP.
 1) Buttons
 - Sizes: sm (28–32px), md (36–40px), lg (44–48px)
 - Variants:
-  - Primary: accent background, white text
-  - Secondary: surface background, text primary, accent border on hover
-  - Ghost: transparent bg, text primary, subtle hover bg
-- States: hover, active, disabled, loading; focus ring with 2px accent outline
+  - Primary: accent border (`--accent`); hover changes border to `--accent-hover`.
+  - Secondary: surface background, text primary, visible border; hover uses interactive-hover tint
+  - Ghost: transparent bg, text primary, subtle hover on surface
+- States: hover, active, disabled, loading; focus ring with 2px high-contrast outline
 
 Example:
 ```tsx
 <button
   className="inline-flex items-center justify-center rounded-md px-4 h-10
-             bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]
-             focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]
+             bg-[var(--accent)] text-[var(--bg)] hover:bg-[var(--accent-hover)]
+             focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-ring)]
              disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 >
   Continue
@@ -169,7 +172,7 @@ Example:
 <label className="block text-sm mb-1">Email</label>
 <input
   className="w-full h-10 px-3 rounded-md bg-surface text-text border border-[var(--border)]
-             focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+             focus:outline-none focus:ring-2 focus:ring-[var(--focus-ring)]"
   type="email" placeholder="you@example.com"/>
 <p className="mt-1 text-xs text-[var(--text-muted)]">We'll never share your email.</p>
 ```
@@ -183,7 +186,7 @@ Example:
 4) Navigation
 - Topbar: logo, product name, XP/level, streak indicator, avatar menu.
 - Sidebar: sections for Dashboard, Modules, Achievements, Profile.
-- Active item: left accent border or background tint.
+- Active item: left accent border (2px) or subtle surface tint; ensure sufficient contrast for text.
 
 5) Tables/Lists
 - Use dense rows; zebra striping optional; responsive: stack cells on small screens.
@@ -192,13 +195,13 @@ Example:
 - Use for confirmation and secondary flows. Dismiss via ESC and backdrop click. Trap focus.
 
 7) Toaster/Alerts
-- Non-blocking notifications at top-right. Use semantic colors; keep copy concise.
+- Non-blocking notifications at top-right. Use icons and grayscale emphasis; keep copy concise.
 
 8) Skeletons & Loading
 - Use skeletons for cards/lists; spinner only for small inline waits.
 
 9) Monaco Editor Area
-- Respect theme (use `vs-dark` when dark mode). Surround with a surface container; clear run/test actions in the header with primary button accent.
+- Respect theme (use `vs-dark` when dark mode). Surround with a surface container; clear run/test actions in the header with a primary action button using the interactive tokens.
 
 ---
 
@@ -217,7 +220,7 @@ Example:
 ---
 
 ## 11. Interaction & Feedback
-- Hover and focus differ: hover = subtle color lift; focus = accent ring.
+- Hover and focus differ: hover = subtle brightness lift; focus = high-contrast ring.
 - Click/Active state: slight darken and scale(0.98) optional for buttons.
 - Disabled: lower opacity, cursor-not-allowed, no hover.
 - Empty states: explain what to do next; provide a primary action.
@@ -239,7 +242,7 @@ export function AppShell({ sidebar, children }: { sidebar: React.ReactNode; chil
       <header className="h-14 border-b border-[var(--border)] bg-surface">
         <div className="mx-auto max-w-7xl h-full flex items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-[var(--accent)]" />
+            <div className="w-6 h-6 rounded bg-[var(--text)]" />
             <span className="font-semibold">GitGud</span>
           </div>
           <div className="flex items-center gap-3">
@@ -286,7 +289,7 @@ Removed. The product is dark mode only; do not implement a theme toggle or light
 ---
 
 ## 18. Next Steps (Post-MVP Enhancements)
-- Add a secondary accent for success flows.
+- Refine grayscale ramps and contrast tokens.
 - Expand component library (tabs, stepper, breadcrumbs).
 - Motion primitives for micro-interactions.
 - Theming presets for branding variants.
