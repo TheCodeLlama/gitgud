@@ -154,16 +154,16 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 **Note**: In the monolithic architecture, this "service" is implemented as a set of controllers (`LearningController`), service classes, and repositories within the single Spring Boot application, not as a separate microservice.
 
 #### 3.1 Module Management
-- [ ] Create Module entity and repository
-- [ ] Implement GET /api/learning/modules (list all)
-- [ ] Implement GET /api/learning/modules/{id} (single module)
-- [ ] Add module metadata:
-  - [ ] Title, description, difficulty
-  - [ ] Required XP level
-  - [ ] Estimated time
-  - [ ] Prerequisites
-- [ ] Implement module ordering/sequencing logic
-- [ ] Add API for "recommended next module"
+- [x] Create Module entity and repository
+- [x] Implement GET /api/learning/modules (list all)
+- [x] Implement GET /api/learning/modules/{id} (single module)
+- [x] Add module metadata:
+  - [x] Title, description, difficulty
+  - [x] Required XP level
+  - [x] Estimated time
+  - [x] Prerequisites
+- [x] Implement module ordering/sequencing logic
+- [x] Add API for "recommended next module"
 
 #### 3.2 Lesson Management
 - [ ] Create Lesson entity with fields:

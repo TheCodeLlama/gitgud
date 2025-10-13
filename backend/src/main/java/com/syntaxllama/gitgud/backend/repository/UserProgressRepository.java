@@ -2,6 +2,8 @@ package com.syntaxllama.gitgud.backend.repository;
 
 import com.syntaxllama.gitgud.backend.model.UserProgress;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -43,4 +45,13 @@ public interface UserProgressRepository extends JpaRepository<UserProgress, UUID
      * Check if progress exists for user and lesson.
      */
     boolean existsByUserIdAndLessonId(UUID userId, UUID lessonId);
+
+    /**
+     * Count completed lessons for a user in a specific module.
+     */
+    @Query("SELECT COUNT(up) FROM UserProgress up " +
+           "WHERE up.user.id = :userId " +
+           "AND up.lesson.module.id = :moduleId " +
+           "AND up.status = 'COMPLETED'")
+    long countCompletedLessonsByUserAndModule(@Param("userId") UUID userId, @Param("moduleId") UUID moduleId);
 }
