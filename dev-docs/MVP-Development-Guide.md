@@ -113,35 +113,35 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Create common response wrapper DTOs
 
 #### 2.4 Authentication (Keycloak Integration)
-- [ ] Configure Keycloak realm:
-  - [ ] Create GitGud realm in Keycloak admin console
-  - [ ] Configure client application (Spring Boot backend)
-  - [ ] Set up OAuth2/OIDC settings
-  - [ ] Enable user registration
-- [ ] Add Spring Security dependencies:
-  - [ ] spring-boot-starter-security
-  - [ ] spring-boot-starter-oauth2-resource-server
-  - [ ] spring-boot-starter-oauth2-client
-- [ ] Configure Spring Security for Keycloak:
-  - [ ] Add OAuth2 resource server configuration
-  - [ ] Configure JWT token validation
-  - [ ] Set up CORS for frontend
-  - [ ] Configure public vs protected endpoints
-- [ ] Implement user synchronization:
-  - [ ] Create endpoint to sync Keycloak user to local User entity
-  - [ ] Extract user info from JWT (keycloak_id, email, username)
-  - [ ] Create User record on first login if not exists
-  - [ ] Update User record on subsequent logins
-- [ ] Configure OAuth2 providers in Keycloak:
-  - [ ] Google OAuth2 identity provider
-  - [ ] GitHub OAuth2 identity provider
-- [ ] Implement "me" endpoint (GET /api/auth/me):
-  - [ ] Extract user from JWT token
-  - [ ] Return user profile data
-  - [ ] Include stats and progress summary
-- [ ] Create authentication utility:
-  - [ ] Helper to get current authenticated user
-  - [ ] Extract user ID from security context
+- [x] Configure Keycloak realm:
+  - [x] Create GitGud realm in Keycloak admin console
+  - [x] Configure client application (Spring Boot backend)
+  - [x] Set up OAuth2/OIDC settings
+  - [x] Enable user registration
+- [x] Add Spring Security dependencies:
+  - [x] spring-boot-starter-security
+  - [x] spring-boot-starter-oauth2-resource-server
+  - [x] spring-boot-starter-oauth2-client
+- [x] Configure Spring Security for Keycloak:
+  - [x] Add OAuth2 resource server configuration
+  - [x] Configure JWT token validation
+  - [x] Set up CORS for frontend
+  - [x] Configure public vs protected endpoints
+- [x] Implement user synchronization:
+  - [x] Create endpoint to sync Keycloak user to local User entity
+  - [x] Extract user info from JWT (keycloak_id, email, username)
+  - [x] Create User record on first login if not exists
+  - [x] Update User record on subsequent logins
+- [x] Configure OAuth2 providers in Keycloak:
+  - [x] Google OAuth2 identity provider (documented, requires manual setup)
+  - [x] GitHub OAuth2 identity provider (documented, requires manual setup)
+- [x] Implement "me" endpoint (GET /api/auth/me):
+  - [x] Extract user from JWT token
+  - [x] Return user profile data
+  - [x] Include stats and progress summary
+- [x] Create authentication utility:
+  - [x] Helper to get current authenticated user
+  - [x] Extract user ID from security context
 - [ ] Write unit tests for auth integration
 - [ ] Test OAuth2 login flows (Google, GitHub)
 

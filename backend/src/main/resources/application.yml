@@ -26,6 +26,14 @@ spring:
   flyway:
     enabled: false
 
+  # Spring Security & OAuth2 Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI}
+          jwk-set-uri: ${KEYCLOAK_JWK_SET_URI}
+
 # Server Configuration
 server:
   port: ${BACKEND_PORT}
