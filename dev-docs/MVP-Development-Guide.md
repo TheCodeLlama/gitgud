@@ -142,8 +142,8 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Create authentication utility:
   - [x] Helper to get current authenticated user
   - [x] Extract user ID from security context
-- [ ] Write unit tests for auth integration
-- [ ] Test OAuth2 login flows (Google, GitHub)
+- [x] Write unit tests for auth integration
+- [x] Test OAuth2 login flows (Google, GitHub)
 
 **Note**: Keycloak handles all password hashing, token generation, and OAuth2 flows. The backend only validates tokens and syncs user data.
 
