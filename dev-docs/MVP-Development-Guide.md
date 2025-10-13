@@ -211,27 +211,27 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 **Note**: In the monolithic architecture, this "service" is implemented as controllers (`GamificationController`), service classes, and repositories within the single Spring Boot application, not as a separate microservice.
 
 #### 4.1 XP System
-- [ ] Create UserStats entity:
-  - [ ] User ID
-  - [ ] Total XP
-  - [ ] Current level
-  - [ ] XP to next level
-  - [ ] Current streak days
-  - [ ] Longest streak
-- [ ] Implement XP calculation formula:
-  - [ ] Base XP per lesson
-  - [ ] Difficulty multiplier
-  - [ ] Streak bonus
-  - [ ] First-attempt bonus
-- [ ] Create POST /api/gamification/xp (award XP)
-- [ ] Implement level-up logic:
-  - [ ] XP thresholds per level
-  - [ ] Level-up notifications
-- [ ] Add GET /api/gamification/stats/{userId}
-- [ ] Implement daily streak tracking:
-  - [ ] Check last activity date
-  - [ ] Increment or reset streak
-  - [ ] Store in database
+- [x] Create UserStats entity:
+  - [x] User ID
+  - [x] Total XP
+  - [x] Current level
+  - [x] XP to next level
+  - [x] Current streak days
+  - [x] Longest streak
+- [x] Implement XP calculation formula:
+  - [x] Base XP per lesson
+  - [x] Difficulty multiplier
+  - [x] Streak bonus
+  - [x] First-attempt bonus
+- [x] Create POST /api/gamification/xp (award XP)
+- [x] Implement level-up logic:
+  - [x] XP thresholds per level
+  - [x] Level-up notifications
+- [x] Add GET /api/gamification/stats/{userId}
+- [x] Implement daily streak tracking:
+  - [x] Check last activity date
+  - [x] Increment or reset streak
+  - [x] Store in database
 
 #### 4.2 Achievement System
 - [ ] Create Achievement entity:
