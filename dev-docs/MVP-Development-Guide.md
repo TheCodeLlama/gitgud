@@ -83,24 +83,24 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 **Note**: Starting with a monolithic application for MVP. Multi-module microservices structure will be implemented later when the application scales.
 
 #### 2.2 Database Setup
-- [ ] Design initial database schema (ERD):
-  - [ ] Users table
-  - [ ] Modules table
-  - [ ] Lessons table
-  - [ ] User_Progress table
-  - [ ] Achievements table
-  - [ ] User_Achievements table
-  - [ ] Submissions table
-  - [ ] Test_Cases table
-- [ ] Add seed data class called DevDataBootstrapper for development:
-  - [ ] Sample lessons
+- [x] Design initial database schema (ERD):
+  - [x] Users table
+  - [x] Modules table
+  - [x] Lessons table
+  - [x] User_Progress table
+  - [x] Achievements table
+  - [x] User_Achievements table
+  - [x] Submissions table
+  - [x] Test_Cases table
+- [x] Add seed data class called DevDataBootstrapper for development:
+  - [x] Sample lessons
   - [ ] Test users
-  - [ ] Achievement definitions
-- [ ] Configure JPA entities matching schema
-- [ ] Set up Spring Data JPA repositories
+  - [x] Achievement definitions
+- [x] Configure JPA entities matching schema
+- [x] Set up Spring Data JPA repositories
 
-#### 2.3 API Gateway
-- [ ] Set up Spring Cloud Gateway or basic routing
+#### 2.3 Initial API
+- [ ] Set up basic routing
 - [ ] Configure routes to all services:
   - `/api/auth/**` → Auth service
   - `/api/learning/**` → Learning service
@@ -112,7 +112,7 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [ ] Configure rate limiting (basic, in-memory)
 - [ ] Test routing to all downstream services
 
-#### 2.4 Authentication Service
+#### 2.4 Authentication
 - [ ] Implement user registration endpoint:
   - [ ] Email/username validation
   - [ ] Password hashing (BCrypt)
@@ -138,7 +138,7 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 
 ---
 
-### 3. Learning Service
+### 3. Learning
 
 #### 3.1 Module Management
 - [ ] Create Module entity and repository
@@ -193,7 +193,7 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 
 ---
 
-### 4. Gamification Service
+### 4. Gamification
 
 #### 4.1 XP System
 - [ ] Create UserStats entity:
