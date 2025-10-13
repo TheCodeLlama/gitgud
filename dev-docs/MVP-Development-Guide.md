@@ -100,17 +100,17 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Set up Spring Data JPA repositories
 
 #### 2.3 REST Controllers & Configuration
-- [ ] Create controller package structure:
-  - [ ] `controller.auth` - User profile endpoints
-  - [ ] `controller.learning` - Modules, lessons, progress endpoints
-  - [ ] `controller.gamification` - XP, achievements, stats endpoints
-  - [ ] `controller.execution` - Code execution endpoints
-- [ ] Add CORS configuration for React frontend (http://localhost:5173)
-- [ ] Implement global exception handler (@ControllerAdvice)
-- [ ] Add request/response logging filter
+- [x] Create controller package structure:
+  - [x] `controller.auth` - User profile endpoints
+  - [x] `controller.learning` - Modules, lessons, progress endpoints
+  - [x] `controller.gamification` - XP, achievements, stats endpoints
+  - [x] `controller.execution` - Code execution endpoints
+- [x] Add CORS configuration for React frontend (http://localhost:5173)
+- [x] Implement global exception handler (@ControllerAdvice)
+- [x] Add request/response logging filter
 - [ ] Configure rate limiting (basic, in-memory with Bucket4j)
-- [ ] Set up API versioning strategy (URL path: /api/v1/)
-- [ ] Create common response wrapper DTOs
+- [x] Set up API versioning strategy (URL path: /api/v1/)
+- [x] Create common response wrapper DTOs
 
 #### 2.4 Authentication (Keycloak Integration)
 - [ ] Configure Keycloak realm:
