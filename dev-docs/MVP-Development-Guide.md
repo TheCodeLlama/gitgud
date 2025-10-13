@@ -108,7 +108,7 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Add CORS configuration for React frontend (http://localhost:5173)
 - [x] Implement global exception handler (@ControllerAdvice)
 - [x] Add request/response logging filter
-- [ ] Configure rate limiting (basic, in-memory with Bucket4j)
+- [x] Configure rate limiting (basic, in-memory with Bucket4j)
 - [x] Set up API versioning strategy (URL path: /api/v1/)
 - [x] Create common response wrapper DTOs
 
