@@ -4,17 +4,17 @@ services:
     image: postgres:17-alpine
     container_name: gitgud-postgres
     environment:
-      POSTGRES_DB: gitgud
-      POSTGRES_USER: gitgud_user
-      POSTGRES_PASSWORD: gitgud_dev_password
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - gitgud-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gitgud_user -d gitgud"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,7 +25,7 @@ services:
     image: redis:7-alpine
     container_name: gitgud-redis
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT}:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -43,12 +43,12 @@ services:
     image: rabbitmq:4-management-alpine
     container_name: gitgud-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: gitgud_user
-      RABBITMQ_DEFAULT_PASS: gitgud_dev_password
-      RABBITMQ_DEFAULT_VHOST: /
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
     ports:
-      - "5672:5672"   # AMQP protocol
-      - "15672:15672" # Management UI
+      - "${RABBITMQ_PORT}:5672"   # AMQP protocol
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672" # Management UI
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:
@@ -66,19 +66,19 @@ services:
     container_name: gitgud-keycloak
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: gitgud_user
-      KC_DB_PASSWORD: gitgud_dev_password
-      KC_HOSTNAME: localhost
-      KC_HOSTNAME_PORT: 8180
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${KEYCLOAK_DB}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME}
+      KC_HOSTNAME_PORT: ${KEYCLOAK_PORT}
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
       KC_HTTP_ENABLED: true
       KC_HEALTH_ENABLED: true
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
     ports:
-      - "8180:8080" # Mapped to 8180 to avoid conflict with Spring Boot
+      - "${KEYCLOAK_PORT}:8080" # Keycloak external port
     volumes:
       - keycloak_data:/opt/keycloak/data
     networks:
