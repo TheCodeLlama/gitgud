@@ -255,19 +255,19 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Implement achievement notification system (return on award)
 
 #### 4.3 Level System
-- [ ] Define level progression formula (exponential):
-  - [ ] Level 1: 0 XP
-  - [ ] Level 2: 100 XP
-  - [ ] Level 3: 250 XP
-  - [ ] Level N: formula or lookup table
-- [ ] Create level metadata (titles, badges):
-  - [ ] Level 1-5: "Novice"
-  - [ ] Level 6-10: "Apprentice"
-  - [ ] Level 11-20: "Developer"
-  - [ ] Level 21+: "Expert"
-- [ ] Implement GET /api/gamification/levels (level info)
-- [ ] Add level-based unlocks (modules locked by level)
-- [ ] Create visual level progress bar data (frontend use)
+- [x] Define level progression formula (exponential):
+  - [x] Level 1: 0 XP
+  - [x] Level 2: 100 XP
+  - [x] Level 3: 250 XP
+  - [x] Level N: formula or lookup table
+- [x] Create level metadata (titles, badges):
+  - [x] Level 1-5: "Novice"
+  - [x] Level 6-10: "Apprentice"
+  - [x] Level 11-20: "Developer"
+  - [x] Level 21+: "Expert"
+- [x] Implement GET /api/gamification/levels (level info)
+- [x] Add level-based unlocks (modules locked by level)
+- [x] Create visual level progress bar data (frontend use)
 
 #### 4.4 Character/Avatar System (Basic)
 - [ ] Create UserProfile entity:

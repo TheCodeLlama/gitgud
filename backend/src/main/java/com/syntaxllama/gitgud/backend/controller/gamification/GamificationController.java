@@ -2,8 +2,11 @@ package com.syntaxllama.gitgud.backend.controller.gamification;
 
 import com.syntaxllama.gitgud.backend.controller.BaseController;
 import com.syntaxllama.gitgud.backend.dto.ApiResponse;
+import com.syntaxllama.gitgud.backend.dto.ErrorResponse;
 import com.syntaxllama.gitgud.backend.dto.gamification.AchievementDTO;
 import com.syntaxllama.gitgud.backend.dto.gamification.AwardXpRequest;
+import com.syntaxllama.gitgud.backend.dto.gamification.LevelInfoDTO;
+import com.syntaxllama.gitgud.backend.dto.gamification.LevelProgressDTO;
 import com.syntaxllama.gitgud.backend.dto.gamification.UserAchievementDTO;
 import com.syntaxllama.gitgud.backend.dto.gamification.UserStatsDTO;
 import com.syntaxllama.gitgud.backend.dto.gamification.XpAwardResult;
@@ -13,6 +16,7 @@ import java.util.List;
 import com.syntaxllama.gitgud.backend.security.AuthenticationUtil;
 import com.syntaxllama.gitgud.backend.service.UserSyncService;
 import com.syntaxllama.gitgud.backend.service.gamification.AchievementService;
+import com.syntaxllama.gitgud.backend.service.gamification.LevelService;
 import com.syntaxllama.gitgud.backend.service.gamification.XpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +35,7 @@ public class GamificationController extends BaseController {
 
     private final XpService xpService;
     private final AchievementService achievementService;
+    private final LevelService levelService;
     private final UserSyncService userSyncService;
 
     /**
@@ -111,8 +116,60 @@ public class GamificationController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(userAchievements));
     }
 
+    /**
+     * Get all level information (1-50).
+     * Public endpoint - no authentication required.
+     *
+     * @return List of all level metadata
+     */
+    @GetMapping("/levels")
+    public ResponseEntity<ApiResponse<List<LevelInfoDTO>>> getAllLevels() {
+        log.info("GET /api/v1/gamification/levels");
+
+        List<LevelInfoDTO> levels = levelService.getAllLevels();
+        return ResponseEntity.ok(ApiResponse.success(levels));
+    }
+
+    /**
+     * Get level information for a specific level.
+     * Public endpoint - no authentication required.
+     *
+     * @param level Level number
+     * @return Level metadata
+     */
+    @GetMapping("/levels/{level}")
+    public ResponseEntity<?> getLevelInfo(@PathVariable Integer level) {
+        log.info("GET /api/v1/gamification/levels/{}", level);
+
+        if (level < 1 || level > 50) {
+            return ResponseEntity.badRequest().body(
+                    ErrorResponse.of("Invalid level", "Level must be between 1 and 50", 400, "/api/v1/gamification/levels/" + level)
+            );
+        }
+
+        LevelInfoDTO levelInfo = levelService.getLevelInfo(level);
+        return ResponseEntity.ok(ApiResponse.success(levelInfo));
+    }
+
+    /**
+     * Get level progress visualization data for the authenticated user.
+     * Requires authentication.
+     *
+     * @return Level progress data for progress bar
+     */
+    @GetMapping("/levels/progress")
+    public ResponseEntity<ApiResponse<LevelProgressDTO>> getLevelProgress() {
+        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+                .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exception.UnauthorizedException("User not authenticated"));
+
+        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        log.info("GET /api/v1/gamification/levels/progress - user: {}", currentUser.getId());
+
+        LevelProgressDTO progress = levelService.getLevelProgress(currentUser);
+        return ResponseEntity.ok(ApiResponse.success(progress));
+    }
+
     // TODO: Implement remaining endpoints:
-    // GET /api/v1/gamification/levels - Get level metadata
     // GET /api/v1/gamification/profile - Get user profile
     // PUT /api/v1/gamification/profile - Update user profile
 }
