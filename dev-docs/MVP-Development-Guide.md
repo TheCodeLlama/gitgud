@@ -373,19 +373,18 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 ### 6. Frontend (React SPA)
 
 #### 6.1 Project Setup
-- [ ] Create React app with Vite:
+- [x] Create React app with Vite:
   ```bash
   npm create vite@latest frontend -- --template react-ts
   ```
-- [ ] Install dependencies:
-  - [ ] React Router v6
-  - [ ] Tailwind CSS
-  - [ ] Axios (API client)
-  - [ ] React Query
-  - [ ] Monaco Editor (@monaco-editor/react)
-  - [ ] Zustand or Redux (state management)
-  - [ ] React Hook Form (forms)
-  - [ ] Zod (validation)
+- [x] Install dependencies:
+  - [x] React Router v7
+  - [x] Tailwind CSS
+  - [x] Axios (API client)
+  - [x] React Query
+  - [x] Monaco Editor (@monaco-editor/react)
+  - [x] Zustand or Redux (state management)
+  - [x] React Hook Form (forms)
 - [ ] Configure Tailwind CSS with custom theme:
   - [ ] Define color palette (gamified aesthetic)
   - [ ] Add font imports
