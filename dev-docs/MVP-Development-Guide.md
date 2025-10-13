@@ -318,8 +318,8 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
   - [ ] Execute with timeout
   - [ ] Cleanup container after execution
 - [ ] Add resource limits:
-  - [ ] Max execution time: 5 seconds
-  - [ ] Max memory: 256MB
+  - [ ] Max execution time: 60 seconds
+  - [ ] Max memory: 512MB
   - [ ] No network access
   - [ ] No file system writes outside /tmp
 - [ ] Test malicious code scenarios:
