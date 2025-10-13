@@ -4,10 +4,14 @@ import com.syntaxllama.gitgud.backend.controller.BaseController;
 import com.syntaxllama.gitgud.backend.dto.ApiResponse;
 import com.syntaxllama.gitgud.backend.dto.ErrorResponse;
 import com.syntaxllama.gitgud.backend.dto.gamification.AchievementDTO;
+import com.syntaxllama.gitgud.backend.dto.gamification.AvatarDTO;
 import com.syntaxllama.gitgud.backend.dto.gamification.AwardXpRequest;
 import com.syntaxllama.gitgud.backend.dto.gamification.LevelInfoDTO;
 import com.syntaxllama.gitgud.backend.dto.gamification.LevelProgressDTO;
+import com.syntaxllama.gitgud.backend.dto.gamification.UpdateProfileRequest;
 import com.syntaxllama.gitgud.backend.dto.gamification.UserAchievementDTO;
+import com.syntaxllama.gitgud.backend.dto.gamification.UserProfileDTO;
+import com.syntaxllama.gitgud.backend.dto.gamification.UserProfileWithStatsDTO;
 import com.syntaxllama.gitgud.backend.dto.gamification.UserStatsDTO;
 import com.syntaxllama.gitgud.backend.dto.gamification.XpAwardResult;
 import com.syntaxllama.gitgud.backend.model.User;
@@ -17,7 +21,9 @@ import com.syntaxllama.gitgud.backend.security.AuthenticationUtil;
 import com.syntaxllama.gitgud.backend.service.UserSyncService;
 import com.syntaxllama.gitgud.backend.service.gamification.AchievementService;
 import com.syntaxllama.gitgud.backend.service.gamification.LevelService;
+import com.syntaxllama.gitgud.backend.service.gamification.ProfileService;
 import com.syntaxllama.gitgud.backend.service.gamification.XpService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +42,7 @@ public class GamificationController extends BaseController {
     private final XpService xpService;
     private final AchievementService achievementService;
     private final LevelService levelService;
+    private final ProfileService profileService;
     private final UserSyncService userSyncService;
 
     /**
@@ -169,7 +176,54 @@ public class GamificationController extends BaseController {
         return ResponseEntity.ok(ApiResponse.success(progress));
     }
 
-    // TODO: Implement remaining endpoints:
-    // GET /api/v1/gamification/profile - Get user profile
-    // PUT /api/v1/gamification/profile - Update user profile
+    /**
+     * Get user profile with stats for the authenticated user.
+     * Requires authentication.
+     *
+     * @return User profile with stats
+     */
+    @GetMapping("/profile")
+    public ResponseEntity<ApiResponse<UserProfileWithStatsDTO>> getUserProfile() {
+        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+                .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exception.UnauthorizedException("User not authenticated"));
+
+        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        log.info("GET /api/v1/gamification/profile - user: {}", currentUser.getId());
+
+        UserProfileWithStatsDTO profile = profileService.getUserProfileWithStats(currentUser);
+        return ResponseEntity.ok(ApiResponse.success(profile));
+    }
+
+    /**
+     * Update user profile for the authenticated user.
+     * Requires authentication.
+     *
+     * @param request Update profile request
+     * @return Updated user profile
+     */
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponse<UserProfileDTO>> updateUserProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+                .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exception.UnauthorizedException("User not authenticated"));
+
+        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        log.info("PUT /api/v1/gamification/profile - user: {}", currentUser.getId());
+
+        UserProfileDTO profile = profileService.updateUserProfile(currentUser, request);
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", profile));
+    }
+
+    /**
+     * Get all available avatars.
+     * Public endpoint - no authentication required.
+     *
+     * @return List of all available avatars
+     */
+    @GetMapping("/avatars")
+    public ResponseEntity<ApiResponse<List<AvatarDTO>>> getAvailableAvatars() {
+        log.info("GET /api/v1/gamification/avatars");
+
+        List<AvatarDTO> avatars = AvatarDTO.getAllAvatars();
+        return ResponseEntity.ok(ApiResponse.success(avatars));
+    }
 }

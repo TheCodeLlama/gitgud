@@ -270,16 +270,16 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Create visual level progress bar data (frontend use)
 
 #### 4.4 Character/Avatar System (Basic)
-- [ ] Create UserProfile entity:
-  - [ ] User ID
-  - [ ] Avatar URL/type
-  - [ ] Display name
-  - [ ] Bio
-  - [ ] Public profile flag
-- [ ] Implement GET/PUT /api/gamification/profile
-- [ ] Add basic avatar selection (5-10 preset avatars)
-- [ ] Store avatar choice in profile
-- [ ] Return profile with stats in single endpoint
+- [x] Create UserProfile entity:
+  - [x] User ID
+  - [x] Avatar URL/type
+  - [x] Display name
+  - [x] Bio
+  - [x] Public profile flag
+- [x] Implement GET/PUT /api/gamification/profile
+- [x] Add basic avatar selection (5-10 preset avatars)
+- [x] Store avatar choice in profile
+- [x] Return profile with stats in single endpoint
 
 ---
 
