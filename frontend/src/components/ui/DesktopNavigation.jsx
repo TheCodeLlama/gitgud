@@ -12,7 +12,7 @@ import DesktopNavigationItem from './DesktopNavigationItem';
  */
 export default function DesktopNavigation({ items, isActivePath }) {
   return (
-    <div className="hidden sm:ml-6 sm:block">
+    <div className="hidden sm:block">
       <div className="flex space-x-4">
         {items.map((item) => (
           <DesktopNavigationItem

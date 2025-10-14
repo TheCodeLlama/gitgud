@@ -44,17 +44,18 @@ export default function Navbar({ onMenuClick }) {
   return (
     <nav className="bg-[var(--surface)] border-b border-[var(--border)]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="relative flex h-16 items-center justify-between">
-          {/* Mobile menu button */}
-          <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
+        <div className="flex h-16 items-center justify-between">
+          {/* Left side - Mobile menu button, Logo and desktop navigation */}
+          <div className="flex items-center gap-2">
+            {/* Mobile menu button */}
             <button
               type="button"
               onClick={() => {
                 setMobileMenuOpen(!mobileMenuOpen);
                 onMenuClick?.();
               }}
-              className="relative inline-flex items-center justify-center rounded-md p-2 text-[var(--text-muted)]
-                       hover:bg-[var(--surface-muted)] hover:text-[var(--text)] transition-colors"
+              className="inline-flex items-center justify-center rounded-md p-2 text-[var(--text-muted)]
+                       hover:bg-[var(--surface-muted)] hover:text-[var(--text)] transition-colors sm:hidden"
             >
               <span className="sr-only">Open main menu</span>
               {/* Hamburger icon */}
@@ -84,10 +85,7 @@ export default function Navbar({ onMenuClick }) {
                 </svg>
               )}
             </button>
-          </div>
 
-          {/* Logo and desktop navigation */}
-          <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
             {/* Logo */}
             <Link to="/" className="flex shrink-0 items-center">
               <div className="bg-[var(--accent)] rounded-md px-3 py-1.5 flex items-center justify-center w-14">
@@ -100,7 +98,7 @@ export default function Navbar({ onMenuClick }) {
           </div>
 
           {/* Right side - Stats, Auth buttons or user menu */}
-          <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+          <div className="flex items-center gap-2">
             {authenticated ? (
               <>
                 {/* XP/Level and Streak display - Hidden on mobile */}
