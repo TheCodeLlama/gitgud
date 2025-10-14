@@ -395,25 +395,25 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Configure React Query client
 
 #### 6.2 Authentication Flow
-- [ ] Create login page:
-  - [ ] Email/password form
-  - [ ] OAuth buttons (Google, GitHub)
-  - [ ] Link to registration
-  - [ ] Form validation
-- [ ] Create registration page:
-  - [ ] Email, username, password fields
-  - [ ] Password strength indicator
-  - [ ] Terms acceptance
-  - [ ] Form validation
-- [ ] Implement AuthContext/hook:
-  - [ ] Store JWT token in localStorage
-  - [ ] Axios interceptor to add token to requests
-  - [ ] Auto-logout on 401 responses
-  - [ ] Refresh token logic
-- [ ] Create ProtectedRoute component
-- [ ] Implement OAuth callback handling
-- [ ] Add "Forgot Password" page (stub)
-- [ ] Create user profile dropdown (logout, settings)
+- [x] Create login page:
+  - [x] Email/password form
+  - [x] OAuth buttons (Google, GitHub)
+  - [x] Link to registration
+  - [x] Form validation
+- [x] Create registration page:
+  - [x] Email, username, password fields
+  - [x] Password strength indicator
+  - [x] Terms acceptance
+  - [x] Form validation
+- [x] Implement AuthContext/hook:
+  - [x] Store JWT token in localStorage
+  - [x] Axios interceptor to add token to requests
+  - [x] Auto-logout on 401 responses
+  - [x] Refresh token logic
+- [x] Create ProtectedRoute component
+- [x] Implement OAuth callback handling
+- [x] Add "Forgot Password" page (stub)
+- [x] Create user profile dropdown (logout, settings)
 
 #### 6.3 Layout & Navigation
 - [ ] Create main layout component:
