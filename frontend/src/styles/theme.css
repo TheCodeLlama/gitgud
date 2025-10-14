@@ -1,0 +1,99 @@
+/* GitGud Dark Mode Theme
+ * Minimalist monochrome design with orange accent
+ * Based on Frontend Design Guide
+ */
+
+:root {
+  /* Background colors */
+  --bg: #0B0B0B;              /* near-black app background */
+  --surface: #111317;         /* cards/containers */
+  --surface-muted: #161A1E;   /* muted surfaces */
+  --border: #262B31;          /* borders */
+
+  /* Text colors */
+  --text: #F5F6F7;            /* primary text (near-white) */
+  --text-muted: #9CA3AF;      /* secondary/muted text */
+
+  /* Accent (orange) - use sparingly for primary actions and highlights */
+  --accent: #F97316;          /* primary accent */
+  --accent-hover: #EA580C;    /* hover state */
+  --accent-ring: rgba(249, 115, 22, 0.7); /* focus ring */
+
+  /* Monochrome interactive elements */
+  --interactive: #E5E7EB;        /* button backgrounds, toggles */
+  --interactive-hover: #D1D5DB;  /* hover state */
+  --focus-ring: #FFFFFF;         /* focus outline */
+
+  /* Status colors (grayscale-based with orange accent for success) */
+  --success: #10B981;
+  --error: #EF4444;
+  --warning: #F59E0B;
+  --info: #3B82F6;
+}
+
+/* Apply base theme */
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Ensure smooth transitions */
+* {
+  transition-property: color, background-color, border-color, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Custom scrollbar for dark mode */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Code blocks styling */
+code:not(pre code) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  background: var(--surface-muted);
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+
+pre {
+  background: var(--surface-muted);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+pre code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Selection color */
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
