@@ -3,6 +3,7 @@
  * Displays current level, XP, progress to next level, and streak using modular components
  */
 
+import { Flame, Sparkles } from 'lucide-react';
 import { useUserStats } from '../../hooks/useUserStats';
 import { useLevelProgress } from '../../hooks/useLevelProgress';
 import Card, { CardBody } from '../ui/Card';
@@ -60,7 +61,7 @@ export default function UserStatsCard() {
         <div className="bg-[var(--bg)] rounded-lg p-4 text-center border border-orange-500/20">
           <div className="text-sm text-[var(--text-muted)] mb-2">Streak</div>
           <div className="text-4xl font-bold flex items-center justify-center gap-2">
-            <span className="text-orange-500">🔥</span>
+            <Flame className="w-9 h-9 text-orange-500" />
             <span className="text-[var(--text)]">{stats.currentStreakDays}</span>
           </div>
           <div className="text-xs text-[var(--text-muted)] mt-2">
@@ -97,8 +98,9 @@ export default function UserStatsCard() {
       {/* Motivational message */}
       {stats.currentStreakDays >= 7 && (
         <div className="mt-4 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg text-center">
-          <span className="text-sm text-orange-600 dark:text-orange-400">
-            🌟 Amazing! You're on fire with your {stats.currentStreakDays}-day streak!
+          <span className="text-sm text-orange-600 dark:text-orange-400 flex items-center justify-center gap-2">
+            <Sparkles className="w-4 h-4" />
+            Amazing! You're on fire with your {stats.currentStreakDays}-day streak!
           </span>
         </div>
       )}

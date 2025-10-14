@@ -3,6 +3,7 @@
  * Displays the last lesson in progress and suggests next lesson using modular components
  */
 
+import { BookOpen, Rocket, Library, FileText, Swords, Code, Star, Timer, RotateCw } from 'lucide-react';
 import { useUserProgress } from '../../hooks/useUserProgress';
 import Card, { CardBody } from '../ui/Card';
 import Button from '../ui/Button';
@@ -23,7 +24,7 @@ export default function ContinueLearning() {
     return (
       <Card>
         <CardBody className="text-center py-8">
-          <div className="text-5xl mb-4">📚</div>
+          <Library className="w-16 h-16 mx-auto mb-4 text-[var(--accent)]" />
           <h3 className="text-xl font-semibold text-[var(--text)] mb-2">Start Your Journey!</h3>
           <p className="text-[var(--text-muted)] mb-6">
             Ready to begin learning Java and Spring Boot? Browse our modules to get started.
@@ -39,13 +40,30 @@ export default function ContinueLearning() {
   const lesson = currentLesson || progress?.suggestedLesson;
   const isInProgress = currentLesson?.status === 'IN_PROGRESS';
 
+  // Helper to get lesson icon
+  const getLessonIcon = () => {
+    if (lesson?.type === 'TUTORIAL') return <FileText className="w-8 h-8" />;
+    if (lesson?.type === 'CHALLENGE') return <Swords className="w-8 h-8" />;
+    return <Code className="w-8 h-8" />;
+  };
+
   return (
     <div className="bg-gradient-to-br from-[var(--accent)]/10 to-[var(--accent-secondary)]/10
                   border border-[var(--accent)]/20 rounded-lg p-6">
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h3 className="text-lg font-semibold text-[var(--text)] mb-1">
-            {isInProgress ? '📖 Continue Learning' : '🚀 Up Next'}
+          <h3 className="text-lg font-semibold text-[var(--text)] mb-1 flex items-center gap-2">
+            {isInProgress ? (
+              <>
+                <BookOpen className="w-5 h-5" />
+                Continue Learning
+              </>
+            ) : (
+              <>
+                <Rocket className="w-5 h-5" />
+                Up Next
+              </>
+            )}
           </h3>
           <p className="text-sm text-[var(--text-muted)]">
             {isInProgress ? 'Pick up where you left off' : 'Suggested for you'}
@@ -62,8 +80,8 @@ export default function ContinueLearning() {
       <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-4 mb-4">
         <div className="flex items-start gap-4">
           {/* Lesson icon/type */}
-          <div className="flex-shrink-0 text-3xl">
-            {lesson?.type === 'TUTORIAL' ? '📝' : lesson?.type === 'CHALLENGE' ? '⚔️' : '💻'}
+          <div className="flex-shrink-0 text-[var(--accent)]">
+            {getLessonIcon()}
           </div>
 
           {/* Lesson details */}
@@ -97,19 +115,19 @@ export default function ContinueLearning() {
             <div className="flex items-center gap-4 text-xs text-[var(--text-muted)]">
               {lesson?.xpReward && (
                 <div className="flex items-center gap-1">
-                  <span>⭐</span>
+                  <Star className="w-3 h-3" />
                   <span>{lesson.xpReward} XP</span>
                 </div>
               )}
               {lesson?.estimatedMinutes && (
                 <div className="flex items-center gap-1">
-                  <span>⏱️</span>
+                  <Timer className="w-3 h-3" />
                   <span>{lesson.estimatedMinutes} min</span>
                 </div>
               )}
               {lesson?.attempts > 0 && (
                 <div className="flex items-center gap-1">
-                  <span>🔄</span>
+                  <RotateCw className="w-3 h-3" />
                   <span>{lesson.attempts} {lesson.attempts === 1 ? 'attempt' : 'attempts'}</span>
                 </div>
               )}

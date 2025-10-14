@@ -6,6 +6,7 @@
  * - Responsive design with smooth transitions
  */
 
+import { LayoutDashboard, Library, User, Trophy, Flame, Lightbulb, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { useUserStats } from '../hooks/useUserStats';
 import { StatsSkeleton } from './skeletons/Skeleton';
@@ -24,25 +25,25 @@ export default function Sidebar({ isOpen = true, onClose = () => {} }) {
     {
       name: 'Dashboard',
       path: '/dashboard',
-      icon: '📊',
+      icon: LayoutDashboard,
       description: 'Overview and quick stats',
     },
     {
       name: 'Modules',
       path: '/modules',
-      icon: '📚',
+      icon: Library,
       description: 'Browse learning modules',
     },
     {
       name: 'Profile',
       path: '/profile',
-      icon: '👤',
+      icon: User,
       description: 'View your profile',
     },
     {
       name: 'Achievements',
       path: '/achievements',
-      icon: '🏆',
+      icon: Trophy,
       description: 'View your achievements',
     },
   ];
@@ -101,31 +102,32 @@ export default function Sidebar({ isOpen = true, onClose = () => {} }) {
 
           {/* Navigation links */}
           <nav className="space-y-1">
-            {navigationItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={handleLinkClick}
-                className={`
-                  flex items-center gap-3 px-4 py-3 rounded-lg
-                  transition-all duration-200
-                  ${
-                    isActivePath(item.path)
-                      ? 'bg-[var(--accent)]/10 text-[var(--accent)] border-l-4 border-[var(--accent)]'
-                      : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)] border-l-4 border-transparent'
-                  }
-                `}
-                title={item.description}
-              >
-                <span className="text-2xl" aria-hidden="true">
-                  {item.icon}
-                </span>
-                <div className="flex-1">
-                  <div className="font-medium">{item.name}</div>
-                  <div className="text-xs text-[var(--text-muted)]">{item.description}</div>
-                </div>
-              </Link>
-            ))}
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={handleLinkClick}
+                  className={`
+                    flex items-center gap-3 px-4 py-3 rounded-lg
+                    transition-all duration-200
+                    ${
+                      isActivePath(item.path)
+                        ? 'bg-[var(--accent)]/10 text-[var(--accent)] border-l-4 border-[var(--accent)]'
+                        : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)] border-l-4 border-transparent'
+                    }
+                  `}
+                  title={item.description}
+                >
+                  <Icon className="w-6 h-6" aria-hidden="true" />
+                  <div className="flex-1">
+                    <div className="font-medium">{item.name}</div>
+                    <div className="text-xs text-[var(--text-muted)]">{item.description}</div>
+                  </div>
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Progress Stats Widget */}
@@ -182,7 +184,7 @@ export default function Sidebar({ isOpen = true, onClose = () => {} }) {
                   <div className="text-center">
                     <div className="text-xs text-[var(--text-muted)] mb-1">Streak</div>
                     <div className="text-lg font-semibold text-[var(--text)] flex items-center justify-center gap-1">
-                      <span className="text-orange-500">🔥</span>
+                      <Flame className="w-5 h-5 text-orange-500" />
                       {stats.currentStreakDays}
                     </div>
                   </div>
@@ -190,10 +192,15 @@ export default function Sidebar({ isOpen = true, onClose = () => {} }) {
 
                 {/* Motivational message */}
                 {stats.currentStreakDays > 0 && (
-                  <div className="text-xs text-center text-[var(--text-muted)] pt-2">
-                    {stats.currentStreakDays >= 7
-                      ? 'Amazing streak! Keep it up! 🌟'
-                      : 'Keep learning every day! 💪'}
+                  <div className="text-xs text-center text-[var(--text-muted)] pt-2 flex items-center justify-center gap-1">
+                    {stats.currentStreakDays >= 7 ? (
+                      <>
+                        <Sparkles className="w-3 h-3" />
+                        Amazing streak! Keep it up!
+                      </>
+                    ) : (
+                      'Keep learning every day!'
+                    )}
                   </div>
                 )}
               </div>
@@ -206,9 +213,12 @@ export default function Sidebar({ isOpen = true, onClose = () => {} }) {
 
           {/* Quick tip */}
           <div className="p-3 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg">
-            <div className="text-xs text-[var(--text-muted)]">
-              <span className="font-semibold text-[var(--accent)]">💡 Tip:</span> Complete lessons
-              daily to maintain your streak and earn bonus XP!
+            <div className="text-xs text-[var(--text-muted)] flex items-start gap-2">
+              <Lightbulb className="w-4 h-4 text-[var(--accent)] flex-shrink-0 mt-0.5" />
+              <span>
+                <span className="font-semibold text-[var(--accent)]">Tip:</span> Complete lessons
+                daily to maintain your streak and earn bonus XP!
+              </span>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@
  * Displays an achievement with icon, details, and rarity
  */
 
+import { Lock } from 'lucide-react';
 import Badge from './Badge';
 
 const rarityStyles = {
@@ -37,7 +38,7 @@ const rarityStyles = {
  * AchievementCard component
  * @param {string} name - Achievement name
  * @param {string} description - Achievement description
- * @param {string} icon - Achievement icon emoji
+ * @param {React.ReactNode} icon - Achievement icon component
  * @param {string} rarity - Rarity level (LEGENDARY, EPIC, RARE, UNCOMMON, COMMON)
  * @param {number} xpReward - XP reward amount
  * @param {string} earnedAt - Date earned (ISO string)
@@ -47,7 +48,7 @@ const rarityStyles = {
 export default function AchievementCard({
   name,
   description,
-  icon = '🏆',
+  icon,
   rarity = 'COMMON',
   xpReward = 0,
   earnedAt,
@@ -82,9 +83,9 @@ export default function AchievementCard({
     >
       {/* Achievement icon with rarity gradient */}
       <div className={`flex-shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br ${styles.gradient}
-                    flex items-center justify-center text-2xl shadow-lg
+                    flex items-center justify-center shadow-lg text-white
                     ${locked ? 'grayscale' : ''}`}>
-        {locked ? '🔒' : icon}
+        {locked ? <Lock className="w-6 h-6" /> : icon}
       </div>
 
       {/* Achievement details */}

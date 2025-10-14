@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Flame } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserStats } from '../hooks/useUserStats';
@@ -147,7 +148,7 @@ export default function Navbar({ onMenuClick }) {
                           className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/10 rounded-lg"
                           title={`${stats.currentStreakDays} day streak!`}
                         >
-                          <span className="text-orange-500 text-xl">🔥</span>
+                          <Flame className="w-5 h-5 text-orange-500" />
                           <span className="text-sm font-semibold text-orange-500">
                             {stats.currentStreakDays}
                           </span>
@@ -198,7 +199,7 @@ export default function Navbar({ onMenuClick }) {
                                 <>
                                   <span>•</span>
                                   <span className="flex items-center gap-1">
-                                    <span className="text-orange-500">🔥</span>
+                                    <Flame className="w-3 h-3 text-orange-500" />
                                     {stats.currentStreakDays}
                                   </span>
                                 </>

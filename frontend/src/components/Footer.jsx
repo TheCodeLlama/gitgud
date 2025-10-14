@@ -6,6 +6,7 @@
  * - Responsive design
  */
 
+import { Heart } from 'lucide-react';
 import { Link } from 'react-router';
 
 export default function Footer() {
@@ -146,8 +147,8 @@ export default function Footer() {
             <p className="text-sm text-[var(--text-muted)]">
               © {currentYear} GitGud. All rights reserved.
             </p>
-            <p className="text-xs text-[var(--text-muted)]">
-              Built with ❤️ for developers who want to level up
+            <p className="text-xs text-[var(--text-muted)] flex items-center gap-1.5">
+              Built with <Heart className="w-3.5 h-3.5 text-red-500 fill-red-500" /> for developers who want to level up
             </p>
           </div>
         </div>

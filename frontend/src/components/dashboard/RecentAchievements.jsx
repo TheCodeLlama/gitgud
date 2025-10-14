@@ -3,12 +3,14 @@
  * Displays 3-5 most recently earned achievements using AchievementCard components
  */
 
+import { Trophy } from 'lucide-react';
 import { Link } from 'react-router';
 import { useUserAchievements } from '../../hooks/useUserAchievements';
 import Card, { CardBody } from '../ui/Card';
 import AchievementCard from '../ui/AchievementCard';
 import Button from '../ui/Button';
 import { ListItemSkeleton } from '../skeletons/Skeleton';
+import { mapIconToComponent } from '../../utils/iconMapping';
 
 export default function RecentAchievements({ limit = 5 }) {
   const { data: achievements, isLoading } = useUserAchievements();
@@ -40,7 +42,7 @@ export default function RecentAchievements({ limit = 5 }) {
         <CardBody>
           <h3 className="text-lg font-semibold text-[var(--text)] mb-4">Recent Achievements</h3>
           <div className="text-center py-8">
-            <div className="text-5xl mb-3">🏆</div>
+            <Trophy className="w-16 h-16 mx-auto mb-3 text-[var(--accent)]" />
             <p className="text-[var(--text-muted)] mb-4">No achievements yet!</p>
             <p className="text-sm text-[var(--text-muted)]">
               Complete lessons to earn your first achievement
@@ -70,7 +72,7 @@ export default function RecentAchievements({ limit = 5 }) {
               key={achievement.id}
               name={achievement.name}
               description={achievement.description}
-              icon={achievement.icon}
+              icon={mapIconToComponent(achievement.icon)}
               rarity={achievement.rarity}
               xpReward={achievement.xpReward}
               earnedAt={achievement.earnedAt}

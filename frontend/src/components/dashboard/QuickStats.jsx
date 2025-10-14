@@ -3,6 +3,7 @@
  * Displays quick overview stats using modular StatCard components
  */
 
+import { Star, CheckCircle2, Target, Flame } from 'lucide-react';
 import { useUserStats } from '../../hooks/useUserStats';
 import { useUserProgress } from '../../hooks/useUserProgress';
 import StatCard from '../ui/StatCard';
@@ -32,7 +33,7 @@ export default function QuickStats() {
       id: 'total-xp',
       label: 'Total XP',
       value: stats?.totalXp?.toLocaleString() || '0',
-      icon: '⭐',
+      icon: <Star className="w-8 h-8 text-yellow-500" />,
       gradient: 'from-yellow-500 to-amber-500',
       bgColor: 'bg-yellow-500/10',
       borderColor: 'border-yellow-500/20',
@@ -41,7 +42,7 @@ export default function QuickStats() {
       id: 'lessons-completed',
       label: 'Lessons Completed',
       value: progress?.completedLessons || 0,
-      icon: '✅',
+      icon: <CheckCircle2 className="w-8 h-8 text-green-500" />,
       gradient: 'from-green-500 to-emerald-500',
       bgColor: 'bg-green-500/10',
       borderColor: 'border-green-500/20',
@@ -50,7 +51,7 @@ export default function QuickStats() {
       id: 'current-level',
       label: 'Current Level',
       value: stats?.currentLevel || 1,
-      icon: '🎯',
+      icon: <Target className="w-8 h-8 text-blue-500" />,
       gradient: 'from-blue-500 to-cyan-500',
       bgColor: 'bg-blue-500/10',
       borderColor: 'border-blue-500/20',
@@ -59,7 +60,7 @@ export default function QuickStats() {
       id: 'longest-streak',
       label: 'Longest Streak',
       value: `${stats?.longestStreakDays || 0} days`,
-      icon: '🔥',
+      icon: <Flame className="w-8 h-8 text-orange-500" />,
       gradient: 'from-orange-500 to-red-500',
       bgColor: 'bg-orange-500/10',
       borderColor: 'border-orange-500/20',

@@ -7,7 +7,7 @@
  * StatCard component
  * @param {string} label - Stat label
  * @param {string|number} value - Stat value
- * @param {string} icon - Icon emoji
+ * @param {React.ReactNode} icon - Icon component
  * @param {string} gradient - Gradient color classes (e.g., 'from-yellow-500 to-amber-500')
  * @param {string} bgColor - Background color class (e.g., 'bg-yellow-500/10')
  * @param {string} borderColor - Border color class (e.g., 'border-yellow-500/20')
@@ -30,7 +30,7 @@ export default function StatCard({
       {...props}
     >
       <div className="flex items-center justify-between mb-2">
-        <div className={`text-3xl rounded-lg shadow-sm`}>
+        <div className="rounded-lg shadow-sm">
           {icon}
         </div>
       </div>
