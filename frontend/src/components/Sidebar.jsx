@@ -9,6 +9,7 @@
 import { LayoutDashboard, Library, User, Trophy, Flame, Lightbulb, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { useUserStats } from '../hooks/useUserStats';
+import ProgressBar from './ui/ProgressBar';
 import { StatsSkeleton } from './skeletons/Skeleton';
 
 /**
@@ -147,28 +148,14 @@ export default function Sidebar({ isOpen = true, onClose = () => {} }) {
                 </div>
 
                 {/* XP progress bar */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs text-[var(--text-muted)]">
-                    <span>XP</span>
-                    <span>
-                      {stats.currentLevelXp || 0} / {stats.xpToNextLevel}
-                    </span>
-                  </div>
-                  <div className="h-3 bg-[var(--surface-muted)] rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] rounded-full transition-all duration-500"
-                      style={{
-                        width: `${
-                          ((stats.currentLevelXp || 0) / stats.xpToNextLevel) * 100
-                        }%`,
-                      }}
-                      role="progressbar"
-                      aria-valuenow={stats.currentLevelXp || 0}
-                      aria-valuemin="0"
-                      aria-valuemax={stats.xpToNextLevel}
-                    />
-                  </div>
-                </div>
+                <ProgressBar
+                  value={stats.currentLevelXp || 0}
+                  max={stats.xpToNextLevel}
+                  showLabel
+                  label="XP"
+                  size="sm"
+                  color="accent"
+                />
 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[var(--border)]">

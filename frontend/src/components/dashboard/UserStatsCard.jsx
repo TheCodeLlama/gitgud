@@ -76,7 +76,7 @@ export default function UserStatsCard() {
         max={stats.xpToNextLevel}
         showPercentage={progressPercent > 15}
         showLabel
-        label={`Progress to Level ${stats.currentLevel + 1}`}
+        label={`XP`}
         size="lg"
         color="accent"
         className="mb-3"
