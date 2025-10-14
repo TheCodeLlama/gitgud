@@ -10,27 +10,14 @@
         </encoder>
     </appender>
 
-    <!-- File Appender -->
-    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/gitgud-backend.log</file>
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/gitgud-backend.%d{yyyy-MM-dd}.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-    </appender>
-
     <!-- Loki Appender -->
     <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
         <http>
-            <url>${LOKI_URL:-http://localhost:3100}/loki/api/v1/push</url>
+            <url>http://localhost:3100/loki/api/v1/push</url>
         </http>
         <format>
             <label>
-                <pattern>application=gitgud-backend,host=${HOSTNAME},level=%level</pattern>
+                <pattern>application=gitgud-backend,host=${HOSTNAME:-localhost},level=%level</pattern>
             </label>
             <message>
                 <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -48,7 +35,6 @@
 
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="FILE"/>
             <appender-ref ref="LOKI"/>
         </root>
     </springProfile>
@@ -60,7 +46,6 @@
 
         <root level="WARN">
             <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="FILE"/>
             <appender-ref ref="LOKI"/>
         </root>
     </springProfile>

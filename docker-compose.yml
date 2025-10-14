@@ -137,21 +137,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # Promtail (Log Shipper for Loki)
-  promtail:
-    image: grafana/promtail:3.0.0
-    container_name: gitgud-promtail
-    volumes:
-      - ./observability/promtail-config.yml:/etc/promtail/config.yml
-      - /var/log:/var/log:ro
-      - ./backend/logs:/app/logs:ro
-    networks:
-      - gitgud-network
-    command: -config.file=/etc/promtail/config.yml
-    depends_on:
-      - loki
-    restart: unless-stopped
-
   # Prometheus (Metrics Collection)
   prometheus:
     image: prom/prometheus:v2.54.0
