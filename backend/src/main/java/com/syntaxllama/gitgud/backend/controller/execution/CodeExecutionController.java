@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.*;
  * - No elevated privileges
  */
 @RestController
-@RequestMapping("/execute")
+@RequestMapping("/api/v1/execute")
 @RequiredArgsConstructor
 @Slf4j
 public class CodeExecutionController extends BaseController {

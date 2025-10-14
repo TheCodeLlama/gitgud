@@ -34,10 +34,10 @@ import org.springframework.web.bind.annotation.*;
  * Handles XP, levels, achievements, and user stats.
  */
 @RestController
-@RequestMapping("/gamification")
+@RequestMapping("/api/v1/gamification")
 @RequiredArgsConstructor
 @Slf4j
-public class GamificationController extends BaseController {
+public class GamificationController {
 
     private final XpService xpService;
     private final AchievementService achievementService;
