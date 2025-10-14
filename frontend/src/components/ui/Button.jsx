@@ -6,6 +6,7 @@
 import { Link } from 'react-router';
 
 const buttonStyles = {
+  base: 'inline-flex items-center justify-center rounded-md font-medium transition-colors',
   variant: {
     primary: 'bg-transparent text-[var(--accent)] border-2 border-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--bg)]',
     secondary: 'bg-[var(--surface-muted)] text-[var(--text)] hover:bg-[var(--border)] border border-[var(--border)]',
@@ -18,6 +19,7 @@ const buttonStyles = {
     md: 'px-6 h-10 text-base',
     lg: 'px-8 h-12 text-lg',
   },
+  disabled: 'bg-[var(--surface-muted)] text-[var(--text-muted)] border border-[var(--border)] opacity-50 cursor-not-allowed',
   fullWidth: 'w-full',
 };
 
@@ -44,8 +46,8 @@ export default function Button({
   type = 'button',
   ...props
 }) {
-  const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)] disabled:border-[var(--border)]';
-  const variantStyles = buttonStyles.variant[variant] || buttonStyles.variant.primary;
+  const baseStyles = buttonStyles.base;
+  const variantStyles = disabled ? buttonStyles.disabled : (buttonStyles.variant[variant] || buttonStyles.variant.primary);
   const sizeStyles = buttonStyles.size[size] || buttonStyles.size.md;
   const widthStyles = fullWidth ? buttonStyles.fullWidth : '';
 
