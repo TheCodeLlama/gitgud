@@ -10,6 +10,8 @@ import Dashboard from '../pages/dashboard/Dashboard.jsx';
 import NotFound from '../pages/NotFound';
 import SignIn from '../pages/auth/SignIn.jsx';
 import SignUp from '../pages/auth/SignUp.jsx';
+import ModulesListPage from '../pages/learning/ModulesListPage.jsx';
+import ModuleDetailPage from '../pages/learning/ModuleDetailPage.jsx';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Layout from '../components/Layout';
 
@@ -50,6 +52,24 @@ export function AppRoutes() {
               <Dashboard />
             </Layout>
           </ProtectedRoute>
+        }
+      />
+
+      {/* Module routes - Public with navbar */}
+      <Route
+        path="/modules"
+        element={
+          <Layout>
+            <ModulesListPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/modules/:moduleId"
+        element={
+          <Layout>
+            <ModuleDetailPage />
+          </Layout>
         }
       />
 

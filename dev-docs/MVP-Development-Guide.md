@@ -455,24 +455,24 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Add motivational messages/tips
 
 #### 6.5 Module & Lesson Browser
-- [ ] Create modules list page (`/modules`):
-  - [ ] Display all modules as cards
-  - [ ] Show module progress (X/Y lessons)
-  - [ ] Display difficulty badges
-  - [ ] Show lock icon for unavailable modules
-  - [ ] Filter/search functionality
-- [ ] Create module detail page (`/modules/:moduleId`):
-  - [ ] Module description and metadata
-  - [ ] List all lessons in module
-  - [ ] Show completion status per lesson
-  - [ ] Display XP rewards
-  - [ ] "Start Next Lesson" button
-- [ ] Implement lesson card component:
-  - [ ] Lesson title and description
-  - [ ] Difficulty indicator
-  - [ ] Completion status icon
-  - [ ] XP reward badge
-  - [ ] Lesson type icon (tutorial/challenge)
+- [x] Create modules list page (`/modules`):
+  - [x] Display all modules as cards
+  - [x] Show module progress (X/Y lessons)
+  - [x] Display difficulty badges
+  - [x] Show lock icon for unavailable modules
+  - [x] Filter/search functionality
+- [x] Create module detail page (`/modules/:moduleId`):
+  - [x] Module description and metadata
+  - [x] List all lessons in module
+  - [x] Show completion status per lesson
+  - [x] Display XP rewards
+  - [x] "Start Next Lesson" button
+- [x] Implement lesson card component:
+  - [x] Lesson title and description
+  - [x] Difficulty indicator
+  - [x] Completion status icon
+  - [x] XP reward badge
+  - [x] Lesson type icon (tutorial/challenge)
 
 #### 6.6 Lesson Page (Core Experience)
 - [ ] Create lesson page route (`/lessons/:lessonId`)
