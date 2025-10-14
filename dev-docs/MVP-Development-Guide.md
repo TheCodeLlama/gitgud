@@ -475,47 +475,47 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
   - [x] Lesson type icon (tutorial/challenge)
 
 #### 6.6 Lesson Page (Core Experience)
-- [ ] Create lesson page route (`/lessons/:lessonId`)
-- [ ] Build lesson layout (split view):
-  - [ ] Left panel: Instructions
-  - [ ] Right panel: Code editor
-  - [ ] Bottom panel: Console output (toggle)
-- [ ] Integrate Monaco Editor:
-  - [ ] Syntax highlighting for Java
-  - [ ] Auto-completion
-  - [ ] Configurable theme
-  - [ ] Load starter code from API
-  - [ ] Save code to localStorage (auto-save)
-- [ ] Create instructions panel:
-  - [ ] Render lesson content (Markdown)
-  - [ ] Show test cases (visible ones)
-  - [ ] Display expected behavior
-  - [ ] Add hint sections (expandable)
-- [ ] Build action buttons:
-  - [ ] "Run Code" button
-  - [ ] "Submit" button (runs against all tests)
-  - [ ] "Reset Code" button
+- [x] Create lesson page route (`/lessons/:lessonId`)
+- [x] Build lesson layout (split view):
+  - [x] Left panel: Instructions
+  - [x] Right panel: Code editor
+  - [x] Bottom panel: Console output (toggle)
+- [x] Integrate Monaco Editor:
+  - [x] Syntax highlighting for Java
+  - [x] Auto-completion
+  - [x] Configurable theme
+  - [x] Load starter code from API
+  - [x] Save code to localStorage (auto-save)
+- [x] Create instructions panel:
+  - [x] Render lesson content (Markdown)
+  - [x] Show test cases (visible ones)
+  - [x] Display expected behavior
+  - [x] Add hint sections (expandable)
+- [x] Build action buttons:
+  - [x] "Run Code" button
+  - [x] "Submit" button (runs against all tests)
+  - [x] "Reset Code" button
   - [ ] "Get Hint" button (future)
-- [ ] Implement code execution flow:
-  - [ ] POST to `/api/execute/run`
-  - [ ] Poll for results or use WebSocket
-  - [ ] Display loading state
-  - [ ] Show results in console panel
-- [ ] Create results display:
-  - [ ] Test case results (passed/failed)
-  - [ ] Execution time
-  - [ ] Error messages with line numbers
-  - [ ] XP awarded animation
-  - [ ] Success/failure message
-- [ ] Add navigation:
-  - [ ] Previous/Next lesson buttons
-  - [ ] Back to module button
-  - [ ] Progress indicator (lesson X of Y)
-- [ ] Implement "lesson complete" modal:
-  - [ ] Celebration animation
-  - [ ] XP awarded
-  - [ ] Achievements unlocked
-  - [ ] Next lesson suggestion
+- [x] Implement code execution flow:
+  - [x] POST to `/api/execute/run`
+  - [x] Poll for results or use WebSocket
+  - [x] Display loading state
+  - [x] Show results in console panel
+- [x] Create results display:
+  - [x] Test case results (passed/failed)
+  - [x] Execution time
+  - [x] Error messages with line numbers
+  - [x] XP awarded animation
+  - [x] Success/failure message
+- [x] Add navigation:
+  - [x] Previous/Next lesson buttons
+  - [x] Back to module button
+  - [x] Progress indicator (lesson X of Y)
+- [x] Implement "lesson complete" modal:
+  - [x] Celebration animation
+  - [x] XP awarded
+  - [x] Achievements unlocked
+  - [x] Next lesson suggestion
 
 #### 6.7 Profile & Achievements
 - [ ] Create profile page (`/profile`):
