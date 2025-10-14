@@ -94,7 +94,6 @@ export default function ThemeGuide() {
             <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6 space-y-3 hover:border-[var(--accent)] transition-colors">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Stat Card</h3>
-                <span className="text-2xl">🏆</span>
               </div>
               <div className="space-y-1">
                 <p className="text-3xl font-bold text-[var(--accent)]">1,240 XP</p>
