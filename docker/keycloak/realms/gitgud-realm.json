@@ -590,7 +590,7 @@
     "consentRequired" : false,
     "standardFlowEnabled" : true,
     "implicitFlowEnabled" : false,
-    "directAccessGrantsEnabled" : false,
+    "directAccessGrantsEnabled" : true,
     "serviceAccountsEnabled" : false,
     "publicClient" : true,
     "frontchannelLogout" : false,
@@ -1342,9 +1342,9 @@
     "config" : {
       "syncMode" : "LEGACY",
       "githubJsonFormat" : "false",
-      "clientSecret": "${env.OAUTH_GITHUB_CLIENT_SECRET}",
-      "clientId": "${env.OAUTH_GITHUB_CLIENT_ID}",
-      "defaultScope": "read:user user:email"
+      "clientSecret" : "${env.OAUTH_GITHUB_CLIENT_SECRET}",
+      "clientId" : "${env.OAUTH_GITHUB_CLIENT_ID}",
+      "defaultScope" : "read:user user:email"
     }
   }, {
     "alias" : "google",
@@ -1363,13 +1363,13 @@
     "config" : {
       "acceptsPromptNoneForwardFromClient" : "false",
       "clientId" : "${env.OAUTH_GOOGLE_CLIENT_ID}",
-      "defaultScope": "openid profile email",
       "disableUserInfo" : "false",
       "showInAccountConsole" : "ALWAYS",
       "filteredByClaim" : "false",
       "syncMode" : "LEGACY",
       "clientSecret" : "${env.OAUTH_GOOGLE_CLIENT_SECRET}",
-      "caseSensitiveOriginalUsername" : "false"
+      "caseSensitiveOriginalUsername" : "false",
+      "defaultScope" : "openid profile email"
     }
   } ],
   "identityProviderMappers" : [ ],
@@ -1423,7 +1423,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "saml-user-property-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-usermodel-attribute-mapper", "saml-user-attribute-mapper", "saml-role-list-mapper", "oidc-address-mapper", "oidc-full-name-mapper", "oidc-usermodel-property-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "oidc-full-name-mapper", "saml-user-property-mapper", "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "saml-role-list-mapper" ]
       }
     }, {
       "id" : "3e42d3ea-c369-4d32-9be0-7205c0f465ce",
@@ -1441,7 +1441,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-usermodel-attribute-mapper", "oidc-address-mapper", "saml-user-property-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-role-list-mapper", "saml-user-attribute-mapper", "oidc-full-name-mapper", "oidc-usermodel-property-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-attribute-mapper", "saml-role-list-mapper", "oidc-full-name-mapper", "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-property-mapper", "oidc-usermodel-attribute-mapper", "oidc-usermodel-property-mapper" ]
       }
     } ],
     "org.keycloak.keys.KeyProvider" : [ {
