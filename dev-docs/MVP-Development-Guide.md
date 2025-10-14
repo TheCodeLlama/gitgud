@@ -437,22 +437,22 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Add loading states and skeletons
 
 #### 6.4 Dashboard Page
-- [ ] Create dashboard route (`/dashboard`)
-- [ ] Display user stats card:
-  - [ ] Current level and XP
-  - [ ] Progress to next level (progress bar)
-  - [ ] Current streak
-  - [ ] Total lessons completed
-- [ ] Show "Continue Learning" section:
-  - [ ] Last lesson in progress
-  - [ ] Suggested next lesson
-- [ ] Display recent achievements (3-5 latest)
-- [ ] Add quick stats:
-  - [ ] Total XP earned
-  - [ ] Lessons completed this week
-  - [ ] Current rank (if leaderboard exists)
-- [ ] Create "Featured Modules" section
-- [ ] Add motivational messages/tips
+- [x] Update dashboard page (`/dashboard`)
+- [x] Display user stats card:
+  - [x] Current level and XP
+  - [x] Progress to next level (progress bar)
+  - [x] Current streak
+  - [x] Total lessons completed
+- [x] Show "Continue Learning" section:
+  - [x] Last lesson in progress
+  - [x] Suggested next lesson
+- [x] Display recent achievements (3-5 latest)
+- [x] Add quick stats:
+  - [x] Total XP earned
+  - [x] Lessons completed this week
+  - [x] Current rank (if leaderboard exists)
+- [x] Create "Featured Modules" section
+- [x] Add motivational messages/tips
 
 #### 6.5 Module & Lesson Browser
 - [ ] Create modules list page (`/modules`):

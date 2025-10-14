@@ -1,86 +1,58 @@
 import { useAuth } from '../contexts/AuthContext';
-import { Link } from 'react-router';
+import UserStatsCard from '../components/dashboard/UserStatsCard';
+import ContinueLearning from '../components/dashboard/ContinueLearning';
+import RecentAchievements from '../components/dashboard/RecentAchievements';
+import QuickStats from '../components/dashboard/QuickStats';
 
 /**
  * Dashboard page
  * Main landing page for authenticated users
+ * Displays user stats, progress, recent achievements, and continue learning section
  */
 export default function Dashboard() {
   const { user } = useAuth();
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-8">
+      {/* Header with welcome message */}
       <div>
-        <h1 className="text-3xl font-bold text-[var(--text)]">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-[var(--text)]">
+          Welcome back, {user?.firstName || user?.username || 'Learner'}! 👋
+        </h1>
         <p className="text-[var(--text-muted)] mt-2">
-          Welcome back! Here's your learning progress at a glance.
+          Here's your learning progress at a glance. Keep up the great work!
         </p>
       </div>
 
-      {/* Welcome message */}
-      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-2 text-[var(--text)]">
-          Welcome back, {user?.firstName || user?.username || 'Learner'}!
-        </h2>
-        <p className="text-[var(--text-muted)]">
-          Ready to continue your Java Spring learning journey?
-        </p>
+      {/* Quick Stats Overview */}
+      <QuickStats />
+
+      {/* Main content grid - Stats Card and Continue Learning */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* User Stats Card - Takes 1 column */}
+        <div className="lg:col-span-1">
+          <UserStatsCard />
+        </div>
+
+        {/* Continue Learning Section - Takes 2 columns */}
+        <div className="lg:col-span-2">
+          <ContinueLearning />
+        </div>
       </div>
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Link
-          to="/modules"
-          className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6
-                   hover:border-[var(--accent)] hover:shadow-lg transition-all group"
-        >
-          <div className="text-3xl mb-3">📚</div>
-          <h3 className="font-semibold mb-2 text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">
-            Browse Modules
-          </h3>
-          <p className="text-sm text-[var(--text-muted)]">
-            Explore Java and Spring Boot learning paths
-          </p>
-        </Link>
+      {/* Recent Achievements */}
+      <RecentAchievements limit={5} />
 
-        <Link
-          to="/profile"
-          className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6
-                   hover:border-[var(--accent)] hover:shadow-lg transition-all group"
-        >
-          <div className="text-3xl mb-3">👤</div>
-          <h3 className="font-semibold mb-2 text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">
-            Your Profile
-          </h3>
-          <p className="text-sm text-[var(--text-muted)]">
-            View stats, achievements, and progress
-          </p>
-        </Link>
-
-        <Link
-          to="/achievements"
-          className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6
-                   hover:border-[var(--accent)] hover:shadow-lg transition-all group"
-        >
-          <div className="text-3xl mb-3">🏆</div>
-          <h3 className="font-semibold mb-2 text-[var(--text)] group-hover:text-[var(--accent)] transition-colors">
-            Achievements
-          </h3>
-          <p className="text-sm text-[var(--text-muted)]">
-            Track your unlocked achievements
-          </p>
-        </Link>
-      </div>
-
-      {/* Coming soon placeholder */}
-      <div className="bg-gradient-to-br from-[var(--accent)]/10 to-[var(--accent-secondary)]/10
-                    border border-[var(--accent)]/20 rounded-lg p-8 text-center">
-        <p className="text-[var(--text-muted)] mb-2">
-          🚀 More dashboard features coming soon!
-        </p>
-        <p className="text-sm text-[var(--text-muted)]">
-          Recent activity, progress charts, and personalized recommendations
+      {/* Motivational tip */}
+      <div className="bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent-secondary)]/10 to-[var(--accent)]/10
+                    border border-[var(--accent)]/20 rounded-lg p-6 text-center">
+        <div className="text-2xl mb-3">💡</div>
+        <h3 className="text-lg font-semibold text-[var(--text)] mb-2">
+          Tip of the Day
+        </h3>
+        <p className="text-[var(--text-muted)] max-w-2xl mx-auto">
+          Consistency is key! Try to complete at least one lesson per day to maintain your streak
+          and earn bonus XP. Small, regular practice leads to big improvements over time.
         </p>
       </div>
     </div>
