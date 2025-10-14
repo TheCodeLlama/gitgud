@@ -128,7 +128,7 @@ export default function ModulesListPage() {
             <ModuleCard
               key={module.id}
               module={module}
-              userProgress={userProgress || []}
+              userProgress={userProgress}
               locked={isModuleLocked(module)}
             />
           ))}
@@ -157,7 +157,7 @@ export default function ModulesListPage() {
             </div>
             <div>
               <p className="text-3xl font-bold text-[var(--accent)]">
-                {userProgress?.filter((p) => p.status === 'COMPLETED').length || 0}
+                {userProgress?.completedLessons || 0}
               </p>
               <p className="text-[var(--text-muted)] text-sm">Completed</p>
             </div>

@@ -38,16 +38,18 @@ const getDifficultyLabel = (difficulty) => {
 /**
  * Calculate module progress
  * @param {Object} module - Module with lessons
- * @param {Array} userProgress - User's progress array for lessons
+ * @param {Object} userProgressData - User's overall progress data (OverallProgressDTO)
  */
-const calculateModuleProgress = (module, userProgress = []) => {
+const calculateModuleProgress = (module, userProgressData = null) => {
   if (!module.lessons || module.lessons.length === 0) {
     return { completed: 0, total: 0, percentage: 0 };
   }
 
   const total = module.lessons.length;
+  const progressList = userProgressData?.recentProgress || [];
+
   const completed = module.lessons.filter((lesson) => {
-    const progress = userProgress.find((p) => p.lessonId === lesson.id);
+    const progress = progressList.find((p) => p.lessonId === lesson.id);
     return progress?.status === 'COMPLETED';
   }).length;
 
@@ -59,11 +61,11 @@ const calculateModuleProgress = (module, userProgress = []) => {
 /**
  * ModuleCard component
  * @param {Object} module - Module data
- * @param {Array} userProgress - User's progress array (optional)
+ * @param {Object} userProgress - User's overall progress data (optional)
  * @param {boolean} locked - Whether the module is locked (optional)
  * @param {string} className - Additional CSS classes
  */
-export default function ModuleCard({ module, userProgress = [], locked = false, className = '' }) {
+export default function ModuleCard({ module, userProgress = null, locked = false, className = '' }) {
   const progress = calculateModuleProgress(module, userProgress);
   const isStarted = progress.completed > 0;
 

@@ -12,6 +12,7 @@ import SignIn from '../pages/auth/SignIn.jsx';
 import SignUp from '../pages/auth/SignUp.jsx';
 import ModulesListPage from '../pages/learning/ModulesListPage.jsx';
 import ModuleDetailPage from '../pages/learning/ModuleDetailPage.jsx';
+import LessonPage from '../pages/learning/LessonPage.jsx';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Layout from '../components/Layout';
 
@@ -70,6 +71,16 @@ export function AppRoutes() {
           <Layout>
             <ModuleDetailPage />
           </Layout>
+        }
+      />
+
+      {/* Lesson route - Protected, full-screen without navbar */}
+      <Route
+        path="/lessons/:lessonId"
+        element={
+          <ProtectedRoute>
+            <LessonPage />
+          </ProtectedRoute>
         }
       />
 

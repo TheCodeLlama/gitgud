@@ -49,9 +49,11 @@ export default function ModuleDetailPage() {
   const getNextLesson = () => {
     if (!lessons || lessons.length === 0) return null;
 
+    const progressList = userProgress?.recentProgress || [];
+
     // Find first incomplete lesson
     const nextLesson = lessons.find((lesson) => {
-      const progress = userProgress?.find((p) => p.lessonId === lesson.id);
+      const progress = progressList.find((p) => p.lessonId === lesson.id);
       return !progress || progress.status !== 'COMPLETED';
     });
 
@@ -64,9 +66,10 @@ export default function ModuleDetailPage() {
   const calculateProgress = () => {
     if (!lessons || lessons.length === 0) return { completed: 0, total: 0, percentage: 0 };
 
+    const progressList = userProgress?.recentProgress || [];
     const total = lessons.length;
     const completed = lessons.filter((lesson) => {
-      const progress = userProgress?.find((p) => p.lessonId === lesson.id);
+      const progress = progressList.find((p) => p.lessonId === lesson.id);
       return progress?.status === 'COMPLETED';
     }).length;
 
@@ -78,7 +81,8 @@ export default function ModuleDetailPage() {
 
   // Get progress for a specific lesson
   const getLessonProgress = (lessonId) => {
-    return userProgress?.find((p) => p.lessonId === lessonId);
+    const progressList = userProgress?.recentProgress || [];
+    return progressList.find((p) => p.lessonId === lessonId);
   };
 
   if (moduleError) {
