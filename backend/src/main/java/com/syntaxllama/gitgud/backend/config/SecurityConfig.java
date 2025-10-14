@@ -51,23 +51,27 @@ public class SecurityConfig {
 
                 // Configure authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints (no authentication required)
-                        .requestMatchers("/actuator/**").permitAll()
+                        // Public monitoring endpoints
                         .requestMatchers("/actuator/health/**").permitAll()
                         .requestMatchers("/actuator/prometheus").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
+                        // Public authentication endpoints (registration, etc.)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+
                         // Public API endpoints for unauthenticated users
-                        .requestMatchers(HttpMethod.GET, "/api/learning/modules").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/learning/modules/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/learning/lessons/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/gamification/achievements").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/gamification/levels").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/learning/modules").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/learning/modules/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/learning/lessons/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/gamification/achievements").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/gamification/levels").permitAll()
 
                         // All other API endpoints require authentication
-                        .requestMatchers("/api/**").authenticated()
+                        .requestMatchers("/api/v1/**").authenticated()
 
-                        // Deny everything else
+                        // Deny everything else by default
                         .anyRequest().denyAll()
                 )
 

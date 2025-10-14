@@ -62,6 +62,24 @@ spring:
           max-idle: 8
           min-idle: 0
 
+  # Spring MVC Configuration
+  mvc:
+    throw-exception-if-no-handler-found: true
+
+  # Disable default static resource handling (prevents /** from intercepting API requests)
+  web:
+    resources:
+      add-mappings: false
+
+# Keycloak Admin Configuration
+keycloak:
+  admin:
+    server-url: ${KEYCLOAK_URL}
+    realm: ${KEYCLOAK_REALM}
+    client-id: ${KEYCLOAK_CLIENT_ID}
+    username: ${KEYCLOAK_ADMIN_USER}
+    password: ${KEYCLOAK_ADMIN_PASSWORD}
+
 # Server Configuration
 server:
   port: ${BACKEND_PORT}

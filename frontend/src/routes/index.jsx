@@ -8,6 +8,9 @@ import Home from '../pages/Home';
 import ThemeGuide from '../pages/ThemeGuide';
 import Dashboard from '../pages/Dashboard';
 import NotFound from '../pages/NotFound';
+import SignIn from '../pages/SignIn';
+import SignUp from '../pages/SignUp';
+import ProtectedRoute from '../components/ProtectedRoute';
 
 /**
  * Main routes configuration
@@ -18,9 +21,18 @@ export function AppRoutes() {
       {/* Public routes */}
       <Route path="/" element={<Home />} />
       <Route path="/theme-guide" element={<ThemeGuide />} />
+      <Route path="/signin" element={<SignIn />} />
+      <Route path="/signup" element={<SignUp />} />
 
-      {/* Dashboard (will require authentication in 6.2) */}
-      <Route path="/dashboard" element={<Dashboard />} />
+      {/* Protected routes */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Catch-all 404 */}
       <Route path="*" element={<NotFound />} />

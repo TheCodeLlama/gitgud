@@ -3,7 +3,7 @@ package com.syntaxllama.gitgud.backend.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
- * Base controller with API versioning prefix.
+ * Base controller with API prefix.
  * All API controllers should extend this class.
  */
 @RequestMapping("/api/v1")
