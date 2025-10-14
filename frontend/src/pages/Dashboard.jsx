@@ -1,4 +1,5 @@
 import { useAuth } from '../contexts/AuthContext';
+import { Link } from 'react-router';
 
 /**
  * Dashboard page (placeholder)
@@ -46,8 +47,8 @@ export default function Dashboard() {
 
         {/* Quick actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <a
-            href="/modules"
+          <Link
+            to="/modules"
             className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6
                      hover:border-[var(--accent)] transition-colors"
           >
@@ -56,10 +57,10 @@ export default function Dashboard() {
             <p className="text-sm text-[var(--text-muted)]">
               Explore Java and Spring Boot learning paths
             </p>
-          </a>
+          </Link>
 
-          <a
-            href="/profile"
+          <Link
+            to="/profile"
             className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6
                      hover:border-[var(--accent)] transition-colors"
           >
@@ -68,10 +69,10 @@ export default function Dashboard() {
             <p className="text-sm text-[var(--text-muted)]">
               View stats, achievements, and progress
             </p>
-          </a>
+          </Link>
 
-          <a
-            href="/theme-guide"
+          <Link
+            to="/theme-guide"
             className="bg-[var(--surface)] border border-[var(--border)] rounded-lg p-6
                      hover:border-[var(--accent)] transition-colors"
           >
@@ -80,7 +81,7 @@ export default function Dashboard() {
             <p className="text-sm text-[var(--text-muted)]">
               View design system and components
             </p>
-          </a>
+          </Link>
         </div>
 
         {/* Coming soon placeholder */}

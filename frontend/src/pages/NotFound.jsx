@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+
 /**
  * 404 Not Found page
  */
@@ -7,14 +9,14 @@ export default function NotFound() {
       <div className="text-center">
         <h1 className="text-6xl font-bold mb-4">404</h1>
         <p className="text-xl text-[var(--text-muted)] mb-6">Page not found</p>
-        <a
-          href="/"
+        <Link
+          to="/dashboard"
           className="inline-flex items-center justify-center px-6 h-10 rounded-md
                      bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-muted)]
                      border border-[var(--border)] font-medium transition-colors"
         >
           Go Home
-        </a>
+        </Link>
       </div>
     </div>
   );

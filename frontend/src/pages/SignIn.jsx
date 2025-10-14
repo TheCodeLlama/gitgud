@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../contexts/AuthContext';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 
 /**
  * Sign In page - Split layout with image and form
@@ -233,12 +233,12 @@ export default function SignIn() {
                 />
                 <span className="text-sm text-[var(--text-muted)]">Remember me</span>
               </label>
-              <a
-                href="/forgot-password"
+              <Link
+                to="/forgot-password"
                 className="text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             <button
@@ -256,12 +256,12 @@ export default function SignIn() {
           {/* Sign Up Link */}
           <div className="text-center text-sm text-[var(--text-muted)]">
             Don't have an account?{' '}
-            <a
-              href="/signup"
+            <Link
+              to="/signup"
               className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium transition-colors"
             >
               Sign up
-            </a>
+            </Link>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../contexts/AuthContext';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 
 /**
  * Sign Up page - Split layout with image and registration form
@@ -325,13 +325,13 @@ export default function SignUp() {
               />
               <label htmlFor="terms" className="text-sm text-[var(--text-muted)]">
                 I agree to the{' '}
-                <a href="/terms" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
+                <Link to="/terms" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
                   Terms of Service
-                </a>{' '}
+                </Link>{' '}
                 and{' '}
-                <a href="/privacy" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
+                <Link to="/privacy" className="text-[var(--accent)] hover:text-[var(--accent-hover)]">
                   Privacy Policy
-                </a>
+                </Link>
               </label>
             </div>
             {errors.terms && <p className="text-sm text-red-500">{errors.terms.message}</p>}
@@ -351,12 +351,12 @@ export default function SignUp() {
           {/* Sign In Link */}
           <div className="text-center text-sm text-[var(--text-muted)]">
             Already have an account?{' '}
-            <a
-              href="/signin"
+            <Link
+              to="/signin"
               className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium transition-colors"
             >
               Sign in
-            </a>
+            </Link>
           </div>
         </div>
       </div>

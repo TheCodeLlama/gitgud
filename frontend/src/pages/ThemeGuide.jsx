@@ -1,3 +1,5 @@
+import { Link } from 'react-router';
+
 /**
  * ThemeGuide page - Theme showcase demonstrating the design system
  */
@@ -167,14 +169,14 @@ export default function ThemeGuide() {
             <p className="text-[var(--text-muted)] mb-4">
               Click the button below to navigate to the Dashboard page (separate route):
             </p>
-            <a
-              href="/dashboard"
+            <Link
+              to="/dashboard"
               className="inline-flex items-center justify-center px-6 h-10 rounded-md
                          bg-transparent text-[var(--accent)] border-2 border-[var(--accent)]
                          hover:bg-[var(--accent)] hover:text-[var(--bg)] font-medium transition-colors"
             >
               Go to Dashboard
-            </a>
+            </Link>
           </div>
         </section>
 
