@@ -7,16 +7,16 @@ import { Link } from 'react-router';
 
 const buttonStyles = {
   variant: {
-    primary: 'bg-[var(--accent)] text-[var(--bg)] hover:opacity-90',
-    secondary: 'bg-[var(--surface)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--surface-muted)]',
+    primary: 'bg-transparent text-[var(--accent)] border-2 border-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--bg)]',
+    secondary: 'bg-[var(--surface-muted)] text-[var(--text)] hover:bg-[var(--border)] border border-[var(--border)]',
     outline: 'bg-transparent text-[var(--accent)] border-2 border-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--bg)]',
     ghost: 'bg-transparent text-[var(--text)] hover:bg-[var(--surface-muted)]',
-    danger: 'bg-red-500 text-white hover:bg-red-600',
+    danger: 'bg-red-500 text-white hover:bg-red-600 border-2 border-red-500',
   },
   size: {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+    sm: 'px-4 h-8 text-sm',
+    md: 'px-6 h-10 text-base',
+    lg: 'px-8 h-12 text-lg',
   },
   fullWidth: 'w-full',
 };
@@ -44,7 +44,7 @@ export default function Button({
   type = 'button',
   ...props
 }) {
-  const baseStyles = 'rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-[var(--surface-muted)] disabled:text-[var(--text-muted)] disabled:border-[var(--border)]';
   const variantStyles = buttonStyles.variant[variant] || buttonStyles.variant.primary;
   const sizeStyles = buttonStyles.size[size] || buttonStyles.size.md;
   const widthStyles = fullWidth ? buttonStyles.fullWidth : '';
