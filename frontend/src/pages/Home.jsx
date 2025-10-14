@@ -17,9 +17,11 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] flex items-center justify-center">
-      <div className="text-center space-y-8">
-        <h1 className="text-6xl font-bold">Git Gud</h1>
+    <div className="bg-[var(--bg)] text-[var(--text)] flex items-center justify-center" style={{ minHeight: 'calc(100vh - 4rem)' }}>
+      <div className="text-center space-y-8 px-4">
+        <h1 className="text-6xl font-bold bg-gradient-to-r from-[var(--text)] to-[var(--accent)] bg-clip-text text-transparent">
+          Git Gud
+        </h1>
         <p className="text-xl text-[var(--text-muted)] max-w-md mx-auto">
           Level up your Java Spring skills through gamified learning
         </p>

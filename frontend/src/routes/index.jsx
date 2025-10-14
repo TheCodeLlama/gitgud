@@ -11,6 +11,7 @@ import NotFound from '../pages/NotFound';
 import SignIn from '../pages/SignIn';
 import SignUp from '../pages/SignUp';
 import ProtectedRoute from '../components/ProtectedRoute';
+import Layout from '../components/Layout';
 
 /**
  * Main routes configuration
@@ -18,23 +19,41 @@ import ProtectedRoute from '../components/ProtectedRoute';
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<Home />} />
-      <Route path="/theme-guide" element={<ThemeGuide />} />
+      {/* Public routes with navbar */}
+      <Route
+        path="/"
+        element={
+          <Layout>
+            <Home />
+          </Layout>
+        }
+      />
+      <Route
+        path="/theme-guide"
+        element={
+          <Layout>
+            <ThemeGuide />
+          </Layout>
+        }
+      />
+
+      {/* Auth routes without navbar */}
       <Route path="/signin" element={<SignIn />} />
       <Route path="/signup" element={<SignUp />} />
 
-      {/* Protected routes */}
+      {/* Protected routes with navbar */}
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <Layout>
+              <Dashboard />
+            </Layout>
           </ProtectedRoute>
         }
       />
 
-      {/* Catch-all 404 */}
+      {/* Catch-all 404 without navbar */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
