@@ -1,8 +1,8 @@
-import { useAuth } from '../contexts/AuthContext';
-import UserStatsCard from '../components/dashboard/UserStatsCard';
-import ContinueLearning from '../components/dashboard/ContinueLearning';
-import RecentAchievements from '../components/dashboard/RecentAchievements';
-import QuickStats from '../components/dashboard/QuickStats';
+import { useAuth } from '../../contexts/AuthContext.jsx';
+import UserStatsCard from '../../components/dashboard/UserStatsCard.jsx';
+import ContinueLearning from '../../components/dashboard/ContinueLearning.jsx';
+import RecentAchievements from '../../components/dashboard/RecentAchievements.jsx';
+import QuickStats from '../../components/dashboard/QuickStats.jsx';
 
 /**
  * Dashboard page
@@ -42,19 +42,6 @@ export default function Dashboard() {
 
       {/* Recent Achievements */}
       <RecentAchievements limit={5} />
-
-      {/* Motivational tip */}
-      <div className="bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent-secondary)]/10 to-[var(--accent)]/10
-                    border border-[var(--accent)]/20 rounded-lg p-6 text-center">
-        <div className="text-2xl mb-3">💡</div>
-        <h3 className="text-lg font-semibold text-[var(--text)] mb-2">
-          Tip of the Day
-        </h3>
-        <p className="text-[var(--text-muted)] max-w-2xl mx-auto">
-          Consistency is key! Try to complete at least one lesson per day to maintain your streak
-          and earn bonus XP. Small, regular practice leads to big improvements over time.
-        </p>
-      </div>
     </div>
   );
 }

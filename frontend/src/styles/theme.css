@@ -6,7 +6,7 @@
 :root {
   /* Background colors */
   --bg: #0B0B0B;              /* near-black app background */
-  --surface: #111317;         /* cards/containers */
+  --surface: #0B0B0B;         /* cards/containers */
   --surface-muted: #161A1E;   /* muted surfaces */
   --border: #262B31;          /* borders */
 

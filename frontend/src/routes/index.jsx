@@ -6,10 +6,10 @@
 import { Routes, Route } from 'react-router';
 import Home from '../pages/Home';
 import ThemeGuide from '../pages/ThemeGuide';
-import Dashboard from '../pages/Dashboard';
+import Dashboard from '../pages/dashboard/Dashboard.jsx';
 import NotFound from '../pages/NotFound';
-import SignIn from '../pages/SignIn';
-import SignUp from '../pages/SignUp';
+import SignIn from '../pages/auth/SignIn.jsx';
+import SignUp from '../pages/auth/SignUp.jsx';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Layout from '../components/Layout';
 
