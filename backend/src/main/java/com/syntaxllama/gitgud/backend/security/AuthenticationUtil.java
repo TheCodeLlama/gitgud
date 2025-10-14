@@ -1,7 +1,7 @@
 package com.syntaxllama.gitgud.backend.security;
 
-import com.syntaxllama.gitgud.backend.model.User;
-import com.syntaxllama.gitgud.backend.repository.UserRepository;
+import com.syntaxllama.gitgud.backend.models.User;
+import com.syntaxllama.gitgud.backend.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
