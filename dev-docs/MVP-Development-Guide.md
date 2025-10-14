@@ -416,25 +416,25 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Create user profile dropdown (logout, settings)
 
 #### 6.3 Layout & Navigation
-- [ ] Create main layout component:
-  - [ ] Top navigation bar
-  - [ ] Sidebar (collapsible)
-  - [ ] Main content area
-  - [ ] Footer
-- [ ] Build navigation sidebar:
-  - [ ] Dashboard link
-  - [ ] Modules list
-  - [ ] Profile link
-  - [ ] Achievements link
-  - [ ] Progress stats widget
-- [ ] Implement top navbar:
-  - [ ] Logo/branding
-  - [ ] XP/Level display
-  - [ ] Streak indicator
-  - [ ] User avatar dropdown
-  - [ ] Notifications icon (future)
-- [ ] Make layout responsive (mobile, tablet, desktop)
-- [ ] Add loading states and skeletons
+- [x] Create main layout component:
+  - [x] Top navigation bar
+  - [x] Sidebar (collapsible)
+  - [x] Main content area
+  - [x] Footer
+- [x] Build navigation sidebar:
+  - [x] Dashboard link
+  - [x] Modules list
+  - [x] Profile link
+  - [x] Achievements link
+  - [x] Progress stats widget
+- [x] Implement top navbar:
+  - [x] Logo/branding
+  - [x] XP/Level display
+  - [x] Streak indicator
+  - [x] User avatar dropdown
+  - [x] Notifications icon (future)
+- [x] Make layout responsive (mobile, tablet, desktop)
+- [x] Add loading states and skeletons
 
 #### 6.4 Dashboard Page
 - [ ] Create dashboard route (`/dashboard`)

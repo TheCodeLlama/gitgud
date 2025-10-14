@@ -1,19 +1,23 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
+import { useUserStats } from '../hooks/useUserStats';
+import { NavbarStatsSkeleton } from './skeletons/Skeleton';
 
 /**
  * Main navigation bar component
  * - Responsive design with mobile menu
  * - Active route highlighting
+ * - XP/Level and streak display for authenticated users
  * - User profile dropdown
  * - Theme-consistent styling
  */
-export default function Navbar() {
+export default function Navbar({ onMenuClick }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const location = useLocation();
   const { authenticated, user, logout } = useAuth();
+  const { data: stats, isLoading: statsLoading } = useUserStats();
 
   // Navigation items based on auth status
   const navigationItems = authenticated
@@ -42,7 +46,10 @@ export default function Navbar() {
           <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
             <button
               type="button"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() => {
+                setMobileMenuOpen(!mobileMenuOpen);
+                onMenuClick?.();
+              }}
               className="relative inline-flex items-center justify-center rounded-md p-2 text-[var(--text-muted)]
                        hover:bg-[var(--surface-muted)] hover:text-[var(--text)] transition-colors"
             >
@@ -105,64 +112,131 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Right side - Auth buttons or user menu */}
-          <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+          {/* Right side - Stats, Auth buttons or user menu */}
+          <div className="absolute inset-y-0 right-0 flex items-center gap-2 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
             {authenticated ? (
-              <div className="relative ml-3">
-                <button
-                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
-                  className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
-                           text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors"
-                >
-                  <span className="hidden sm:inline">
-                    {user?.firstName || user?.username || 'User'}
-                  </span>
-                  <div className="h-8 w-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--bg)] font-semibold">
-                    {(user?.firstName?.[0] || user?.username?.[0] || 'U').toUpperCase()}
-                  </div>
-                </button>
+              <>
+                {/* XP/Level and Streak display - Hidden on mobile */}
+                <div className="hidden md:flex items-center gap-4 mr-4">
+                  {statsLoading ? (
+                    <NavbarStatsSkeleton />
+                  ) : stats ? (
+                    <>
+                      {/* Level display */}
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)]/10 rounded-lg
+                                 hover:bg-[var(--accent)]/20 transition-colors group"
+                        title="View your profile"
+                      >
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-medium text-[var(--text-muted)]">LVL</span>
+                          <span className="text-lg font-bold text-[var(--accent)]">
+                            {stats.currentLevel}
+                          </span>
+                        </div>
+                        <div className="h-6 w-px bg-[var(--border)]" />
+                        <div className="text-xs text-[var(--text-muted)] group-hover:text-[var(--text)]">
+                          {stats.totalXp.toLocaleString()} XP
+                        </div>
+                      </Link>
 
-                {/* Profile dropdown */}
-                {profileMenuOpen && (
-                  <>
-                    {/* Backdrop for closing dropdown */}
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setProfileMenuOpen(false)}
-                    />
-                    <div
-                      className="absolute right-0 z-20 mt-2 w-48 origin-top-right rounded-md
-                               bg-[var(--surface)] border border-[var(--border)] shadow-lg"
-                    >
-                      <div className="py-1">
-                        <Link
-                          to="/profile"
-                          onClick={() => setProfileMenuOpen(false)}
-                          className="block px-4 py-2 text-sm text-[var(--text-muted)]
-                                   hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
+                      {/* Streak indicator */}
+                      {stats.currentStreakDays > 0 && (
+                        <div
+                          className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/10 rounded-lg"
+                          title={`${stats.currentStreakDays} day streak!`}
                         >
-                          Your Profile
-                        </Link>
-                        <Link
-                          to="/settings"
-                          onClick={() => setProfileMenuOpen(false)}
-                          className="block px-4 py-2 text-sm text-[var(--text-muted)]
-                                   hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
-                        >
-                          Settings
-                        </Link>
-                        <button
-                          onClick={handleLogout}
-                          className="block w-full text-left px-4 py-2 text-sm text-[var(--text-muted)]
-                                   hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
-                        >
-                          Sign Out
-                        </button>
-                      </div>
+                          <span className="text-orange-500 text-xl">🔥</span>
+                          <span className="text-sm font-semibold text-orange-500">
+                            {stats.currentStreakDays}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : null}
+                </div>
+
+                {/* User menu */}
+                <div className="relative ml-3">
+                  <button
+                    onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                    className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium
+                             text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors"
+                  >
+                    <span className="hidden sm:inline">
+                      {user?.firstName || user?.username || 'User'}
+                    </span>
+                    <div className="h-8 w-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--bg)] font-semibold">
+                      {(user?.firstName?.[0] || user?.username?.[0] || 'U').toUpperCase()}
                     </div>
-                  </>
-                )}
-              </div>
+                  </button>
+
+                  {/* Profile dropdown */}
+                  {profileMenuOpen && (
+                    <>
+                      {/* Backdrop for closing dropdown */}
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setProfileMenuOpen(false)}
+                      />
+                      <div
+                        className="absolute right-0 z-20 mt-2 w-56 origin-top-right rounded-md
+                                 bg-[var(--surface)] border border-[var(--border)] shadow-lg"
+                      >
+                        {/* User info header */}
+                        {stats && (
+                          <div className="px-4 py-3 border-b border-[var(--border)]">
+                            <div className="text-sm font-medium text-[var(--text)]">
+                              {user?.firstName || user?.username || 'User'}
+                            </div>
+                            <div className="flex items-center gap-3 mt-2 text-xs text-[var(--text-muted)]">
+                              <span>Level {stats.currentLevel}</span>
+                              <span>•</span>
+                              <span>{stats.totalXp.toLocaleString()} XP</span>
+                              {stats.currentStreakDays > 0 && (
+                                <>
+                                  <span>•</span>
+                                  <span className="flex items-center gap-1">
+                                    <span className="text-orange-500">🔥</span>
+                                    {stats.currentStreakDays}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="py-1">
+                          <Link
+                            to="/profile"
+                            onClick={() => setProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-[var(--text-muted)]
+                                     hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
+                          >
+                            Your Profile
+                          </Link>
+                          <Link
+                            to="/settings"
+                            onClick={() => setProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-[var(--text-muted)]
+                                     hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
+                          >
+                            Settings
+                          </Link>
+                          <button
+                            onClick={handleLogout}
+                            className="block w-full text-left px-4 py-2 text-sm text-[var(--text-muted)]
+                                     hover:bg-[var(--surface-muted)] hover:text-[var(--text)]"
+                          >
+                            Sign Out
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
             ) : (
               <div className="hidden sm:flex sm:gap-2">
                 <Link
