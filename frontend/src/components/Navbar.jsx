@@ -15,7 +15,7 @@ import { NavbarStatsSkeleton } from './skeletons/Skeleton';
  * - User profile dropdown
  * - Theme-consistent styling
  */
-export default function Navbar({ onMenuClick }) {
+export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const location = useLocation();
@@ -27,6 +27,7 @@ export default function Navbar({ onMenuClick }) {
     ? [
         { name: 'Dashboard', path: '/dashboard' },
         { name: 'Modules', path: '/modules' },
+        { name: 'Achievements', path: '/achievements' },
         { name: 'Profile', path: '/profile' },
       ]
     : [
@@ -50,10 +51,7 @@ export default function Navbar({ onMenuClick }) {
             {/* Mobile menu button */}
             <button
               type="button"
-              onClick={() => {
-                setMobileMenuOpen(!mobileMenuOpen);
-                onMenuClick?.();
-              }}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="inline-flex items-center justify-center rounded-md p-2 text-[var(--text-muted)]
                        hover:bg-[var(--surface-muted)] hover:text-[var(--text)] transition-colors sm:hidden"
             >
