@@ -1,6 +1,5 @@
 package com.syntaxllama.gitgud.backend.controller.learning;
 
-import com.syntaxllama.gitgud.backend.controller.BaseController;
 import com.syntaxllama.gitgud.backend.dto.ApiResponse;
 import com.syntaxllama.gitgud.backend.dto.learning.LessonDTO;
 import com.syntaxllama.gitgud.backend.dto.learning.ModuleDTO;
@@ -27,10 +26,10 @@ import java.util.UUID;
  * Handles modules, lessons, and user progress tracking.
  */
 @RestController
-@RequestMapping("/learning")
+@RequestMapping("/api/v1/learning")
 @RequiredArgsConstructor
 @Slf4j
-public class LearningController extends BaseController {
+public class LearningController {
 
     private final ModuleService moduleService;
     private final LessonService lessonService;

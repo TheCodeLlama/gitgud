@@ -80,9 +80,9 @@ export default function Navbar() {
           <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
             {/* Logo */}
             <Link to="/" className="flex shrink-0 items-center">
-              <span className="text-2xl font-bold bg-gradient-to-r from-[var(--text)] to-[var(--accent)] bg-clip-text text-transparent">
-                GitGud
-              </span>
+              <div className="bg-[var(--accent)] rounded-md px-3 py-1.5 flex items-center justify-center">
+                <span className="text-lg font-bold text-[var(--bg)]">{'{GG}'}</span>
+              </div>
             </Link>
 
             {/* Desktop navigation */}
