@@ -197,17 +197,6 @@ export default function Sidebar({ isOpen = true, onClose = () => {} }) {
               </div>
             )}
           </div>
-
-          {/* Quick tip */}
-          <div className="p-3 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg">
-            <div className="text-xs text-[var(--text-muted)] flex items-start gap-2">
-              <Lightbulb className="w-4 h-4 text-[var(--accent)] flex-shrink-0 mt-0.5" />
-              <span>
-                <span className="font-semibold text-[var(--accent)]">Tip:</span> Complete lessons
-                daily to maintain your streak and earn bonus XP!
-              </span>
-            </div>
-          </div>
         </div>
       </aside>
     </>

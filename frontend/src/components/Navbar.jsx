@@ -3,6 +3,8 @@ import { Flame } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserStats } from '../hooks/useUserStats';
+import DesktopNavigation from './ui/DesktopNavigation';
+import NavbarStats from './ui/NavbarStats';
 import { NavbarStatsSkeleton } from './skeletons/Skeleton';
 
 /**
@@ -88,29 +90,13 @@ export default function Navbar({ onMenuClick }) {
           <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
             {/* Logo */}
             <Link to="/" className="flex shrink-0 items-center">
-              <div className="bg-[var(--accent)] rounded-md px-3 py-1.5 flex items-center justify-center">
+              <div className="bg-[var(--accent)] rounded-md px-3 py-1.5 flex items-center justify-center w-14">
                 <span className="text-lg font-bold text-[var(--bg)]">{'{GG}'}</span>
               </div>
             </Link>
 
             {/* Desktop navigation */}
-            <div className="hidden sm:ml-6 sm:block">
-              <div className="flex space-x-4">
-                {navigationItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                      isActivePath(item.path)
-                        ? 'bg-[var(--surface-muted)] text-[var(--accent)]'
-                        : 'text-[var(--text-muted)] hover:bg-[var(--surface-muted)] hover:text-[var(--text)]'
-                    }`}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
+            <DesktopNavigation items={navigationItems} isActivePath={isActivePath} />
           </div>
 
           {/* Right side - Stats, Auth buttons or user menu */}
@@ -118,44 +104,12 @@ export default function Navbar({ onMenuClick }) {
             {authenticated ? (
               <>
                 {/* XP/Level and Streak display - Hidden on mobile */}
-                <div className="hidden md:flex items-center gap-4 mr-4">
+                <div className="hidden md:flex mr-4">
                   {statsLoading ? (
                     <NavbarStatsSkeleton />
-                  ) : stats ? (
-                    <>
-                      {/* Level display */}
-                      <Link
-                        to="/profile"
-                        className="flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)]/10 rounded-lg
-                                 hover:bg-[var(--accent)]/20 transition-colors group"
-                        title="View your profile"
-                      >
-                        <div className="flex items-center gap-1">
-                          <span className="text-xs font-medium text-[var(--text-muted)]">LVL</span>
-                          <span className="text-lg font-bold text-[var(--accent)]">
-                            {stats.currentLevel}
-                          </span>
-                        </div>
-                        <div className="h-6 w-px bg-[var(--border)]" />
-                        <div className="text-xs text-[var(--text-muted)] group-hover:text-[var(--text)]">
-                          {stats.totalXp.toLocaleString()} XP
-                        </div>
-                      </Link>
-
-                      {/* Streak indicator */}
-                      {stats.currentStreakDays > 0 && (
-                        <div
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/10 rounded-lg"
-                          title={`${stats.currentStreakDays} day streak!`}
-                        >
-                          <Flame className="w-5 h-5 text-orange-500" />
-                          <span className="text-sm font-semibold text-orange-500">
-                            {stats.currentStreakDays}
-                          </span>
-                        </div>
-                      )}
-                    </>
-                  ) : null}
+                  ) : (
+                    <NavbarStats stats={stats} />
+                  )}
                 </div>
 
                 {/* User menu */}
