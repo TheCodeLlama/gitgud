@@ -15,7 +15,9 @@ import { useAuth } from '../contexts/AuthContext';
  */
 const fetchLatestSubmission = async (lessonId) => {
   const { data } = await api.get(`/v1/learning/submissions/latest/${lessonId}`);
-  return data.data; // Extract data from ApiResponse wrapper (may be null)
+  // Extract data from ApiResponse wrapper (may be null or undefined if no submissions)
+  // Return null instead of undefined to satisfy React Query
+  return data.data ?? null;
 };
 
 /**
