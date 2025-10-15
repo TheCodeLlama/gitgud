@@ -518,27 +518,27 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
   - [x] Next lesson suggestion
 
 #### 6.7 Profile & Achievements
-- [ ] Create profile page (`/profile`):
-  - [ ] Display user info (avatar, name, bio)
-  - [ ] Show total stats (XP, level, streak)
-  - [ ] List all achievements (with locked states)
+- [x] Create profile page (`/profile`):
+  - [x] Display user info (avatar, name, bio)
+  - [x] Show total stats (XP, level, streak)
+  - [x] List all achievements (with locked states)
   - [ ] Progress chart (XP over time)
-  - [ ] Edit profile button
-- [ ] Build achievement showcase:
-  - [ ] Grid of achievement badges
-  - [ ] Show locked/unlocked states
-  - [ ] Display achievement descriptions on hover
-  - [ ] Sort by rarity or date earned
-- [ ] Create profile edit form:
-  - [ ] Update display name
-  - [ ] Change avatar
-  - [ ] Edit bio
-  - [ ] Save changes to API
-- [ ] Add settings page:
-  - [ ] Change password
-  - [ ] Notification preferences
-  - [ ] Theme selection
-  - [ ] Delete account (future)
+  - [x] Edit profile button
+- [x] Build achievement showcase:
+  - [x] Grid of achievement badges
+  - [x] Show locked/unlocked states
+  - [x] Display achievement descriptions on hover
+  - [x] Sort by rarity or date earned
+- [x] Create profile edit form:
+  - [x] Update display name
+  - [x] Change avatar
+  - [x] Edit bio
+  - [x] Save changes to API
+- [x] Add settings page:
+  - [x] Change password
+  - [x] Notification preferences
+  - [x] Theme selection
+  - [x] Delete account (future)
 
 #### 6.8 Gamification UI Elements
 - [ ] Create XP progress bar component:

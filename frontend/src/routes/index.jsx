@@ -13,6 +13,8 @@ import SignUp from '../pages/auth/SignUp.jsx';
 import ModulesListPage from '../pages/learning/ModulesListPage.jsx';
 import ModuleDetailPage from '../pages/learning/ModuleDetailPage.jsx';
 import LessonPage from '../pages/learning/LessonPage.jsx';
+import ProfilePage from '../pages/profile/ProfilePage.jsx';
+import SettingsPage from '../pages/settings/SettingsPage.jsx';
 import ProtectedRoute from '../components/ProtectedRoute';
 import Layout from '../components/Layout';
 
@@ -80,6 +82,30 @@ export function AppRoutes() {
         element={
           <ProtectedRoute>
             <LessonPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Profile route - Protected with navbar */}
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <ProfilePage />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Settings route - Protected with navbar */}
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <SettingsPage />
+            </Layout>
           </ProtectedRoute>
         }
       />
