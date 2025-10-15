@@ -3,8 +3,7 @@
  * Defines all application routes and navigation structure
  */
 
-import { Routes, Route } from 'react-router';
-import Home from '../pages/Home';
+import { Routes, Route, Navigate } from 'react-router';
 import ThemeGuide from '../pages/ThemeGuide';
 import Dashboard from '../pages/dashboard/Dashboard.jsx';
 import NotFound from '../pages/NotFound';
@@ -24,15 +23,14 @@ import Layout from '../components/Layout';
 export function AppRoutes() {
   return (
     <Routes>
+      {/* Root redirects to signin */}
+      <Route path="/" element={<SignIn />} />
+
+      {/* Auth routes without navbar */}
+      <Route path="/signin" element={<SignIn />} />
+      <Route path="/signup" element={<SignUp />} />
+
       {/* Public routes with navbar */}
-      <Route
-        path="/"
-        element={
-          <Layout>
-            <Home />
-          </Layout>
-        }
-      />
       <Route
         path="/theme-guide"
         element={
@@ -41,10 +39,6 @@ export function AppRoutes() {
           </Layout>
         }
       />
-
-      {/* Auth routes without navbar */}
-      <Route path="/signin" element={<SignIn />} />
-      <Route path="/signup" element={<SignUp />} />
 
       {/* Protected routes with navbar */}
       <Route

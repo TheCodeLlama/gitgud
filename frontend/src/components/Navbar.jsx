@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Flame } from 'lucide-react';
-import { Link, useLocation } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserStats } from '../hooks/useUserStats';
 import DesktopNavigation from './ui/DesktopNavigation';
@@ -19,6 +19,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { authenticated, user, logout } = useAuth();
   const { data: stats, isLoading: statsLoading } = useUserStats();
 
@@ -30,16 +31,14 @@ export default function Navbar() {
         { name: 'Achievements', path: '/achievements' },
         { name: 'Profile', path: '/profile' },
       ]
-    : [
-        { name: 'Home', path: '/' },
-        { name: 'Theme Guide', path: '/theme-guide' },
-      ];
+    : [];
 
   const isActivePath = (path) => location.pathname === path;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setProfileMenuOpen(false);
-    logout();
+    await logout();
+    navigate('/signin');
   };
 
   return (
@@ -85,7 +84,7 @@ export default function Navbar() {
             </button>
 
             {/* Logo */}
-            <Link to="/" className="flex shrink-0 items-center">
+            <Link to={authenticated ? '/dashboard' : '/'} className="flex shrink-0 items-center">
               <div className="bg-[var(--accent)] rounded-md px-3 py-1.5 flex items-center justify-center w-14">
                 <span className="text-lg font-bold text-[var(--bg)]">{'{GG}'}</span>
               </div>
