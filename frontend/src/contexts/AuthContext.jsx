@@ -25,8 +25,16 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let refreshInterval = null;
+
     // Listen for auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Clear any existing refresh interval
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+      }
+
       if (firebaseUser) {
         // User is signed in
         const idToken = await firebaseUser.getIdToken();
@@ -59,7 +67,7 @@ export function AuthProvider({ children }) {
 
         // Set up token refresh (Firebase tokens expire after 1 hour)
         // Refresh token every 50 minutes to stay ahead of expiration
-        const refreshInterval = setInterval(async () => {
+        refreshInterval = setInterval(async () => {
           try {
             const newToken = await firebaseUser.getIdToken(true); // Force refresh
             setToken(newToken);
@@ -69,9 +77,6 @@ export function AuthProvider({ children }) {
             console.error('Failed to refresh token:', error);
           }
         }, 50 * 60 * 1000); // 50 minutes
-
-        // Cleanup interval on unmount
-        return () => clearInterval(refreshInterval);
       } else {
         // User is signed out
         setUser(null);
@@ -87,8 +92,13 @@ export function AuthProvider({ children }) {
       setLoading(false);
     });
 
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+    // Cleanup subscription and interval on unmount
+    return () => {
+      unsubscribe();
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    };
   }, []);
 
   /**
