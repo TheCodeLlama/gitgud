@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { api } from '../lib/api';
+import { queryClient } from '../lib/queryClient';
 
 const AuthContext = createContext(null);
 
@@ -78,6 +79,9 @@ export function AuthProvider({ children }) {
         setAuthenticated(false);
         delete api.defaults.headers.common['Authorization'];
         localStorage.removeItem('firebase_token');
+
+        // Clear React Query cache to prevent data leaking between users
+        queryClient.clear();
       }
 
       setLoading(false);
@@ -163,6 +167,9 @@ export function AuthProvider({ children }) {
       setAuthenticated(false);
       delete api.defaults.headers.common['Authorization'];
       localStorage.removeItem('firebase_token');
+
+      // Clear React Query cache to prevent data leaking between users
+      queryClient.clear();
     } catch (error) {
       console.error('Logout failed:', error);
       throw new Error(error.message || 'Logout failed');

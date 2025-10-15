@@ -1,11 +1,13 @@
 package com.syntaxllama.gitgud.backend.dtos.learning;
 
+import com.syntaxllama.gitgud.backend.dtos.execution.TestCaseResult;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,5 +30,6 @@ public class SubmissionDTO {
     private String errorMessage;
     private String consoleOutput;
     private Integer xpAwarded;
+    private List<TestCaseResult> testCaseResults;
     private LocalDateTime submittedAt;
 }

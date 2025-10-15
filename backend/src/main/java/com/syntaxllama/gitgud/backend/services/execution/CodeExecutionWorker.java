@@ -1,5 +1,6 @@
 package com.syntaxllama.gitgud.backend.services.execution;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syntaxllama.gitgud.backend.configs.RabbitMQConfig;
 import com.syntaxllama.gitgud.backend.dtos.execution.*;
 import com.syntaxllama.gitgud.backend.dtos.gamification.AwardXpRequest;
@@ -46,6 +47,7 @@ public class CodeExecutionWorker {
     private final UserProgressRepository userProgressRepository;
     private final XpService xpService;
     private final ProgressService progressService;
+    private final ObjectMapper objectMapper;
 
     /**
      * Listen for code execution jobs from RabbitMQ queue.
@@ -274,6 +276,16 @@ public class CodeExecutionWorker {
                 status = Submission.Status.PENDING;
             }
 
+            // Serialize test case results to JSON
+            String testCaseResultsJson = null;
+            if (result.getTestCaseResults() != null && !result.getTestCaseResults().isEmpty()) {
+                try {
+                    testCaseResultsJson = objectMapper.writeValueAsString(result.getTestCaseResults());
+                } catch (Exception e) {
+                    log.warn("Failed to serialize test case results for job {}: {}", job.getJobId(), e.getMessage());
+                }
+            }
+
             // Create submission entity
             Submission submission = new Submission();
             submission.setUser(user);
@@ -286,6 +298,7 @@ public class CodeExecutionWorker {
             submission.setErrorMessage(result.getErrorMessage());
             submission.setConsoleOutput(result.getConsoleOutput());
             submission.setXpAwarded(result.getXpAwarded());
+            submission.setTestCaseResultsJson(testCaseResultsJson);
             submission.setSubmittedAt(job.getSubmittedAt());
 
             // Save to database

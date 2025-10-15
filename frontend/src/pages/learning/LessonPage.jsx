@@ -19,6 +19,25 @@ import Button from '../../components/ui/Button';
 import { Skeleton } from '../../components/skeletons/Skeleton';
 import { ArrowLeft, Play, Send, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 
+/**
+ * Transform submission data to execution result format for ConsolePanel
+ */
+function transformSubmissionToResult(submission) {
+  if (!submission) return null;
+
+  return {
+    passed: submission.status === 'PASSED',
+    testsPassed: submission.passedTests || 0,
+    totalTests: submission.totalTests || 0,
+    xpAwarded: submission.xpAwarded || 0,
+    executionTimeMs: submission.executionTimeMs || 0,
+    status: submission.status,
+    errorMessage: submission.errorMessage,
+    consoleOutput: submission.consoleOutput,
+    testCaseResults: submission.testCaseResults || null,
+  };
+}
+
 export default function LessonPage() {
   const { lessonId } = useParams();
   const navigate = useNavigate();
@@ -39,6 +58,7 @@ export default function LessonPage() {
   const [code, setCode] = useState('');
   const [showConsole, setShowConsole] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [displayedResult, setDisplayedResult] = useState(null);
 
   // Load code from latest submission or starter code
   useEffect(() => {
@@ -52,10 +72,34 @@ export default function LessonPage() {
     }
   }, [lesson, latestSubmission, submissionLoading]);
 
-  // Show console when execution starts or completes
+  // Reset state when lesson changes
+  useEffect(() => {
+    setDisplayedResult(null);
+    setShowConsole(false);
+  }, [lessonId]);
+
+  // Load previous submission results into console
+  useEffect(() => {
+    if (latestSubmission && !submissionLoading) {
+      const previousResult = transformSubmissionToResult(latestSubmission);
+      setDisplayedResult(previousResult);
+
+      // Show console if there are previous results
+      if (previousResult) {
+        setShowConsole(true);
+      }
+    }
+  }, [latestSubmission, submissionLoading]);
+
+  // Show console when execution starts or completes, and update displayed result
   useEffect(() => {
     if (isExecuting || result || executionError) {
       setShowConsole(true);
+    }
+
+    // Update displayed result when new execution completes
+    if (result) {
+      setDisplayedResult(result);
     }
   }, [isExecuting, result, executionError]);
 
@@ -264,7 +308,7 @@ export default function LessonPage() {
               {showConsole && (
                 <div className="flex-1 overflow-hidden">
                   <ConsolePanel
-                    result={result}
+                    result={displayedResult}
                     isExecuting={isExecuting}
                     error={executionError}
                   />

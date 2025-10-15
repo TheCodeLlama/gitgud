@@ -62,10 +62,12 @@ export function useCodeExecution() {
           setIsExecuting(false);
 
           // Always invalidate the latest submission query (regardless of pass/fail)
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.learning.latestSubmission(lessonId),
-            refetchType: 'all' // Refetch even if component is not mounted
-          });
+          if (user?.uid) {
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.learning.latestSubmission(user.uid, lessonId),
+              refetchType: 'all' // Refetch even if component is not mounted
+            });
+          }
 
           // Invalidate queries if execution was successful (all tests passed)
           if (executionResult.passed && executionResult.xpAwarded > 0) {

@@ -24,12 +24,12 @@ const fetchLatestSubmission = async (lessonId) => {
  * @returns {Object} Query result with submission data, loading, and error states
  */
 export function useLatestSubmission(lessonId) {
-  const { authenticated } = useAuth();
+  const { authenticated, user } = useAuth();
 
   return useQuery({
-    queryKey: queryKeys.learning.latestSubmission(lessonId),
+    queryKey: queryKeys.learning.latestSubmission(user?.uid, lessonId),
     queryFn: () => fetchLatestSubmission(lessonId),
-    enabled: authenticated && !!lessonId, // Only fetch if authenticated and lessonId is provided
+    enabled: authenticated && !!lessonId && !!user, // Only fetch if authenticated and lessonId is provided
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
     refetchOnWindowFocus: false, // Don't refetch on window focus (user may be actively editing)
     refetchOnMount: 'always', // Always fetch fresh data when component mounts

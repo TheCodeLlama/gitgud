@@ -52,6 +52,9 @@ public class Submission extends BaseEntity {
     @Column(name = "xp_awarded")
     private Integer xpAwarded;
 
+    @Column(name = "test_case_results_json", columnDefinition = "TEXT")
+    private String testCaseResultsJson;
+
     @Column(name = "submitted_at", nullable = false)
     private LocalDateTime submittedAt = LocalDateTime.now();
 

@@ -1,6 +1,9 @@
 package com.syntaxllama.gitgud.backend.controllers.learning;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syntaxllama.gitgud.backend.dtos.ApiResponse;
+import com.syntaxllama.gitgud.backend.dtos.execution.TestCaseResult;
 import com.syntaxllama.gitgud.backend.dtos.learning.SubmissionDTO;
 import com.syntaxllama.gitgud.backend.models.Submission;
 import com.syntaxllama.gitgud.backend.models.User;
@@ -27,6 +30,7 @@ public class SubmissionController {
 
     private final SubmissionRepository submissionRepository;
     private final AuthenticationUtil authenticationUtil;
+    private final ObjectMapper objectMapper;
 
     /**
      * Get the latest submission for the current user and a specific lesson.
@@ -82,6 +86,20 @@ public class SubmissionController {
      * Map Submission entity to DTO.
      */
     private SubmissionDTO mapToDTO(Submission submission) {
+        // Deserialize test case results from JSON
+        List<TestCaseResult> testCaseResults = null;
+        if (submission.getTestCaseResultsJson() != null) {
+            try {
+                testCaseResults = objectMapper.readValue(
+                        submission.getTestCaseResultsJson(),
+                        new TypeReference<List<TestCaseResult>>() {}
+                );
+            } catch (Exception e) {
+                log.warn("Failed to deserialize test case results for submission {}: {}",
+                        submission.getId(), e.getMessage());
+            }
+        }
+
         return SubmissionDTO.builder()
                 .id(submission.getId())
                 .lessonId(submission.getLesson().getId())
@@ -93,6 +111,7 @@ public class SubmissionController {
                 .errorMessage(submission.getErrorMessage())
                 .consoleOutput(submission.getConsoleOutput())
                 .xpAwarded(submission.getXpAwarded())
+                .testCaseResults(testCaseResults)
                 .submittedAt(submission.getSubmittedAt())
                 .build();
     }
