@@ -5,6 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import { queryKeys } from '../lib/queryClient';
 import { useAuth } from '../contexts/AuthContext';
 
 /**
@@ -24,11 +25,12 @@ export function useUserProgress() {
   const { authenticated } = useAuth();
 
   return useQuery({
-    queryKey: ['userProgress'],
+    queryKey: queryKeys.learning.progress(),
     queryFn: fetchUserProgress,
     enabled: authenticated, // Only fetch if user is authenticated
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
     refetchOnWindowFocus: true, // Refetch when user returns to tab
+    refetchOnMount: 'always', // Always fetch fresh data when component mounts
     retry: 2, // Retry failed requests twice
   });
 }

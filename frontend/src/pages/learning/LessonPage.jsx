@@ -10,7 +10,8 @@ import { useLessonTestCases } from '../../hooks/useLessonTestCases';
 import { useModuleLessons } from '../../hooks/useModuleLessons';
 import { useCodeExecution } from '../../hooks/useCodeExecution';
 import { useUserProgress } from '../../hooks/useUserProgress';
-import CodeEditor, { getSavedCode, clearSavedCode } from '../../components/lesson/CodeEditor';
+import { useLatestSubmission } from '../../hooks/useLatestSubmission';
+import CodeEditor from '../../components/lesson/CodeEditor';
 import InstructionsPanel from '../../components/lesson/InstructionsPanel';
 import ConsolePanel from '../../components/lesson/ConsolePanel';
 import LessonCompleteModal from '../../components/lesson/LessonCompleteModal';
@@ -26,6 +27,7 @@ export default function LessonPage() {
   const { data: lesson, isLoading: lessonLoading, error: lessonError } = useLesson(lessonId);
   const { data: testCases, isLoading: testCasesLoading } = useLessonTestCases(lessonId);
   const { data: userProgress } = useUserProgress();
+  const { data: latestSubmission, isLoading: submissionLoading } = useLatestSubmission(lessonId);
 
   // Fetch lessons in the same module for navigation
   const { data: moduleLessons } = useModuleLessons(lesson?.moduleId);
@@ -38,17 +40,17 @@ export default function LessonPage() {
   const [showConsole, setShowConsole] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
 
-  // Load starter code or saved code on mount
+  // Load code from latest submission or starter code
   useEffect(() => {
-    if (lesson) {
-      const savedCode = getSavedCode(lessonId);
-      if (savedCode) {
-        setCode(savedCode);
+    if (lesson && !submissionLoading) {
+      // Priority: latest submission code -> starter code
+      if (latestSubmission?.code) {
+        setCode(latestSubmission.code);
       } else if (lesson.starterCode) {
         setCode(lesson.starterCode);
       }
     }
-  }, [lesson, lessonId]);
+  }, [lesson, latestSubmission, submissionLoading]);
 
   // Show console when execution starts or completes
   useEffect(() => {
@@ -115,7 +117,6 @@ export default function LessonPage() {
     if (confirm('Are you sure you want to reset your code to the starter template?')) {
       const starterCode = lesson?.starterCode || '';
       setCode(starterCode);
-      clearSavedCode(lessonId);
     }
   };
 
@@ -242,7 +243,6 @@ export default function LessonPage() {
                 <CodeEditor
                   value={code}
                   onChange={setCode}
-                  lessonId={lessonId}
                 />
               </div>
             </div>

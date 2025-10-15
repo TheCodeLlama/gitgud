@@ -1,36 +1,25 @@
 /**
  * CodeEditor Component
  * Monaco Editor wrapper for Java code editing
- * Includes auto-save to localStorage and theme support
  */
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import Editor from '@monaco-editor/react';
 
 /**
  * CodeEditor component
  * @param {string} value - Current code value
  * @param {function} onChange - Callback when code changes
- * @param {string} lessonId - Lesson ID for localStorage key
  * @param {boolean} readOnly - Whether editor is read-only
  * @param {string} className - Additional CSS classes
  */
 export default function CodeEditor({
   value,
   onChange,
-  lessonId,
   readOnly = false,
   className = '',
 }) {
   const editorRef = useRef(null);
-
-  // Auto-save to localStorage when code changes
-  useEffect(() => {
-    if (value && lessonId && !readOnly) {
-      const storageKey = `lesson-code-${lessonId}`;
-      localStorage.setItem(storageKey, value);
-    }
-  }, [value, lessonId, readOnly]);
 
   /**
    * Handle editor mount
@@ -104,25 +93,4 @@ export default function CodeEditor({
       />
     </div>
   );
-}
-
-/**
- * Get saved code from localStorage
- * @param {string} lessonId - Lesson ID
- * @returns {string|null} Saved code or null
- */
-export function getSavedCode(lessonId) {
-  if (!lessonId) return null;
-  const storageKey = `lesson-code-${lessonId}`;
-  return localStorage.getItem(storageKey);
-}
-
-/**
- * Clear saved code from localStorage
- * @param {string} lessonId - Lesson ID
- */
-export function clearSavedCode(lessonId) {
-  if (!lessonId) return;
-  const storageKey = `lesson-code-${lessonId}`;
-  localStorage.removeItem(storageKey);
 }

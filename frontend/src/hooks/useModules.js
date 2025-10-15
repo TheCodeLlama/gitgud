@@ -5,6 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import { queryKeys } from '../lib/queryClient';
 
 /**
  * Fetch all modules from the backend
@@ -21,10 +22,11 @@ const fetchModules = async () => {
  */
 export function useModules() {
   return useQuery({
-    queryKey: ['modules'],
+    queryKey: queryKeys.learning.modules(),
     queryFn: fetchModules,
-    staleTime: 1000 * 60 * 15, // Consider data fresh for 15 minutes
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes (reduced for progress updates)
     refetchOnWindowFocus: false, // Modules don't change frequently
+    refetchOnMount: 'always', // Always fetch fresh data when component mounts
     retry: 2, // Retry failed requests twice
   });
 }

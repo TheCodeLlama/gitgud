@@ -61,17 +61,41 @@ export function useCodeExecution() {
           setResult(executionResult);
           setIsExecuting(false);
 
+          // Always invalidate the latest submission query (regardless of pass/fail)
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.learning.latestSubmission(lessonId),
+            refetchType: 'all' // Refetch even if component is not mounted
+          });
+
           // Invalidate queries if execution was successful (all tests passed)
           if (executionResult.passed && executionResult.xpAwarded > 0) {
             // Invalidate user stats to show updated XP, level, streak
             if (user?.id) {
-              queryClient.invalidateQueries({ queryKey: queryKeys.gamification.stats(user.id) });
-              queryClient.invalidateQueries({ queryKey: queryKeys.gamification.profile(user.id) });
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.gamification.stats(user.id),
+                refetchType: 'all' // Refetch even if component is not mounted
+              });
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.gamification.profile(user.id),
+                refetchType: 'all'
+              });
             }
 
             // Invalidate progress queries to show lesson as completed
-            queryClient.invalidateQueries({ queryKey: queryKeys.learning.progress() });
-            queryClient.invalidateQueries({ queryKey: queryKeys.learning.lessonProgress(lessonId) });
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.learning.progress(),
+              refetchType: 'all' // Refetch even if component is not mounted
+            });
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.learning.lessonProgress(lessonId),
+              refetchType: 'all'
+            });
+
+            // Invalidate modules query to update completion percentages
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.learning.modules(),
+              refetchType: 'all' // Refetch even if component is not mounted
+            });
           }
 
           return executionResult;

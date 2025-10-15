@@ -105,6 +105,9 @@ export const queryKeys = {
     lesson: (id) => [...queryKeys.learning.all, 'lesson', id],
     progress: () => [...queryKeys.learning.all, 'progress'],
     lessonProgress: (lessonId) => [...queryKeys.learning.progress(), lessonId],
+    submissions: () => [...queryKeys.learning.all, 'submissions'],
+    latestSubmission: (lessonId) => [...queryKeys.learning.submissions(), 'latest', lessonId],
+    submissionHistory: (lessonId) => [...queryKeys.learning.submissions(), 'history', lessonId],
   },
 
   // Gamification
