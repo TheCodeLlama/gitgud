@@ -1,227 +1,174 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import Keycloak from 'keycloak-js';
-import keycloakConfig from '../config/keycloak';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  GithubAuthProvider,
+  signInWithPopup,
+} from 'firebase/auth';
+import { auth } from '../config/firebase';
 import { api } from '../lib/api';
-import axios from 'axios';
 
 const AuthContext = createContext(null);
 
 /**
- * AuthProvider - Manages authentication state with direct login/registration
+ * AuthProvider - Manages authentication state with Firebase
  */
 export function AuthProvider({ children }) {
-  const [keycloak, setKeycloak] = useState(null);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialize Keycloak for SSO check and OAuth flows
-    const keycloakInstance = new Keycloak(keycloakConfig);
+    // Listen for auth state changes
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in
+        const idToken = await firebaseUser.getIdToken();
 
-    keycloakInstance
-      .init({
-        onLoad: 'check-sso',
-        silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
-        pkceMethod: 'S256',
-      })
-      .then((authenticated) => {
-        setKeycloak(keycloakInstance);
+        // Set user and token
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName || firebaseUser.email,
+          photoURL: firebaseUser.photoURL,
+        });
+        setToken(idToken);
+        setAuthenticated(true);
 
-        if (authenticated) {
-          // User authenticated via SSO or OAuth
-          setAuthenticated(true);
-          setToken(keycloakInstance.token);
-          api.defaults.headers.common['Authorization'] = `Bearer ${keycloakInstance.token}`;
-          loadUserProfile(keycloakInstance);
+        // Set token in API client
+        api.defaults.headers.common['Authorization'] = `Bearer ${idToken}`;
 
-          // Set up token refresh
-          setInterval(() => {
-            keycloakInstance.updateToken(70).then((refreshed) => {
-              if (refreshed) {
-                setToken(keycloakInstance.token);
-                api.defaults.headers.common['Authorization'] = `Bearer ${keycloakInstance.token}`;
-              }
-            }).catch(() => {
-              console.error('Failed to refresh token');
-            });
-          }, 60000);
-        } else {
-          // Check if user has token in localStorage (direct login)
-          const storedToken = localStorage.getItem('access_token');
-          const storedUser = localStorage.getItem('user');
+        // Store token in localStorage (for page refreshes)
+        localStorage.setItem('firebase_token', idToken);
 
-          if (storedToken && storedUser) {
-            setAuthenticated(true);
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
-            api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
-          }
+        // Sync user with backend
+        try {
+          await api.post('/v1/auth/sync');
+        } catch (error) {
+          console.error('Failed to sync user with backend:', error);
         }
 
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error('Keycloak initialization failed:', error);
-        setLoading(false);
-      });
+        // Set up token refresh (Firebase tokens expire after 1 hour)
+        // Refresh token every 50 minutes to stay ahead of expiration
+        const refreshInterval = setInterval(async () => {
+          try {
+            const newToken = await firebaseUser.getIdToken(true); // Force refresh
+            setToken(newToken);
+            api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+            localStorage.setItem('firebase_token', newToken);
+          } catch (error) {
+            console.error('Failed to refresh token:', error);
+          }
+        }, 50 * 60 * 1000); // 50 minutes
+
+        // Cleanup interval on unmount
+        return () => clearInterval(refreshInterval);
+      } else {
+        // User is signed out
+        setUser(null);
+        setToken(null);
+        setAuthenticated(false);
+        delete api.defaults.headers.common['Authorization'];
+        localStorage.removeItem('firebase_token');
+      }
+
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
   }, []);
 
-  const loadUserProfile = async (keycloakInstance) => {
-    try {
-      const profile = await keycloakInstance.loadUserProfile();
-      const userData = {
-        id: profile.id,
-        email: profile.email,
-        username: profile.username,
-        firstName: profile.firstName,
-        lastName: profile.lastName,
-      };
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-    } catch (error) {
-      console.error('Failed to load user profile:', error);
-    }
-  };
-
   /**
-   * Direct username/password login using Keycloak's token endpoint
+   * Register new user with email and password
    */
-  const login = async (username, password) => {
+  const register = async (email, password, displayName) => {
     try {
-      const tokenUrl = `${keycloakConfig.url}/realms/${keycloakConfig.realm}/protocol/openid-connect/token`;
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-      const params = new URLSearchParams();
-      params.append('client_id', keycloakConfig.clientId);
-      params.append('grant_type', 'password');
-      params.append('username', username);
-      params.append('password', password);
-      params.append('scope', 'openid profile email');
+      // Optionally update display name
+      if (displayName) {
+        // Update profile not available in this version, just store in state
+        console.log('Display name will be set to:', displayName);
+      }
 
-      const response = await axios.post(tokenUrl, params, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      });
-
-      const { access_token, refresh_token } = response.data;
-
-      // Store tokens
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('refresh_token', refresh_token);
-      setToken(access_token);
-      setAuthenticated(true);
-
-      // Configure API client
-      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
-
-      // Fetch user info
-      await fetchUserInfo(access_token);
-
-      return true;
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw new Error(error.response?.data?.error_description || 'Login failed');
-    }
-  };
-
-  /**
-   * Register new user using backend API (which uses Keycloak Admin API)
-   */
-  const register = async (userData) => {
-    try {
-      const response = await api.post('/v1/auth/register', {
-        email: userData.email,
-        username: userData.username,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        password: userData.password,
-      });
-
-      // Auto-login after registration
-      await login(userData.username, userData.password);
-
-      return response.data;
+      return userCredential.user;
     } catch (error) {
       console.error('Registration failed:', error);
-      throw new Error(error.response?.data?.message || 'Registration failed');
+      throw new Error(error.message || 'Registration failed');
     }
   };
 
   /**
-   * Fetch user information from token
+   * Sign in with email and password
    */
-  const fetchUserInfo = async (accessToken) => {
+  const login = async (email, password) => {
     try {
-      const userInfoUrl = `${keycloakConfig.url}/realms/${keycloakConfig.realm}/protocol/openid-connect/userinfo`;
-
-      const response = await axios.get(userInfoUrl, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      const userData = {
-        id: response.data.sub,
-        email: response.data.email,
-        username: response.data.preferred_username,
-        firstName: response.data.given_name,
-        lastName: response.data.family_name,
-      };
-
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      return userCredential.user;
     } catch (error) {
-      console.error('Failed to fetch user info:', error);
+      console.error('Login failed:', error);
+      throw new Error(error.message || 'Login failed');
     }
   };
 
   /**
-   * Logout - clear tokens and user data
+   * Sign in with Google
    */
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    setAuthenticated(false);
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    delete api.defaults.headers.common['Authorization'];
-
-    // If Keycloak session exists, also logout from Keycloak
-    if (keycloak?.authenticated) {
-      keycloak.logout();
+  const loginWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      return userCredential.user;
+    } catch (error) {
+      console.error('Google login failed:', error);
+      throw new Error(error.message || 'Google login failed');
     }
   };
 
   /**
-   * OAuth login with Google
+   * Sign in with GitHub
    */
-  const loginWithGoogle = () => {
-    keycloak?.login({
-      idpHint: 'google',
-    });
+  const loginWithGithub = async () => {
+    try {
+      const provider = new GithubAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      return userCredential.user;
+    } catch (error) {
+      console.error('GitHub login failed:', error);
+      throw new Error(error.message || 'GitHub login failed');
+    }
   };
 
   /**
-   * OAuth login with GitHub
+   * Sign out
    */
-  const loginWithGithub = () => {
-    keycloak?.login({
-      idpHint: 'github',
-    });
+  const logout = async () => {
+    try {
+      await signOut(auth);
+      setUser(null);
+      setToken(null);
+      setAuthenticated(false);
+      delete api.defaults.headers.common['Authorization'];
+      localStorage.removeItem('firebase_token');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      throw new Error(error.message || 'Logout failed');
+    }
   };
 
   const value = {
-    keycloak,
-    authenticated,
-    loading,
     user,
     token,
+    authenticated,
+    loading,
+    register,
     login,
     logout,
-    register,
     loginWithGoogle,
     loginWithGithub,
   };
