@@ -13,10 +13,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Service for synchronizing Keycloak users with the local User entity.
+ * Service for synchronizing Firebase users with the local User entity.
  *
- * When a user logs in via Keycloak, we create a local User record if one doesn't exist,
- * or update the existing record with the latest information from Keycloak.
+ * When a user logs in via Firebase, we create a local User record if one doesn't exist,
+ * or update the existing record with the latest information from Firebase.
  */
 @Service
 @RequiredArgsConstructor
@@ -26,29 +26,29 @@ public class UserSyncService {
     private final UserRepository userRepository;
 
     /**
-     * Sync a Keycloak user to the local database.
+     * Sync a Firebase user to the local database.
      * Creates a new User if one doesn't exist, or updates the existing one.
      *
-     * @param keycloakId The Keycloak user ID (from JWT "sub" claim)
+     * @param firebaseUid The Firebase user ID (from Firebase token)
      * @param email The user's email address
-     * @param username The user's username (from JWT "preferred_username" claim)
+     * @param username The user's username
      * @return The synced User entity
      */
     @Transactional
-    public User syncUser(String keycloakId, String email, String username) {
-        log.debug("Syncing user: keycloakId={}, email={}, username={}", keycloakId, email, username);
+    public User syncUser(String firebaseUid, String email, String username) {
+        log.debug("Syncing user: firebaseUid={}, email={}, username={}", firebaseUid, email, username);
 
-        return userRepository.findByKeycloakId(keycloakId)
+        return userRepository.findByFirebaseUid(firebaseUid)
                 .map(existingUser -> updateExistingUser(existingUser, email, username))
-                .orElseGet(() -> createNewUser(keycloakId, email, username));
+                .orElseGet(() -> createNewUser(firebaseUid, email, username));
     }
 
     /**
      * Update an existing user's information.
-     * Updates email and username in case they were changed in Keycloak.
+     * Updates email and username in case they were changed in Firebase.
      */
     private User updateExistingUser(User user, String email, String username) {
-        log.debug("Updating existing user: id={}, keycloakId={}", user.getId(), user.getKeycloakId());
+        log.debug("Updating existing user: id={}, firebaseUid={}", user.getId(), user.getFirebaseUid());
 
         boolean updated = false;
 
@@ -75,15 +75,15 @@ public class UserSyncService {
     }
 
     /**
-     * Create a new user record from Keycloak information.
+     * Create a new user record from Firebase information.
      * Also initializes UserStats and UserProfile with default values.
      */
-    private User createNewUser(String keycloakId, String email, String username) {
-        log.info("Creating new user: keycloakId={}, email={}, username={}", keycloakId, email, username);
+    private User createNewUser(String firebaseUid, String email, String username) {
+        log.info("Creating new user: firebaseUid={}, email={}, username={}", firebaseUid, email, username);
 
         // Create user
         User user = new User();
-        user.setKeycloakId(keycloakId);
+        user.setFirebaseUid(firebaseUid);
         user.setEmail(email);
         user.setUsername(username);
 
@@ -109,19 +109,19 @@ public class UserSyncService {
         // Save user (cascades to stats and profile)
         user = userRepository.save(user);
 
-        log.info("New user created: id={}, keycloakId={}", user.getId(), user.getKeycloakId());
+        log.info("New user created: id={}, firebaseUid={}", user.getId(), user.getFirebaseUid());
 
         return user;
     }
 
     /**
-     * Get a user by their Keycloak ID.
+     * Get a user by their Firebase UID.
      *
-     * @param keycloakId The Keycloak user ID
+     * @param firebaseUid The Firebase user ID
      * @return The User entity, or empty if not found
      */
-    public User getUserByKeycloakId(String keycloakId) {
-        return userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found with keycloakId: " + keycloakId));
+    public User getUserByFirebaseUid(String firebaseUid) {
+        return userRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new RuntimeException("User not found with firebaseUid: " + firebaseUid));
     }
 }

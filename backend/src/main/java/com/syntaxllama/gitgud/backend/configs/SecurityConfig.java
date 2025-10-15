@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -17,13 +18,13 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 /**
- * Spring Security configuration for Keycloak OAuth2/OIDC integration.
+ * Spring Security configuration for Firebase Authentication.
  *
  * This configuration:
- * - Validates JWT tokens from Keycloak
+ * - Validates Firebase ID tokens
  * - Configures public vs protected endpoints
  * - Enables CORS for React frontend
- * - Extracts roles from Keycloak JWT claims
+ * - Extracts user information from Firebase tokens
  * - Uses stateless session management (no server-side sessions)
  */
 @Configuration
@@ -32,8 +33,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final FirebaseAuthenticationFilter firebaseAuthenticationFilter;
+
     /**
-     * Configure the security filter chain with JWT authentication and authorization rules.
+     * Configure the security filter chain with Firebase authentication and authorization rules.
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -57,9 +60,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/error").permitAll()
 
-                        // Public authentication endpoints (registration, etc.)
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                        // Note: Firebase handles registration on the client side
+                        // No backend /register endpoint needed
 
                         // Public API endpoints for unauthenticated users
                         .requestMatchers(HttpMethod.GET, "/api/v1/learning/modules").permitAll()
@@ -75,10 +77,8 @@ public class SecurityConfig {
                         .anyRequest().denyAll()
                 )
 
-                // Configure OAuth2 Resource Server with JWT validation
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(new KeycloakJwtAuthenticationConverter()))
-                );
+                // Add Firebase authentication filter before Spring Security's authentication filter
+                .addFilterBefore(firebaseAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

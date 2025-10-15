@@ -14,9 +14,9 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
 
     /**
-     * Find user by Keycloak ID (primary lookup for authentication).
+     * Find user by Firebase UID (primary lookup for authentication).
      */
-    Optional<User> findByKeycloakId(String keycloakId);
+    Optional<User> findByFirebaseUid(String firebaseUid);
 
     /**
      * Find user by email.
@@ -29,9 +29,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByUsername(String username);
 
     /**
-     * Check if user exists by Keycloak ID.
+     * Check if user exists by Firebase UID.
      */
-    boolean existsByKeycloakId(String keycloakId);
+    boolean existsByFirebaseUid(String firebaseUid);
 
     /**
      * Check if user exists by email.

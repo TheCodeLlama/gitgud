@@ -1,26 +1,23 @@
 package com.syntaxllama.gitgud.backend.controllers.auth;
 
 import com.syntaxllama.gitgud.backend.dtos.ApiResponse;
-import com.syntaxllama.gitgud.backend.dtos.auth.RegisterRequest;
 import com.syntaxllama.gitgud.backend.dtos.auth.UserProfileDTO;
 import com.syntaxllama.gitgud.backend.exceptions.BadRequestException;
 import com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException;
 import com.syntaxllama.gitgud.backend.models.User;
 import com.syntaxllama.gitgud.backend.security.AuthenticationUtil;
-import com.syntaxllama.gitgud.backend.services.KeycloakAdminService;
 import com.syntaxllama.gitgud.backend.services.UserSyncService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Controller for authentication and user profile operations.
- * Handles user synchronization with Keycloak and profile management.
+ * Handles user synchronization with Firebase and profile management.
+ *
+ * Note: User registration is handled by Firebase SDK on the client side,
+ * so no /register endpoint is needed here.
  */
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -29,11 +26,10 @@ import java.util.Map;
 public class AuthController {
 
     private final UserSyncService userSyncService;
-    private final KeycloakAdminService keycloakAdminService;
 
     /**
-     * Sync the current authenticated user from Keycloak to the local database.
-     * This endpoint is called by the frontend after successful Keycloak login to ensure
+     * Sync the current authenticated user from Firebase to the local database.
+     * This endpoint is called by the frontend after successful Firebase login to ensure
      * the user exists in our database before making other API calls.
      *
      * @return The synced user profile
@@ -41,20 +37,20 @@ public class AuthController {
     @PostMapping("/sync")
     @ResponseStatus(HttpStatus.OK)
     public ApiResponse<UserProfileDTO> syncUser() {
-        log.debug("Syncing user from JWT");
+        log.debug("Syncing user from Firebase token");
 
-        // Extract user info from JWT
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        // Extract user info from Firebase token
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new UnauthorizedException("No authenticated user found"));
 
         String email = AuthenticationUtil.getCurrentUserEmail()
-                .orElseThrow(() -> new BadRequestException("Email not found in JWT token"));
+                .orElseThrow(() -> new BadRequestException("Email not found in Firebase token"));
 
         String username = AuthenticationUtil.getCurrentUsername()
-                .orElseThrow(() -> new BadRequestException("Username not found in JWT token"));
+                .orElse(email); // Fall back to email if username not available
 
         // Sync user to database
-        User user = userSyncService.syncUser(keycloakId, email, username);
+        User user = userSyncService.syncUser(firebaseUid, email, username);
 
         // Convert to DTO
         UserProfileDTO dto = mapUserToDTO(user);
@@ -73,12 +69,12 @@ public class AuthController {
     public ApiResponse<UserProfileDTO> getCurrentUser() {
         log.debug("Getting current user profile");
 
-        // Extract Keycloak ID from JWT
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        // Extract Firebase UID from token
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new UnauthorizedException("No authenticated user found"));
 
         // Get user from database
-        User user = userSyncService.getUserByKeycloakId(keycloakId);
+        User user = userSyncService.getUserByFirebaseUid(firebaseUid);
 
         // Convert to DTO
         UserProfileDTO dto = mapUserToDTO(user);
@@ -87,55 +83,12 @@ public class AuthController {
     }
 
     /**
-     * Register a new user in Keycloak.
-     * This endpoint is publicly accessible and creates a new user account.
-     *
-     * @param request The registration request containing user details
-     * @return Success message with user ID
-     */
-    @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<Map<String, String>> registerUser(@Valid @RequestBody RegisterRequest request) {
-        log.info("=== REGISTRATION REQUEST RECEIVED ===");
-        log.info("Registering new user: username={}, email={}", request.getUsername(), request.getEmail());
-        log.debug("Full registration request: {}", request);
-
-        try {
-            log.debug("Step 1: Creating user in Keycloak...");
-            // Create user in Keycloak
-            String keycloakUserId = keycloakAdminService.createUser(request);
-            log.info("User created in Keycloak with ID: {}", keycloakUserId);
-
-            log.debug("Step 2: Syncing user to local database...");
-            // Sync user to local database
-            User user = userSyncService.syncUser(keycloakUserId, request.getEmail(), request.getUsername());
-            log.info("User synced to database with ID: {}", user.getId());
-
-            Map<String, String> response = new HashMap<>();
-            response.put("keycloakId", keycloakUserId);
-            response.put("userId", user.getId().toString());
-            response.put("username", user.getUsername());
-            response.put("email", user.getEmail());
-
-            log.info("=== REGISTRATION SUCCESSFUL ===");
-            return ApiResponse.success("User registered successfully", response);
-
-        } catch (BadRequestException e) {
-            log.warn("Registration failed (BadRequestException): {}", e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Unexpected error during registration", e);
-            throw new BadRequestException("Registration failed: " + e.getMessage());
-        }
-    }
-
-    /**
      * Map User entity to UserProfileDTO.
      */
     private UserProfileDTO mapUserToDTO(User user) {
         return UserProfileDTO.builder()
                 .id(user.getId())
-                .keycloakId(user.getKeycloakId())
+                .firebaseUid(user.getFirebaseUid())
                 .email(user.getEmail())
                 .username(user.getUsername())
                 .displayName(user.getProfile() != null ? user.getProfile().getDisplayName() : user.getUsername())

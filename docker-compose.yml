@@ -20,28 +20,6 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # PostgreSQL Database for Keycloak
-  postgres-keycloak:
-    image: postgres:17-alpine
-    container_name: gitgud-keycloak-postgres
-    environment:
-      POSTGRES_DB: ${KEYCLOAK_DB}
-      POSTGRES_USER: ${KEYCLOAK_DB_USER}
-      POSTGRES_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
-    ports:
-      - "${KEYCLOAK_DB_PORT}:5432"
-    volumes:
-      - postgres_keycloak_data:/var/lib/postgresql/data
-      - ./docker/keycloak/init-keycloak-db.sql:/docker-entrypoint-initdb.d/init-keycloak-db.sql
-    networks:
-      - gitgud-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${KEYCLOAK_DB_USER} -d ${KEYCLOAK_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
   # Redis Cache
   redis:
     image: redis:7-alpine
@@ -81,42 +59,6 @@ services:
       timeout: 10s
       retries: 5
     restart: unless-stopped
-
-  # Keycloak (OAuth/Identity Provider)
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.4.0
-    container_name: gitgud-keycloak
-    environment:
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://postgres-keycloak:5432/${KEYCLOAK_DB}
-      KC_DB_USERNAME: ${KEYCLOAK_DB_USER}
-      KC_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
-      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME}
-      KC_HOSTNAME_PORT: ${KEYCLOAK_PORT}
-      KC_HOSTNAME_STRICT: false
-      KC_HOSTNAME_STRICT_HTTPS: false
-      KC_HTTP_ENABLED: true
-      KC_HEALTH_ENABLED: true
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USER}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-    ports:
-      - "${KEYCLOAK_PORT}:8080" # Keycloak external port
-    volumes:
-      - keycloak_data:/opt/keycloak/data
-      - ./docker/keycloak/realms:/opt/keycloak/data/import
-    networks:
-      - gitgud-network
-    depends_on:
-      postgres-keycloak:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200 OK'"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-    restart: unless-stopped
-    command: start-dev --import-realm
 
   # Loki (Log Aggregation)
   loki:
@@ -189,14 +131,10 @@ services:
 volumes:
   postgres_data:
     name: gitgud-postgres-data
-  postgres_keycloak_data:
-    name: gitgud-keycloak-postgres-data
   redis_data:
     name: gitgud-redis-data
   rabbitmq_data:
     name: gitgud-rabbitmq-data
-  keycloak_data:
-    name: gitgud-keycloak-data
   loki_data:
     name: gitgud-loki-data
   prometheus_data:

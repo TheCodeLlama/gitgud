@@ -87,10 +87,10 @@ public class LearningController {
      */
     @GetMapping("/modules/recommended")
     public ResponseEntity<ApiResponse<ModuleDTO>> getRecommendedModule() {
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException("User not authenticated"));
 
-        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        User currentUser = userSyncService.getUserByFirebaseUid(firebaseUid);
         log.info("GET /api/v1/learning/modules/recommended - user: {}", currentUser.getId());
 
         ModuleDTO recommendedModule = moduleService.getRecommendedNextModule(currentUser);
@@ -157,10 +157,10 @@ public class LearningController {
      */
     @PostMapping("/progress")
     public ResponseEntity<ApiResponse<UserProgressDTO>> updateProgress(@RequestBody UpdateProgressRequest request) {
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException("User not authenticated"));
 
-        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        User currentUser = userSyncService.getUserByFirebaseUid(firebaseUid);
         log.info("POST /api/v1/learning/progress - user: {}, lesson: {}", currentUser.getId(), request.getLessonId());
 
         UserProgressDTO progress = progressService.updateProgress(currentUser, request);
@@ -175,10 +175,10 @@ public class LearningController {
      */
     @GetMapping("/progress")
     public ResponseEntity<ApiResponse<OverallProgressDTO>> getOverallProgress() {
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException("User not authenticated"));
 
-        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        User currentUser = userSyncService.getUserByFirebaseUid(firebaseUid);
         log.info("GET /api/v1/learning/progress - user: {}", currentUser.getId());
 
         OverallProgressDTO progress = progressService.getOverallProgress(currentUser);
@@ -194,10 +194,10 @@ public class LearningController {
      */
     @GetMapping("/progress/{lessonId}")
     public ResponseEntity<ApiResponse<UserProgressDTO>> getProgressForLesson(@PathVariable UUID lessonId) {
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException("User not authenticated"));
 
-        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        User currentUser = userSyncService.getUserByFirebaseUid(firebaseUid);
         log.info("GET /api/v1/learning/progress/{} - user: {}", lessonId, currentUser.getId());
 
         UserProgressDTO progress = progressService.getProgressForLesson(currentUser, lessonId);
@@ -212,10 +212,10 @@ public class LearningController {
      */
     @GetMapping("/continue")
     public ResponseEntity<ApiResponse<UUID>> getContinueLesson() {
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException("User not authenticated"));
 
-        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        User currentUser = userSyncService.getUserByFirebaseUid(firebaseUid);
         log.info("GET /api/v1/learning/continue - user: {}", currentUser.getId());
 
         UUID lessonId = progressService.getContinueLesson(currentUser);

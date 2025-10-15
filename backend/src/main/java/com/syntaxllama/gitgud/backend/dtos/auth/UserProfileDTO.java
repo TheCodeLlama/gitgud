@@ -17,7 +17,7 @@ import java.util.UUID;
 public class UserProfileDTO {
 
     private UUID id;
-    private String keycloakId;
+    private String firebaseUid;
     private String email;
     private String username;
 

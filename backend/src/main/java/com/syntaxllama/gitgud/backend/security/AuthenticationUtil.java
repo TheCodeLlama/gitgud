@@ -1,19 +1,18 @@
 package com.syntaxllama.gitgud.backend.security;
 
+import com.syntaxllama.gitgud.backend.configs.FirebaseAuthenticationFilter.FirebaseAuthenticationToken;
 import com.syntaxllama.gitgud.backend.models.User;
 import com.syntaxllama.gitgud.backend.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
 /**
- * Utility class for extracting authenticated user information from JWT tokens.
+ * Utility class for extracting authenticated user information from Firebase tokens.
  */
 @Slf4j
 @Component
@@ -30,54 +29,62 @@ public class AuthenticationUtil {
     }
 
     /**
-     * Get the JWT token from the current authentication.
+     * Get the Firebase authentication token from the current authentication.
      */
-    public static Optional<Jwt> getCurrentJwt() {
+    public static Optional<FirebaseAuthenticationToken> getCurrentFirebaseToken() {
         return getCurrentAuthentication()
-                .filter(auth -> auth instanceof JwtAuthenticationToken)
-                .map(auth -> ((JwtAuthenticationToken) auth).getToken());
+                .filter(auth -> auth instanceof FirebaseAuthenticationToken)
+                .map(auth -> (FirebaseAuthenticationToken) auth);
     }
 
     /**
-     * Extract the Keycloak user ID (subject claim) from the JWT.
-     * The "sub" claim in Keycloak JWTs contains the user's unique identifier.
+     * Extract the Firebase UID (user ID) from the authentication token.
+     * This is the user's unique identifier in Firebase.
      */
-    public static Optional<String> getCurrentKeycloakUserId() {
-        return getCurrentJwt()
-                .map(Jwt::getSubject);
+    public static Optional<String> getCurrentFirebaseUid() {
+        return getCurrentFirebaseToken()
+                .map(FirebaseAuthenticationToken::getUid);
     }
 
     /**
-     * Extract the user's email from the JWT.
+     * Extract the user's email from the Firebase token.
      */
     public static Optional<String> getCurrentUserEmail() {
-        return getCurrentJwt()
-                .map(jwt -> jwt.getClaimAsString("email"));
+        return getCurrentFirebaseToken()
+                .map(FirebaseAuthenticationToken::getEmail);
     }
 
     /**
-     * Extract the user's preferred username from the JWT.
-     * This is typically the username set in Keycloak.
+     * Extract the user's display name from the Firebase token.
      */
     public static Optional<String> getCurrentUsername() {
-        return getCurrentJwt()
-                .map(jwt -> jwt.getClaimAsString("preferred_username"));
+        return getCurrentFirebaseToken()
+                .map(token -> {
+                    // Try to get username from custom claims first
+                    Object username = token.getClaims().get("username");
+                    if (username != null) {
+                        return username.toString();
+                    }
+                    // Fall back to name or email
+                    String name = token.getName();
+                    return name != null ? name : token.getEmail();
+                });
     }
 
     /**
-     * Extract the user's given name (first name) from the JWT.
+     * Extract the user's name from the Firebase token.
      */
-    public static Optional<String> getCurrentGivenName() {
-        return getCurrentJwt()
-                .map(jwt -> jwt.getClaimAsString("given_name"));
+    public static Optional<String> getCurrentName() {
+        return getCurrentFirebaseToken()
+                .map(FirebaseAuthenticationToken::getName);
     }
 
     /**
-     * Extract the user's family name (last name) from the JWT.
+     * Get a custom claim from the Firebase token.
      */
-    public static Optional<String> getCurrentFamilyName() {
-        return getCurrentJwt()
-                .map(jwt -> jwt.getClaimAsString("family_name"));
+    public static Optional<Object> getClaim(String claimName) {
+        return getCurrentFirebaseToken()
+                .map(token -> token.getClaims().get(claimName));
     }
 
     /**
@@ -102,13 +109,13 @@ public class AuthenticationUtil {
 
     /**
      * Get the current authenticated User entity.
-     * Looks up the user by their Keycloak ID from the JWT.
+     * Looks up the user by their Firebase UID.
      */
     public User getCurrentUser() {
-        String keycloakId = getCurrentKeycloakUserId()
+        String firebaseUid = getCurrentFirebaseUid()
                 .orElseThrow(() -> new RuntimeException("No authenticated user found"));
 
-        return userRepository.findByKeycloakId(keycloakId)
-                .orElseThrow(() -> new RuntimeException("User not found in database: " + keycloakId));
+        return userRepository.findByFirebaseUid(firebaseUid)
+                .orElseThrow(() -> new RuntimeException("User not found in database: " + firebaseUid));
     }
 }

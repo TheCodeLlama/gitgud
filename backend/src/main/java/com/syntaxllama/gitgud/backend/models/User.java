@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * User entity representing application users.
- * Authentication is handled by Keycloak - this table only stores application-specific data.
+ * Authentication is handled by Firebase - this table only stores application-specific data.
  */
 @Entity
 @Table(name = "users")
@@ -18,8 +18,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class User extends BaseEntity {
 
-    @Column(name = "keycloak_id", unique = true, nullable = false)
-    private String keycloakId;
+    @Column(name = "firebase_uid", unique = true, nullable = false)
+    private String firebaseUid;
 
     @Column(unique = true, nullable = false)
     private String email;

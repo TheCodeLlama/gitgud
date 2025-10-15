@@ -52,10 +52,10 @@ public class GamificationController {
      */
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<UserStatsDTO>> getUserStats() {
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException("User not authenticated"));
 
-        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        User currentUser = userSyncService.getUserByFirebaseUid(firebaseUid);
         log.info("GET /api/v1/gamification/stats - user: {}", currentUser.getId());
 
         UserStatsDTO stats = xpService.getUserStats(currentUser);
@@ -71,10 +71,10 @@ public class GamificationController {
      */
     @PostMapping("/xp")
     public ResponseEntity<ApiResponse<XpAwardResult>> awardXp(@RequestBody AwardXpRequest request) {
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException("User not authenticated"));
 
-        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        User currentUser = userSyncService.getUserByFirebaseUid(firebaseUid);
         log.info("POST /api/v1/gamification/xp - user: {}, lesson: {}", currentUser.getId(), request.getLessonId());
 
         XpAwardResult result = xpService.awardXp(currentUser, request);
@@ -112,10 +112,10 @@ public class GamificationController {
      */
     @GetMapping("/achievements/user")
     public ResponseEntity<ApiResponse<List<UserAchievementDTO>>> getUserAchievements() {
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException("User not authenticated"));
 
-        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        User currentUser = userSyncService.getUserByFirebaseUid(firebaseUid);
         log.info("GET /api/v1/gamification/achievements/user - user: {}", currentUser.getId());
 
         List<UserAchievementDTO> userAchievements = achievementService.getUserAchievements(currentUser);
@@ -165,10 +165,10 @@ public class GamificationController {
      */
     @GetMapping("/levels/progress")
     public ResponseEntity<ApiResponse<LevelProgressDTO>> getLevelProgress() {
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException("User not authenticated"));
 
-        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        User currentUser = userSyncService.getUserByFirebaseUid(firebaseUid);
         log.info("GET /api/v1/gamification/levels/progress - user: {}", currentUser.getId());
 
         LevelProgressDTO progress = levelService.getLevelProgress(currentUser);
@@ -183,10 +183,10 @@ public class GamificationController {
      */
     @GetMapping("/profile")
     public ResponseEntity<ApiResponse<UserProfileWithStatsDTO>> getUserProfile() {
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException("User not authenticated"));
 
-        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        User currentUser = userSyncService.getUserByFirebaseUid(firebaseUid);
         log.info("GET /api/v1/gamification/profile - user: {}", currentUser.getId());
 
         UserProfileWithStatsDTO profile = profileService.getUserProfileWithStats(currentUser);
@@ -202,10 +202,10 @@ public class GamificationController {
      */
     @PutMapping("/profile")
     public ResponseEntity<ApiResponse<UserProfileDTO>> updateUserProfile(@Valid @RequestBody UpdateProfileRequest request) {
-        String keycloakId = AuthenticationUtil.getCurrentKeycloakUserId()
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
                 .orElseThrow(() -> new com.syntaxllama.gitgud.backend.exceptions.UnauthorizedException("User not authenticated"));
 
-        User currentUser = userSyncService.getUserByKeycloakId(keycloakId);
+        User currentUser = userSyncService.getUserByFirebaseUid(firebaseUid);
         log.info("PUT /api/v1/gamification/profile - user: {}", currentUser.getId());
 
         UserProfileDTO profile = profileService.updateUserProfile(currentUser, request);
