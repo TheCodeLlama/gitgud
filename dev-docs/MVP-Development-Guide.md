@@ -562,7 +562,6 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
 - [x] Add XP gain animations:
   - [x] +XP floating text
   - [x] Particle effects (optional)
-  - [ ] Sound effects (optional, user toggle)
 
 ---
 
