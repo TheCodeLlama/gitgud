@@ -21,18 +21,11 @@ export const api = axios.create({
 
 /**
  * Request interceptor
- * - Adds JWT token to Authorization header if available
  * - Logs request details in development
+ * NOTE: Token is managed by AuthContext and set directly on api instance
  */
 api.interceptors.request.use(
   (config) => {
-    // Get token from localStorage
-    const token = localStorage.getItem('access_token');
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
     // Log request in development
     if (import.meta.env.DEV) {
       console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`, config.data);
@@ -62,44 +55,16 @@ api.interceptors.response.use(
     return response;
   },
   async (error) => {
-    const originalRequest = error.config;
-
     // Log error in development
     if (import.meta.env.DEV) {
       console.error('[API Response Error]', error.response?.status, error.message);
     }
 
     // Handle 401 Unauthorized - token expired or invalid
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        // Try to refresh the token
-        const refreshToken = localStorage.getItem('refresh_token');
-
-        if (refreshToken) {
-          // Attempt token refresh (implement this endpoint when available)
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-            refresh_token: refreshToken,
-          });
-
-          const { access_token } = response.data;
-          localStorage.setItem('access_token', access_token);
-
-          // Retry the original request with new token
-          originalRequest.headers.Authorization = `Bearer ${access_token}`;
-          return api(originalRequest);
-        }
-      } catch (refreshError) {
-        // Refresh failed, clear tokens and redirect to login
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-
-        // Dispatch custom event for app to handle (e.g., redirect to login)
-        window.dispatchEvent(new CustomEvent('auth:logout'));
-
-        return Promise.reject(refreshError);
-      }
+    // Firebase token refresh is handled automatically by AuthContext
+    if (error.response?.status === 401) {
+      console.error('[API] Unauthorized - Firebase token may be expired');
+      window.dispatchEvent(new CustomEvent('auth:logout'));
     }
 
     // Handle 403 Forbidden
@@ -128,15 +93,12 @@ api.interceptors.response.use(
 
 /**
  * Helper function to set authentication token
- * @param {string} token - JWT access token
- * @param {string} refreshToken - JWT refresh token (optional)
+ * @param {string} token - Firebase ID token
  */
-export const setAuthToken = (token, refreshToken = null) => {
+export const setAuthToken = (token) => {
   if (token) {
-    localStorage.setItem('access_token', token);
-    if (refreshToken) {
-      localStorage.setItem('refresh_token', refreshToken);
-    }
+    localStorage.setItem('firebase_token', token);
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 };
 
@@ -144,21 +106,21 @@ export const setAuthToken = (token, refreshToken = null) => {
  * Helper function to clear authentication tokens
  */
 export const clearAuthTokens = () => {
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('firebase_token');
+  delete api.defaults.headers.common['Authorization'];
 };
 
 /**
  * Helper function to get current authentication token
- * @returns {string|null} - Current access token or null
+ * @returns {string|null} - Current Firebase token or null
  */
 export const getAuthToken = () => {
-  return localStorage.getItem('access_token');
+  return localStorage.getItem('firebase_token');
 };
 
 /**
  * Check if user is authenticated
- * @returns {boolean} - True if access token exists
+ * @returns {boolean} - True if Firebase token exists
  */
 export const isAuthenticated = () => {
   return !!getAuthToken();
