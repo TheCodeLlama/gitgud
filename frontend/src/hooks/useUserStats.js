@@ -5,6 +5,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import { queryKeys } from '../lib/queryClient';
 import { useAuth } from '../contexts/AuthContext';
 
 /**
@@ -21,10 +22,10 @@ const fetchUserStats = async () => {
  * @returns {Object} Query result with stats data, loading, and error states
  */
 export function useUserStats() {
-  const { authenticated } = useAuth();
+  const { authenticated, user } = useAuth();
 
   return useQuery({
-    queryKey: ['userStats'],
+    queryKey: user?.id ? queryKeys.gamification.stats(user.id) : ['userStats'],
     queryFn: fetchUserStats,
     enabled: authenticated, // Only fetch if user is authenticated
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes

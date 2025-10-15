@@ -4,7 +4,10 @@
  */
 
 import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
+import { queryKeys } from '../lib/queryClient';
+import { useAuth } from '../contexts/AuthContext';
 
 /**
  * Hook for code execution workflow
@@ -15,6 +18,8 @@ export function useCodeExecution() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   /**
    * Submit code for execution
@@ -55,6 +60,20 @@ export function useCodeExecution() {
         if (executionResult.status === 'COMPLETED' || executionResult.status === 'FAILED') {
           setResult(executionResult);
           setIsExecuting(false);
+
+          // Invalidate queries if execution was successful (all tests passed)
+          if (executionResult.passed && executionResult.xpAwarded > 0) {
+            // Invalidate user stats to show updated XP, level, streak
+            if (user?.id) {
+              queryClient.invalidateQueries({ queryKey: queryKeys.gamification.stats(user.id) });
+              queryClient.invalidateQueries({ queryKey: queryKeys.gamification.profile(user.id) });
+            }
+
+            // Invalidate progress queries to show lesson as completed
+            queryClient.invalidateQueries({ queryKey: queryKeys.learning.progress() });
+            queryClient.invalidateQueries({ queryKey: queryKeys.learning.lessonProgress(lessonId) });
+          }
+
           return executionResult;
         }
 
@@ -69,7 +88,7 @@ export function useCodeExecution() {
       setIsExecuting(false);
       throw new Error(errorMessage);
     }
-  }, []);
+  }, [queryClient, user]);
 
   /**
    * Reset execution state

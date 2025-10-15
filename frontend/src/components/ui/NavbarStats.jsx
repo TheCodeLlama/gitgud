@@ -8,12 +8,15 @@ import { Link } from 'react-router';
 
 /**
  * NavbarStats component
- * @param {object} stats - User stats object with currentLevel, currentLevelXp, xpToNextLevel, totalXp, currentStreakDays
+ * @param {object} stats - User stats object with currentLevel, currentLevelXp, xpForCurrentLevel, totalXp, currentStreakDays
  */
 export default function NavbarStats({ stats }) {
   if (!stats) return null;
 
-  const progressPercent = ((stats.currentLevelXp || 0) / stats.xpToNextLevel) * 100;
+  // Calculate progress percentage within current level
+  const progressPercent = stats.xpForCurrentLevel > 0
+    ? ((stats.currentLevelXp || 0) / stats.xpForCurrentLevel) * 100
+    : 0;
 
   return (
     <div className="flex items-center gap-4">
@@ -41,7 +44,7 @@ export default function NavbarStats({ stats }) {
               role="progressbar"
               aria-valuenow={stats.currentLevelXp || 0}
               aria-valuemin="0"
-              aria-valuemax={stats.xpToNextLevel}
+              aria-valuemax={stats.xpForCurrentLevel}
               aria-label={`Level progress: ${Math.round(progressPercent)}%`}
             />
           </div>

@@ -2,14 +2,21 @@ package com.syntaxllama.gitgud.backend.services.execution;
 
 import com.syntaxllama.gitgud.backend.configs.RabbitMQConfig;
 import com.syntaxllama.gitgud.backend.dtos.execution.*;
+import com.syntaxllama.gitgud.backend.dtos.gamification.AwardXpRequest;
+import com.syntaxllama.gitgud.backend.dtos.gamification.XpAwardResult;
+import com.syntaxllama.gitgud.backend.dtos.learning.UpdateProgressRequest;
 import com.syntaxllama.gitgud.backend.models.Lesson;
 import com.syntaxllama.gitgud.backend.models.Submission;
 import com.syntaxllama.gitgud.backend.models.TestCase;
 import com.syntaxllama.gitgud.backend.models.User;
+import com.syntaxllama.gitgud.backend.models.UserProgress;
 import com.syntaxllama.gitgud.backend.repositories.LessonRepository;
 import com.syntaxllama.gitgud.backend.repositories.SubmissionRepository;
 import com.syntaxllama.gitgud.backend.repositories.TestCaseRepository;
 import com.syntaxllama.gitgud.backend.repositories.UserRepository;
+import com.syntaxllama.gitgud.backend.repositories.UserProgressRepository;
+import com.syntaxllama.gitgud.backend.services.gamification.XpService;
+import com.syntaxllama.gitgud.backend.services.learning.ProgressService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -18,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Worker service that processes code execution jobs from RabbitMQ queue.
@@ -35,6 +43,9 @@ public class CodeExecutionWorker {
     private final SubmissionRepository submissionRepository;
     private final UserRepository userRepository;
     private final LessonRepository lessonRepository;
+    private final UserProgressRepository userProgressRepository;
+    private final XpService xpService;
+    private final ProgressService progressService;
 
     /**
      * Listen for code execution jobs from RabbitMQ queue.
@@ -78,8 +89,23 @@ public class CodeExecutionWorker {
             boolean allPassed = passedTests == testCases.size();
             ExecutionStatus status = allPassed ? ExecutionStatus.COMPLETED : ExecutionStatus.FAILED;
 
-            // Calculate XP with partial credit (proportional to tests passed)
-            int xpAwarded = calculatePartialCreditXp(passedTests, testCases.size());
+            // Load user and lesson for XP/progress updates
+            User user = userRepository.findById(job.getUserId()).orElse(null);
+            Lesson lesson = lessonRepository.findById(job.getLessonId()).orElse(null);
+
+            if (user == null || lesson == null) {
+                failJob(job.getJobId(), "User or lesson not found");
+                return;
+            }
+
+            // Update user progress status
+            updateUserProgress(user, lesson, allPassed, passedTests, testCases.size());
+
+            // Award XP if all tests passed
+            int xpAwarded = 0;
+            if (allPassed) {
+                xpAwarded = awardXpForCompletion(user, lesson);
+            }
 
             // Build final result
             ExecutionResult result = ExecutionResult.builder()
@@ -101,7 +127,8 @@ public class CodeExecutionWorker {
             // Save submission to database
             saveSubmission(job, result);
 
-            log.info("Job {} completed: {}/{} tests passed", job.getJobId(), passedTests, testCases.size());
+            log.info("Job {} completed: {}/{} tests passed, {} XP awarded",
+                    job.getJobId(), passedTests, testCases.size(), xpAwarded);
 
         } catch (Exception e) {
             log.error("Error processing job {}", job.getJobId(), e);
@@ -274,40 +301,93 @@ public class CodeExecutionWorker {
     }
 
     /**
-     * Calculate XP with partial credit based on proportion of tests passed.
-     * Awards proportional XP even if not all tests pass.
+     * Update user progress for a lesson based on execution results.
      *
-     * Formula:
-     * - Base XP per test case: 10 XP
-     * - Partial credit: (passedTests / totalTests) * totalPossibleXP
-     * - Minimum 0 XP if no tests pass
-     *
-     * Examples:
-     * - 5/5 tests passed: 50 XP (100%)
-     * - 4/5 tests passed: 40 XP (80%)
-     * - 1/5 tests passed: 10 XP (20%)
-     * - 0/5 tests passed: 0 XP (0%)
-     *
-     * @param passedTests Number of tests that passed
+     * @param user The user who submitted the code
+     * @param lesson The lesson being attempted
+     * @param allPassed Whether all tests passed
+     * @param passedTests Number of tests passed
      * @param totalTests Total number of tests
-     * @return XP awarded (rounded down to nearest integer)
      */
-    private Integer calculatePartialCreditXp(int passedTests, int totalTests) {
-        if (totalTests == 0 || passedTests == 0) {
+    private void updateUserProgress(User user, Lesson lesson, boolean allPassed, int passedTests, int totalTests) {
+        try {
+            // Determine the new status
+            UserProgress.Status newStatus;
+            if (allPassed) {
+                newStatus = UserProgress.Status.COMPLETED;
+            } else if (passedTests > 0) {
+                newStatus = UserProgress.Status.IN_PROGRESS;
+            } else {
+                newStatus = UserProgress.Status.IN_PROGRESS; // Still mark as started even if all failed
+            }
+
+            // Calculate score as percentage
+            Integer score = totalTests > 0 ? (passedTests * 100) / totalTests : 0;
+
+            // Update progress via service
+            UpdateProgressRequest progressRequest = UpdateProgressRequest.builder()
+                    .lessonId(lesson.getId())
+                    .status(newStatus)
+                    .score(score)
+                    .build();
+
+            progressService.updateProgress(user, progressRequest);
+
+            log.info("Updated progress for user {} on lesson {}: status={}, score={}",
+                    user.getId(), lesson.getId(), newStatus, score);
+
+        } catch (Exception e) {
+            log.error("Failed to update progress for user {} on lesson {}: {}",
+                    user.getId(), lesson.getId(), e.getMessage(), e);
+            // Don't fail the job if progress update fails
+        }
+    }
+
+    /**
+     * Award XP to user for completing a lesson.
+     * Only awards XP on first completion to prevent farming.
+     *
+     * @param user The user who completed the lesson
+     * @param lesson The completed lesson
+     * @return XP awarded
+     */
+    private int awardXpForCompletion(User user, Lesson lesson) {
+        try {
+            // Check if user has already completed this lesson
+            Optional<UserProgress> existingProgress =
+                    userProgressRepository.findByUserIdAndLessonId(user.getId(), lesson.getId());
+
+            // Only award XP if this is first completion
+            boolean firstCompletion = existingProgress.isEmpty() ||
+                    existingProgress.get().getStatus() != UserProgress.Status.COMPLETED;
+
+            if (!firstCompletion) {
+                log.info("User {} has already completed lesson {}. No XP awarded.",
+                        user.getId(), lesson.getId());
+                return 0;
+            }
+
+            // Award XP via XpService (includes difficulty multiplier, streak bonus, etc.)
+            AwardXpRequest xpRequest = AwardXpRequest.builder()
+                    .lessonId(lesson.getId())
+                    .baseXp(lesson.getXpReward())
+                    .difficulty(lesson.getDifficulty().name())
+                    .firstAttempt(true) // This is their first completion
+                    .build();
+
+            XpAwardResult xpResult = xpService.awardXp(user, xpRequest);
+
+            log.info("Awarded {} XP to user {} for completing lesson {} (level: {}, leveledUp: {})",
+                    xpResult.getXpAwarded(), user.getId(), lesson.getId(),
+                    xpResult.getCurrentLevel(), xpResult.getLeveledUp());
+
+            return xpResult.getXpAwarded().intValue();
+
+        } catch (Exception e) {
+            log.error("Failed to award XP to user {} for lesson {}: {}",
+                    user.getId(), lesson.getId(), e.getMessage(), e);
+            // Return 0 instead of failing the job
             return 0;
         }
-
-        // Base XP: 10 per test case
-        int baseXpPerTest = 10;
-        int totalPossibleXp = totalTests * baseXpPerTest;
-
-        // Calculate proportional XP
-        double proportion = (double) passedTests / totalTests;
-        int xpAwarded = (int) Math.floor(proportion * totalPossibleXp);
-
-        log.debug("XP calculation: {}/{} tests passed = {} XP ({}%)",
-            passedTests, totalTests, xpAwarded, (int)(proportion * 100));
-
-        return xpAwarded;
     }
 }
