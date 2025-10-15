@@ -68,11 +68,15 @@ export default function InstructionsPanel({ lesson, testCases = [] }) {
                   {children}
                 </code>
               ) : (
-                <code className="block bg-[var(--surface-muted)] text-[var(--text)] p-4 rounded-lg overflow-x-auto font-mono text-sm">
+                <code className="text-[var(--text)] font-mono text-sm">
                   {children}
                 </code>
               ),
-            pre: ({ children }) => <pre className="mb-4">{children}</pre>,
+            pre: ({ children }) => (
+              <pre className="mb-4 overflow-x-auto inline-block max-w-full bg-[var(--surface-muted)] p-4 rounded-lg">
+                {children}
+              </pre>
+            ),
             ul: ({ children }) => (
               <ul className="list-disc list-inside text-[var(--text)] mb-4 space-y-1">
                 {children}
