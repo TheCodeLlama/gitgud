@@ -167,6 +167,9 @@ GitGud/
 # Start infrastructure
 docker-compose up -d
 
+# macOS users: Start Docker socket forwarding (in a separate terminal)
+socat TCP-LISTEN:2376,range=127.0.0.1/32,reuseaddr,fork UNIX-CLIENT:/var/run/docker.sock
+
 # In separate terminals:
 # Terminal 1: Backend
 cd backend && ./mvnw spring-boot:run
@@ -272,6 +275,20 @@ GitGud executes user-submitted Java code in hardened Docker containers with comp
 cd docker/java-executor
 docker build -t gitgud-java-executor:latest .
 ```
+
+**macOS Users - Docker Socket Setup:**
+
+If you're on macOS, Docker Desktop uses a Unix socket that may not be accessible via TCP. You'll need to forward the Docker socket to TCP using `socat`:
+
+```bash
+# Install socat
+brew install socat
+
+# Forward Docker socket to TCP (run in a separate terminal and keep it running)
+socat TCP-LISTEN:2376,range=127.0.0.1/32,reuseaddr,fork UNIX-CLIENT:/var/run/docker.sock
+```
+
+**Note**: Keep the `socat` command running in a separate terminal while the backend is running. The backend is configured to connect to Docker via `tcp://localhost:2376` (see `application.yml`).
 
 **Submit code for execution:**
 ```bash

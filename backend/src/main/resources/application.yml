@@ -120,7 +120,7 @@ code:
       memory:
         mb: ${CODE_EXECUTION_MAX_MEMORY_MB}
     docker:
-      host: unix:///var/run/docker.sock
+      host: tcp://localhost:2376
       timeout: 30
       image: ${CODE_EXECUTION_DOCKER_IMAGE}
 

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.concurrent.*;
 
 /**
@@ -112,7 +113,7 @@ public class DockerExecutorService {
      * - CPU limits (0.5 CPU)
      * - PID limits (50)
      * - Non-root user (UID 1000)
-     * - Tmpfs for /tmp (100MB, noexec, nosuid)
+     * - Tmpfs for /tmp (100MB, nosuid - exec allowed for Java compilation)
      */
     private String createSecureContainer() {
         HostConfig hostConfig = HostConfig.newHostConfig()
@@ -129,10 +130,10 @@ public class DockerExecutorService {
                 .withCapDrop(Capability.ALL)
                 // Read-only root filesystem
                 .withReadonlyRootfs(true)
-                // Tmpfs for temporary files (100MB, noexec, nosuid)
+                // Tmpfs for temporary files (100MB, nosuid but exec allowed for Java compilation)
+                // Note: We need exec for javac/java but nosuid prevents privilege escalation
                 .withTmpFs(java.util.Map.of(
-                        "/tmp", "rw,noexec,nosuid,size=100m",
-                        "/home/coderunner", "rw,noexec,nosuid,size=50m"
+                        "/tmp", "rw,nosuid,size=100m"
                 ))
                 // Security options (no-new-privileges prevents privilege escalation)
                 .withSecurityOpts(java.util.List.of("no-new-privileges"));
@@ -141,7 +142,7 @@ public class DockerExecutorService {
                 .withHostConfig(hostConfig)
                 // Run as non-root user (UID 1000)
                 .withUser("1000:1000")
-                .withWorkingDir("/home/coderunner")
+                .withWorkingDir("/tmp")
                 .withCmd("sleep", "3600") // Keep container alive
                 .exec();
 
@@ -149,12 +150,17 @@ public class DockerExecutorService {
     }
 
     /**
-     * Write source code to container.
+     * Write source code to container using base64 encoding to avoid shell escaping issues.
      */
     private void writeSourceCode(String containerId, String sourceCode) throws InterruptedException, ExecutionException, TimeoutException {
-        // Create Main.java file with the source code
-        String command = String.format("sh -c 'cat > Main.java << EOF\n%s\nEOF'", sourceCode);
+        // Encode source code to base64 to safely pass through shell
+        String base64Code = Base64.getEncoder().encodeToString(sourceCode.getBytes(StandardCharsets.UTF_8));
+
+        // Decode and write to Main.java (working directory is /tmp)
+        String command = String.format("echo '%s' | base64 -d > Main.java", base64Code);
         executeCommand(containerId, command, 5);
+
+        log.debug("Wrote source code to Main.java in container {}", containerId);
     }
 
     /**
@@ -170,6 +176,7 @@ public class DockerExecutorService {
                 .withCmd("javac", "Main.java")
                 .withAttachStdout(true)
                 .withAttachStderr(true)
+                .withWorkingDir("/tmp")
                 .exec();
 
         Future<Void> future = executorService.submit(() -> {
@@ -208,12 +215,13 @@ public class DockerExecutorService {
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
-        // Create execution command
+        // Create execution command (run from /tmp directory where Main.class is)
         ExecCreateCmdResponse execCreateCmd = dockerClient.execCreateCmd(containerId)
                 .withCmd("java", "Main")
                 .withAttachStdout(true)
                 .withAttachStderr(true)
                 .withAttachStdin(input != null && !input.isEmpty())
+                .withWorkingDir("/tmp")
                 .exec();
 
         // Execute with timeout
