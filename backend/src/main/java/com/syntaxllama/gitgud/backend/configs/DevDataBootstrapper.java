@@ -23,26 +23,43 @@ import java.util.List;
 @Slf4j
 public class DevDataBootstrapper implements ApplicationRunner {
 
-    private final ModuleRepository moduleRepository;
-    private final LessonRepository lessonRepository;
-    private final TestCaseRepository testCaseRepository;
     private final AchievementRepository achievementRepository;
+    private final LessonRepository lessonRepository;
+    private final ModuleRepository moduleRepository;
+    private final SubmissionRepository submissionRepository;
+    private final TestCaseRepository testCaseRepository;
+    private final UserAchievementRepository userAchievementRepository;
+    private final UserProfileRepository userProfileRepository;
+    private final UserProgressRepository userProgressRepository;
+    private final UserRepository userRepository;
+    private final UserStatsRepository userStatsRepository;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
         log.info("Starting development data bootstrapping...");
 
-        // Only seed if database is empty
-        if (moduleRepository.count() > 0) {
-            log.info("Database already contains data. Skipping bootstrapping.");
-            return;
-        }
+        // Clear existing data
+        clearDatabase();
 
+        // Seed fresh data
         seedModulesAndLessons();
         seedAchievements();
 
         log.info("Development data bootstrapping completed successfully!");
+    }
+
+    private void clearDatabase() {
+        achievementRepository.deleteAll();
+        submissionRepository.deleteAll();
+        userProgressRepository.deleteAll();
+        lessonRepository.deleteAll();
+        moduleRepository.deleteAll();
+        testCaseRepository.deleteAll();
+        userAchievementRepository.deleteAll();
+        userProfileRepository.deleteAll();
+        userRepository.deleteAll();
+        userStatsRepository.deleteAll();
     }
 
     private void seedModulesAndLessons() {
@@ -63,7 +80,119 @@ public class DevDataBootstrapper implements ApplicationRunner {
             javaFundamentals,
             "Hello, Java!",
             "Your first Java program",
-            "# Hello, Java!\n\nWelcome to your first Java lesson! In this lesson, you'll write your first Java program that prints \"Hello, World!\" to the console.\n\n## Instructions\n\n1. Complete the `main` method\n2. Use `System.out.println()` to print \"Hello, World!\"\n3. Click \"Run Code\" to test your solution\n\n## Example Output\n```\nHello, World!\n```",
+            """
+            # Hello, Java!
+
+            Welcome to your very first Java lesson! By the end of this tutorial, you'll have written and run your first Java program. Let's dive in!
+
+            ## What is Java?
+
+            Java is a powerful, versatile programming language used by millions of developers worldwide. It's known for:
+            - **Platform independence**: Write once, run anywhere (Windows, Mac, Linux)
+            - **Object-oriented**: Helps organize code into reusable components
+            - **Strong typing**: Catches errors before your code runs
+            - **Wide adoption**: Used in everything from mobile apps to enterprise systems
+
+            ## Understanding Your First Program
+
+            Every Java program starts with a **class**. Think of a class as a container for your code. Here's the basic structure:
+
+            ```java
+            public class Main {
+                // Code goes here
+            }
+            ```
+
+            - `public` means this class can be accessed from anywhere
+            - `class` is the keyword that starts a class definition
+            - `Main` is the name of our class (must match the file name)
+            - Curly braces `{ }` contain all the code for this class
+
+            ## The main Method
+
+            Every Java application needs a **main method** - this is where your program starts running. Think of it as the entry point:
+
+            ```java
+            public static void main(String[] args) {
+                // Your code goes here
+            }
+            ```
+
+            Let's break this down:
+            - `public` - can be called from anywhere
+            - `static` - can run without creating an object
+            - `void` - doesn't return any value
+            - `main` - the special name Java looks for to start the program
+            - `String[] args` - allows you to pass arguments when running the program
+
+            Don't worry if this seems complex - you'll understand it better as you progress!
+
+            ## Printing to the Console
+
+            To display text in Java, we use `System.out.println()`. Think of it as Java's way of "speaking" to you:
+
+            ```java
+            System.out.println("Hello, World!");
+            ```
+
+            - `System.out` - the standard output stream (your console)
+            - `println` - "print line" - prints text and moves to the next line
+            - The text goes inside **quotes** - this is called a **string**
+            - Every statement ends with a **semicolon** `;`
+
+            ### Strings
+
+            A **string** is a sequence of characters (letters, numbers, symbols) surrounded by double quotes:
+
+            ```java
+            "Hello, World!"    // A string
+            "Java is awesome!" // Another string
+            "12345"           // Even numbers can be strings!
+            ```
+
+            ## Your Challenge
+
+            Now it's your turn! Complete the program by adding the `System.out.println()` statement to print "Hello, World!" to the console.
+
+            ### Instructions
+
+            1. Look at the code editor on the right
+            2. Find the comment that says `// TODO: Print "Hello, World!"`
+            3. Below that comment, write: `System.out.println("Hello, World!");`
+            4. Click the "Run Code" button to test your solution
+            5. If successful, you'll see "Hello, World!" in the console output!
+
+            ### Expected Output
+
+            When your program runs correctly, you should see:
+            ```
+            Hello, World!
+            ```
+
+            ### Hints
+
+            - Don't forget the semicolon `;` at the end
+            - Make sure the text is in double quotes: `"Hello, World!"`
+            - Check your spelling and capitalization - it must match exactly
+            - The parentheses must be balanced: `(` and `)`
+
+            ### Common Mistakes
+
+            - Missing semicolon: `System.out.println("Hello, World!")`
+            - Single quotes instead of double: `System.out.println('Hello, World!')`
+            - Wrong capitalization: `system.out.println("Hello, World!")`
+            - Correct: `System.out.println("Hello, World!");`
+
+            ## What's Next?
+
+            After completing this lesson, you'll learn about:
+            - Variables - storing data in your programs
+            - Data types - different kinds of information
+            - Math operations - making calculations
+            - And much more!
+
+            Take your time, and don't hesitate to experiment. Programming is learned by doing!
+            """,
             Lesson.LessonType.TUTORIAL,
             10,
             Lesson.Difficulty.EASY,
