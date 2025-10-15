@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   GithubAuthProvider,
   signInWithPopup,
+  updateProfile,
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { api } from '../lib/api';
@@ -45,9 +46,12 @@ export function AuthProvider({ children }) {
         // Store token in localStorage (for page refreshes)
         localStorage.setItem('firebase_token', idToken);
 
-        // Sync user with backend
+        // Sync user with backend (send displayName as username for new users)
         try {
-          await api.post('/v1/auth/sync');
+          const syncData = firebaseUser.displayName
+            ? { username: firebaseUser.displayName }
+            : {};
+          await api.post('/v1/auth/sync', syncData);
         } catch (error) {
           console.error('Failed to sync user with backend:', error);
         }
@@ -86,14 +90,18 @@ export function AuthProvider({ children }) {
   /**
    * Register new user with email and password
    */
-  const register = async (email, password, displayName) => {
+  const register = async (email, password, username) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-      // Optionally update display name
-      if (displayName) {
-        // Update profile not available in this version, just store in state
-        console.log('Display name will be set to:', displayName);
+      // Set the username as the display name on Firebase profile
+      if (username) {
+        await updateProfile(userCredential.user, {
+          displayName: username,
+        });
+
+        // Force refresh the ID token to include the updated displayName
+        await userCredential.user.getIdToken(true);
       }
 
       return userCredential.user;

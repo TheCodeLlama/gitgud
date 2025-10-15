@@ -33,7 +33,8 @@ export default function SignUp() {
     setLoading(true);
 
     try {
-      await registerUser(data);
+      // Pass email, password, and username to registerUser function
+      await registerUser(data.email, data.password, data.username);
       // Registration successful, redirect to dashboard
       navigate('/dashboard');
     } catch (err) {

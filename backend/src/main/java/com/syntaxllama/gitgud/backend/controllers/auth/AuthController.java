@@ -12,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * Controller for authentication and user profile operations.
  * Handles user synchronization with Firebase and profile management.
@@ -32,11 +34,12 @@ public class AuthController {
      * This endpoint is called by the frontend after successful Firebase login to ensure
      * the user exists in our database before making other API calls.
      *
+     * @param request Optional request body containing username for new users
      * @return The synced user profile
      */
     @PostMapping("/sync")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<UserProfileDTO> syncUser() {
+    public ApiResponse<UserProfileDTO> syncUser(@RequestBody(required = false) Map<String, String> request) {
         log.debug("Syncing user from Firebase token");
 
         // Extract user info from Firebase token
@@ -46,8 +49,16 @@ public class AuthController {
         String email = AuthenticationUtil.getCurrentUserEmail()
                 .orElseThrow(() -> new BadRequestException("Email not found in Firebase token"));
 
-        String username = AuthenticationUtil.getCurrentUsername()
-                .orElse(email); // Fall back to email if username not available
+        // Get username from request body (for new registrations), or from token, or fall back to email
+        String username;
+        if (request != null && request.containsKey("username")) {
+            username = request.get("username");
+            log.debug("Using username from request: {}", username);
+        } else {
+            username = AuthenticationUtil.getCurrentUsername()
+                    .orElse(email); // Fall back to email if username not available
+            log.debug("Using username from token or email: {}", username);
+        }
 
         // Sync user to database
         User user = userSyncService.syncUser(firebaseUid, email, username);
