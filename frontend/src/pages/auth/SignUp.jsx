@@ -2,6 +2,8 @@ import { useForm } from 'react-hook-form';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router';
+import { useUsernameValidation } from '../../hooks/useUsernameValidation';
+import { usePasswordValidation } from '../../hooks/usePasswordValidation';
 
 /**
  * Sign Up page - Split layout with image and registration form
@@ -20,6 +22,23 @@ export default function SignUp() {
   } = useForm();
 
   const password = watch('password');
+  const confirmPassword = watch('confirmPassword');
+  const username = watch('username');
+
+  // Use custom hook for username validation
+  const {
+    checking: usernameChecking,
+    available: usernameAvailable,
+    error: usernameError,
+    validateUsername,
+  } = useUsernameValidation(username, 200);
+
+  // Use custom hook for password validation
+  const {
+    validation: passwordValidation,
+    error: passwordError,
+    isValid: passwordIsValid,
+  } = usePasswordValidation(password, confirmPassword);
 
   // Redirect to dashboard if already authenticated
   useEffect(() => {
@@ -30,6 +49,32 @@ export default function SignUp() {
 
   const onSubmit = async (data) => {
     setError('');
+
+    // Check username format and availability before submitting
+    const validationError = validateUsername(data.username);
+    if (validationError) {
+      return;
+    }
+
+    if (usernameAvailable === false) {
+      return;
+    }
+
+    // If we haven't checked availability yet, wait for it
+    if (usernameAvailable === null) {
+      return;
+    }
+
+    // Check password validity
+    if (!passwordIsValid) {
+      return;
+    }
+
+    // Check passwords match
+    if (data.password !== data.confirmPassword) {
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -187,6 +232,7 @@ export default function SignUp() {
                 <input
                   id="firstName"
                   type="text"
+                  autoComplete="given-name"
                   {...register('firstName', {
                     required: 'First name is required',
                   })}
@@ -207,6 +253,7 @@ export default function SignUp() {
                 <input
                   id="lastName"
                   type="text"
+                  autoComplete="family-name"
                   {...register('lastName', {
                     required: 'Last name is required',
                   })}
@@ -225,24 +272,50 @@ export default function SignUp() {
               <label htmlFor="username" className="block text-sm font-medium mb-2 text-[var(--text)]">
                 Username
               </label>
-              <input
-                id="username"
-                type="text"
-                {...register('username', {
-                  required: 'Username is required',
-                  minLength: {
-                    value: 3,
-                    message: 'Username must be at least 3 characters',
-                  },
-                })}
-                className="w-full h-12 px-4 rounded-md bg-[var(--surface)] text-[var(--text)]
-                         border border-[var(--border)] focus:outline-none focus:ring-2
-                         focus:ring-[var(--accent)] focus:border-transparent transition-all"
-                placeholder="johndoe"
-              />
-              {errors.username && (
+              <div className="relative">
+                <input
+                  id="username"
+                  type="text"
+                  autoComplete="username"
+                  {...register('username', {
+                    required: 'Username is required',
+                    minLength: {
+                      value: 3,
+                      message: 'Username must be at least 3 characters',
+                    },
+                    maxLength: {
+                      value: 100,
+                      message: 'Username must be less than 100 characters',
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9_-]+$/,
+                      message: 'Username can only contain letters, numbers, underscores, and hyphens',
+                    },
+                  })}
+                  className="w-full h-12 px-4 rounded-md bg-[var(--surface)] text-[var(--text)]
+                           border border-[var(--border)] focus:outline-none focus:ring-2
+                           focus:ring-[var(--accent)] focus:border-transparent transition-all"
+                  placeholder="johndoe"
+                />
+                {usernameChecking && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="w-5 h-5 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+                  </div>
+                )}
+              </div>
+              {/* Show custom username error first, then react-hook-form errors */}
+              {usernameError && (
+                <p className="mt-1 text-sm text-red-500">{usernameError}</p>
+              )}
+              {!usernameError && errors.username && (
                 <p className="mt-1 text-sm text-red-500">{errors.username.message}</p>
               )}
+              {usernameAvailable === true && !usernameError && (
+                <p className="mt-1 text-sm text-green-500">Username is available!</p>
+              )}
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                3-100 characters. Letters, numbers, underscores, and hyphens only.
+              </p>
             </div>
 
             <div>
@@ -252,6 +325,7 @@ export default function SignUp() {
               <input
                 id="email"
                 type="email"
+                autoComplete="email"
                 {...register('email', {
                   required: 'Email is required',
                   pattern: {
@@ -276,18 +350,52 @@ export default function SignUp() {
               <input
                 id="password"
                 type="password"
+                autoComplete="new-password"
                 {...register('password', {
                   required: 'Password is required',
-                  minLength: {
-                    value: 8,
-                    message: 'Password must be at least 8 characters',
-                  },
                 })}
                 className="w-full h-12 px-4 rounded-md bg-[var(--surface)] text-[var(--text)]
                          border border-[var(--border)] focus:outline-none focus:ring-2
                          focus:ring-[var(--accent)] focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
+              {/* Real-time password requirements */}
+              {password && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className={passwordValidation.hasMinLength ? 'text-green-500' : 'text-red-500'}>
+                      {passwordValidation.hasMinLength ? '✓' : '✗'}
+                    </span>
+                    <span className={passwordValidation.hasMinLength ? 'text-green-500' : 'text-[var(--text-muted)]'}>
+                      At least 6 characters
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className={passwordValidation.hasUpperCase ? 'text-green-500' : 'text-red-500'}>
+                      {passwordValidation.hasUpperCase ? '✓' : '✗'}
+                    </span>
+                    <span className={passwordValidation.hasUpperCase ? 'text-green-500' : 'text-[var(--text-muted)]'}>
+                      One uppercase letter
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className={passwordValidation.hasLowerCase ? 'text-green-500' : 'text-red-500'}>
+                      {passwordValidation.hasLowerCase ? '✓' : '✗'}
+                    </span>
+                    <span className={passwordValidation.hasLowerCase ? 'text-green-500' : 'text-[var(--text-muted)]'}>
+                      One lowercase letter
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className={passwordValidation.hasSpecialChar ? 'text-green-500' : 'text-red-500'}>
+                      {passwordValidation.hasSpecialChar ? '✓' : '✗'}
+                    </span>
+                    <span className={passwordValidation.hasSpecialChar ? 'text-green-500' : 'text-[var(--text-muted)]'}>
+                      One special character
+                    </span>
+                  </div>
+                </div>
+              )}
               {errors.password && (
                 <p className="mt-1 text-sm text-red-500">{errors.password.message}</p>
               )}
@@ -300,15 +408,31 @@ export default function SignUp() {
               <input
                 id="confirmPassword"
                 type="password"
+                autoComplete="new-password"
                 {...register('confirmPassword', {
                   required: 'Please confirm your password',
-                  validate: (value) => value === password || 'Passwords do not match',
                 })}
                 className="w-full h-12 px-4 rounded-md bg-[var(--surface)] text-[var(--text)]
                          border border-[var(--border)] focus:outline-none focus:ring-2
                          focus:ring-[var(--accent)] focus:border-transparent transition-all"
                 placeholder="••••••••"
               />
+              {/* Password match indicator */}
+              {confirmPassword && (
+                <div className="mt-2">
+                  {passwordValidation.passwordsMatch === true ? (
+                    <p className="text-xs text-green-500 flex items-center gap-2">
+                      <span>✓</span>
+                      <span>Passwords match</span>
+                    </p>
+                  ) : (
+                    <p className="text-xs text-red-500 flex items-center gap-2">
+                      <span>✗</span>
+                      <span>Passwords do not match</span>
+                    </p>
+                  )}
+                </div>
+              )}
               {errors.confirmPassword && (
                 <p className="mt-1 text-sm text-red-500">{errors.confirmPassword.message}</p>
               )}
@@ -339,7 +463,14 @@ export default function SignUp() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={
+                loading ||
+                usernameChecking ||
+                usernameAvailable === false ||
+                (username && usernameAvailable === null) ||
+                (password && !passwordIsValid) ||
+                (confirmPassword && passwordValidation.passwordsMatch === false)
+              }
               className="w-full h-12 rounded-md bg-transparent text-[var(--accent)]
                        border-2 border-[var(--accent)] hover:bg-[var(--accent)]
                        hover:text-[var(--bg)] font-medium transition-colors

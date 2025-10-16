@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { api } from '../../lib/api';
 import Button from '../ui/Button';
+import { useUsernameValidation } from '../../hooks/useUsernameValidation';
 
 /**
  * UsernameModal component
@@ -8,94 +8,28 @@ import Button from '../ui/Button';
  */
 export default function UsernameModal({ onSubmit, onCancel }) {
   const [username, setUsername] = useState('');
-  const [checking, setChecking] = useState(false);
-  const [available, setAvailable] = useState(null);
-  const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Validate username format
-  const validateUsername = (value) => {
-    if (!value || value.trim().length === 0) {
-      return 'Username is required';
-    }
-    if (value.length < 3) {
-      return 'Username must be at least 3 characters';
-    }
-    if (value.length > 100) {
-      return 'Username must be less than 100 characters';
-    }
-    if (!/^[a-zA-Z0-9_-]+$/.test(value)) {
-      return 'Username can only contain letters, numbers, underscores, and hyphens';
-    }
-    return null;
-  };
-
-  // Check username availability with backend
-  const checkAvailability = async (value) => {
-    const validationError = validateUsername(value);
-    if (validationError) {
-      setError(validationError);
-      setAvailable(null);
-      return;
-    }
-
-    setChecking(true);
-    setError('');
-
-    try {
-      const response = await api.get(`/v1/auth/username/check`, {
-        params: { username: value },
-      });
-
-      const isAvailable = response.data.data;
-      setAvailable(isAvailable);
-
-      if (!isAvailable) {
-        setError('Username is already taken');
-      }
-    } catch (err) {
-      console.error('Failed to check username availability:', err);
-      setError('Failed to check username availability. Please try again.');
-      setAvailable(null);
-    } finally {
-      setChecking(false);
-    }
-  };
+  // Use custom hook for username validation
+  const { checking, available, error, validateUsername } = useUsernameValidation(username, 200);
 
   // Handle username input change
   const handleUsernameChange = (e) => {
-    const value = e.target.value;
-    setUsername(value);
-    setAvailable(null);
-    setError('');
-  };
-
-  // Handle username blur (check availability when user finishes typing)
-  const handleUsernameBlur = () => {
-    if (username.trim()) {
-      checkAvailability(username.trim());
-    }
+    setUsername(e.target.value);
   };
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate username format
     const validationError = validateUsername(username);
     if (validationError) {
-      setError(validationError);
       return;
     }
 
-    // If we haven't checked availability yet, check now
-    if (available === null) {
-      await checkAvailability(username.trim());
-      return;
-    }
-
-    // If username is not available, don't submit
-    if (!available) {
-      setError('Username is already taken');
+    // Ensure username is available
+    if (available !== true) {
       return;
     }
 
@@ -103,7 +37,7 @@ export default function UsernameModal({ onSubmit, onCancel }) {
     try {
       await onSubmit(username.trim());
     } catch (err) {
-      setError(err.message || 'Failed to complete registration. Please try again.');
+      // Error is handled by the parent component
       setSubmitting(false);
     }
   };
@@ -132,7 +66,6 @@ export default function UsernameModal({ onSubmit, onCancel }) {
                 type="text"
                 value={username}
                 onChange={handleUsernameChange}
-                onBlur={handleUsernameBlur}
                 className="w-full px-4 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-lg
                          text-[var(--text)] placeholder-[var(--text-muted)]
                          focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent"

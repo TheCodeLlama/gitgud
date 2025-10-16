@@ -182,6 +182,7 @@ export default function SignIn() {
               <input
                 id="email"
                 type="email"
+                autoComplete="email"
                 {...register('email', {
                   required: 'Email is required',
                   pattern: {
@@ -206,6 +207,7 @@ export default function SignIn() {
               <input
                 id="password"
                 type="password"
+                autoComplete="current-password"
                 {...register('password', {
                   required: 'Password is required',
                   minLength: {
