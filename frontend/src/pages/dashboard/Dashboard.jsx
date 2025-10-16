@@ -17,7 +17,7 @@ export default function Dashboard() {
       {/* Header with welcome message */}
       <div>
         <h1 className="text-3xl font-bold text-[var(--text)]">
-          Welcome back, {user?.firstName || user?.username || 'Learner'}! 👋
+          Welcome back, {user?.displayName || user?.username || 'Learner'}! 👋
         </h1>
         <p className="text-[var(--text-muted)] mt-2">
           Here's your learning progress at a glance. Keep up the great work!

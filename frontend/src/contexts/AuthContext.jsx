@@ -39,18 +39,9 @@ export function AuthProvider({ children }) {
         // User is signed in
         const idToken = await firebaseUser.getIdToken();
 
-        // Set user and token
-        setUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName || firebaseUser.email,
-          photoURL: firebaseUser.photoURL,
-        });
-        setToken(idToken);
-        setAuthenticated(true);
-
-        // Set token in API client
+        // Set token in API client first (needed for sync call)
         api.defaults.headers.common['Authorization'] = `Bearer ${idToken}`;
+        setToken(idToken);
 
         // Store token in localStorage (for page refreshes)
         localStorage.setItem('firebase_token', idToken);
@@ -60,10 +51,29 @@ export function AuthProvider({ children }) {
           const syncData = firebaseUser.displayName
             ? { username: firebaseUser.displayName }
             : {};
-          await api.post('/v1/auth/sync', syncData);
+          const syncResponse = await api.post('/v1/auth/sync', syncData);
+
+          // Use backend user data from sync response
+          const backendUser = syncResponse.data.data;
+          setUser({
+            // Firebase data
+            uid: firebaseUser.uid,
+            photoURL: firebaseUser.photoURL,
+            // Backend data (includes username, displayName, email, etc.)
+            ...backendUser,
+          });
         } catch (error) {
           console.error('Failed to sync user with backend:', error);
+          // Fallback to Firebase data only
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName || firebaseUser.email,
+            photoURL: firebaseUser.photoURL,
+          });
         }
+
+        setAuthenticated(true);
 
         // Set up token refresh (Firebase tokens expire after 1 hour)
         // Refresh token every 50 minutes to stay ahead of expiration

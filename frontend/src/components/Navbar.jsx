@@ -115,10 +115,10 @@ export default function Navbar() {
                              text-[var(--text)] hover:bg-[var(--surface-muted)] transition-colors"
                   >
                     <span className="hidden sm:inline">
-                      {user?.firstName || user?.username || 'User'}
+                      {user?.username}
                     </span>
                     <div className="h-8 w-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--bg)] font-semibold">
-                      {(user?.firstName?.[0] || user?.username?.[0] || 'U').toUpperCase()}
+                      {(user?.displayName?.[0] || user?.username?.[0] || 'U').toUpperCase()}
                     </div>
                   </button>
 
@@ -138,7 +138,7 @@ export default function Navbar() {
                         {stats && (
                           <div className="px-4 py-3 border-b border-[var(--border)]">
                             <div className="text-sm font-medium text-[var(--text)]">
-                              {user?.firstName || user?.username || 'User'}
+                              {user?.displayName || user?.username || 'User'}
                             </div>
                             <div className="flex items-center gap-3 mt-2 text-xs text-[var(--text-muted)]">
                               <span>Level {stats.currentLevel}</span>
