@@ -105,7 +105,7 @@ export default function LessonPage() {
 
   // Show completion modal when all tests pass
   useEffect(() => {
-    if (result && result.passed && result.xpAwarded > 0) {
+    if (result && result.passed) {
       setShowCompleteModal(true);
     }
   }, [result]);
