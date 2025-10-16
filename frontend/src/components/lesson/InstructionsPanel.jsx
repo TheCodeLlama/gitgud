@@ -17,6 +17,7 @@ import Badge from '../ui/Badge';
  */
 export default function InstructionsPanel({ lesson, testCases = [] }) {
   const [showHints, setShowHints] = useState(false);
+  const [showTestCases, setShowTestCases] = useState(false);
 
   if (!lesson) {
     return (
@@ -155,64 +156,74 @@ export default function InstructionsPanel({ lesson, testCases = [] }) {
 
       {/* Test Cases Section */}
       {testCases && testCases.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-4">
+        <div className="mb-6 bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg">
+          <button
+            onClick={() => setShowTestCases(!showTestCases)}
+            className="flex items-center gap-2 w-full p-4 hover:bg-[var(--surface)] transition-colors rounded-lg"
+          >
             <TestTube className="w-5 h-5 text-[var(--accent)]" />
-            <h2 className="text-xl font-bold text-[var(--text)]">Test Cases</h2>
-          </div>
+            <span className="font-semibold text-[var(--text)]">Test Cases</span>
+            {showTestCases ? (
+              <ChevronUp className="w-5 h-5 text-[var(--text-muted)] ml-auto" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-[var(--text-muted)] ml-auto" />
+            )}
+          </button>
 
-          <div className="space-y-3">
-            {testCases
-              .filter((tc) => tc.visible)
-              .map((testCase, index) => (
-                <div
-                  key={testCase.id}
-                  className="bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg p-4"
-                >
-                  <h3 className="font-semibold text-[var(--text)] mb-2">
-                    Test Case {index + 1}
-                    {testCase.hidden && (
-                      <Badge size="sm" variant="warning" className="ml-2">
-                        Hidden
-                      </Badge>
-                    )}
-                  </h3>
+          {showTestCases && (
+            <div className="p-4 pt-0">
+              <div className="space-y-3">
+                {testCases
+                  .filter((tc) => !tc.isHidden)
+                  .map((testCase, index) => (
+                    <div
+                      key={testCase.id}
+                      className="bg-[var(--bg)] border border-[var(--border)] rounded-lg p-4"
+                    >
+                      <h3 className="font-semibold text-[var(--text)] mb-2">
+                        Test Case {index + 1}
+                        {testCase.isHidden && (
+                          <Badge size="sm" variant="warning" className="ml-2">
+                            Hidden
+                          </Badge>
+                        )}
+                      </h3>
 
-                  {testCase.description && (
-                    <p className="text-[var(--text-muted)] mb-2 text-sm">
-                      {testCase.description}
-                    </p>
-                  )}
+                      {testCase.description && (
+                        <p className="text-[var(--text-muted)] mb-2 text-sm">
+                          {testCase.description}
+                        </p>
+                      )}
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    {testCase.input && (
-                      <div>
-                        <span className="text-[var(--text-muted)] font-medium">Input:</span>
-                        <code className="block bg-[var(--bg)] text-[var(--text)] p-2 rounded mt-1 font-mono">
-                          {testCase.input}
-                        </code>
+                      <div className="space-y-3 text-sm">
+                        <div>
+                          <span className="text-[var(--text-muted)] font-medium">Input:</span>
+                          <code className="block bg-[var(--surface-muted)] text-[var(--text)] p-2 rounded mt-1 font-mono">
+                            {testCase.input || <span className="italic text-[var(--text-muted)]">(none)</span>}
+                          </code>
+                        </div>
+
+                        {!testCase.isHidden && testCase.expectedOutput && (
+                          <div>
+                            <span className="text-[var(--text-muted)] font-medium">
+                              Expected Output:
+                            </span>
+                            <code className="block bg-[var(--surface-muted)] text-[var(--text)] p-2 rounded mt-1 font-mono">
+                              {testCase.expectedOutput}
+                            </code>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
+                  ))}
+              </div>
 
-                    {!testCase.hidden && testCase.expectedOutput && (
-                      <div>
-                        <span className="text-[var(--text-muted)] font-medium">
-                          Expected Output:
-                        </span>
-                        <code className="block bg-[var(--bg)] text-[var(--text)] p-2 rounded mt-1 font-mono">
-                          {testCase.expectedOutput}
-                        </code>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-          </div>
-
-          {testCases.some((tc) => tc.hidden) && (
-            <p className="text-sm text-[var(--text-muted)] mt-3">
-              Note: Some test cases are hidden and will be used to validate your solution.
-            </p>
+              {testCases.some((tc) => tc.isHidden) && (
+                <p className="text-sm text-[var(--text-muted)] mt-3">
+                  Note: Some test cases are hidden and will be used to validate your solution.
+                </p>
+              )}
+            </div>
           )}
         </div>
       )}
