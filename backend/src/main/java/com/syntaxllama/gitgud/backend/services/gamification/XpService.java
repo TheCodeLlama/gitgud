@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
+import java.time.LocalDateTime;
 
 /**
  * Service for managing XP, levels, and streaks.
@@ -55,6 +55,7 @@ public class XpService {
                     stats.setCurrentStreakDays(0);
                     stats.setLongestStreakDays(0);
                     stats.setLastActivityDate(null);
+                    stats.setLastActivityDateTime(null);
                     return userStatsRepository.save(stats);
                 });
     }
@@ -192,48 +193,58 @@ public class XpService {
     }
 
     /**
-     * Update user's streak based on last activity date.
-     * - If last activity was yesterday, increment streak
-     * - If last activity was today, do nothing
-     * - Otherwise, reset streak to 1
+     * Update user's streak based on last activity.
+     * Uses computed property that automatically returns 0 if >48 hours have passed.
+     * - Streak increments when completing a lesson on a new day (at least one per day)
+     * - Streak resets to 1 if more than 48 hours have passed since last activity
+     * - If already active today, no change
      *
      * @param stats User stats to update
      */
     public void updateStreak(UserStats stats) {
+        LocalDateTime now = LocalDateTime.now();
         LocalDate today = LocalDate.now();
-        LocalDate lastActivity = stats.getLastActivityDate();
+        LocalDateTime lastActivityDateTime = stats.getLastActivityDateTime();
 
-        if (lastActivity == null) {
-            // First activity ever
+        if (lastActivityDateTime == null) {
+            // First activity ever - start streak at 1
             stats.setCurrentStreakDays(1);
             stats.setLongestStreakDays(1);
             stats.setLastActivityDate(today);
+            stats.setLastActivityDateTime(now);
             log.info("Started new streak for user stats: {}", stats.getId());
-        } else if (lastActivity.equals(today)) {
-            // Already active today, no change
-            log.debug("User already active today, streak unchanged");
+            return;
+        }
+
+        LocalDate lastActivityDate = lastActivityDateTime.toLocalDate();
+
+        if (lastActivityDate.equals(today)) {
+            // Already active today, no change to streak
+            log.debug("User already active today, streak unchanged: {}", stats.getCurrentStreakDays());
+            return;
+        }
+
+        // It's a new day - check if streak is still valid using computed property
+        int currentStreak = stats.getCurrentStreakDays(); // Uses computed property
+
+        if (currentStreak == 0) {
+            // Streak was broken (>48 hours), start fresh
+            stats.setCurrentStreakDays(1);
+            log.info("Streak was broken (>48 hours), starting fresh for user stats: {}", stats.getId());
         } else {
-            long daysSinceLastActivity = ChronoUnit.DAYS.between(lastActivity, today);
+            // Within 48 hours - increment streak
+            stats.setCurrentStreakDays(currentStreak + 1);
+            log.info("Streak incremented for user stats: {}, new streak: {}",
+                    stats.getId(), stats.getCurrentStreakDays());
+        }
 
-            if (daysSinceLastActivity == 1) {
-                // Yesterday - increment streak
-                stats.setCurrentStreakDays(stats.getCurrentStreakDays() + 1);
-                stats.setLastActivityDate(today);
+        // Update timestamps
+        stats.setLastActivityDate(today);
+        stats.setLastActivityDateTime(now);
 
-                // Update longest streak if needed
-                if (stats.getCurrentStreakDays() > stats.getLongestStreakDays()) {
-                    stats.setLongestStreakDays(stats.getCurrentStreakDays());
-                }
-
-                log.info("Streak incremented for user stats: {}, current: {}",
-                        stats.getId(), stats.getCurrentStreakDays());
-            } else {
-                // Missed a day - reset streak
-                stats.setCurrentStreakDays(1);
-                stats.setLastActivityDate(today);
-                log.info("Streak reset for user stats: {}, days missed: {}",
-                        stats.getId(), daysSinceLastActivity);
-            }
+        // Update longest streak if needed
+        if (stats.getCurrentStreakDays() > stats.getLongestStreakDays()) {
+            stats.setLongestStreakDays(stats.getCurrentStreakDays());
         }
     }
 }

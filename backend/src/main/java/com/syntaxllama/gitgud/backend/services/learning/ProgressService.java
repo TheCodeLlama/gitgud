@@ -11,6 +11,7 @@ import com.syntaxllama.gitgud.backend.models.UserStats;
 import com.syntaxllama.gitgud.backend.repositories.LessonRepository;
 import com.syntaxllama.gitgud.backend.repositories.UserProgressRepository;
 import com.syntaxllama.gitgud.backend.repositories.UserStatsRepository;
+import com.syntaxllama.gitgud.backend.services.gamification.XpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ public class ProgressService {
     private final UserProgressRepository userProgressRepository;
     private final LessonRepository lessonRepository;
     private final UserStatsRepository userStatsRepository;
+    private final XpService xpService;
 
     /**
      * Update user progress for a lesson.
@@ -70,7 +72,11 @@ public class ProgressService {
             if (request.getStatus() == UserProgress.Status.COMPLETED &&
                 progress.getStatus() != UserProgress.Status.COMPLETED) {
                 progress.setCompletedAt(LocalDateTime.now());
-                updateStreak(user);
+
+                // Update streak via XpService
+                UserStats stats = xpService.getOrCreateUserStats(user);
+                xpService.updateStreak(stats);
+                userStatsRepository.save(stats);
             }
 
             progress.setStatus(request.getStatus());
@@ -186,45 +192,4 @@ public class ProgressService {
         return null;
     }
 
-    /**
-     * Update user's streak based on activity.
-     * Called when a lesson is completed.
-     *
-     * @param user The current user
-     */
-    private void updateStreak(User user) {
-        UserStats stats = user.getStats();
-        if (stats == null) {
-            log.warn("UserStats not found for user {}", user.getId());
-            return;
-        }
-
-        LocalDate today = LocalDate.now();
-        LocalDate lastActivity = stats.getLastActivityDate();
-
-        if (lastActivity == null) {
-            // First activity ever
-            stats.setCurrentStreakDays(1);
-            stats.setLongestStreakDays(1);
-        } else if (lastActivity.equals(today)) {
-            // Already active today, no change
-            return;
-        } else if (lastActivity.equals(today.minusDays(1))) {
-            // Consecutive day - increment streak
-            stats.setCurrentStreakDays(stats.getCurrentStreakDays() + 1);
-
-            if (stats.getCurrentStreakDays() > stats.getLongestStreakDays()) {
-                stats.setLongestStreakDays(stats.getCurrentStreakDays());
-            }
-        } else {
-            // Streak broken - reset to 1
-            stats.setCurrentStreakDays(1);
-        }
-
-        stats.setLastActivityDate(today);
-        userStatsRepository.save(stats);
-
-        log.info("Updated streak for user {}: current={}, longest={}",
-                user.getId(), stats.getCurrentStreakDays(), stats.getLongestStreakDays());
-    }
 }
