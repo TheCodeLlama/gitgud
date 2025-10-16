@@ -68,13 +68,41 @@ export default function InstructionsPanel({ lesson, testCases = [] }) {
             ),
             code: ({ inline, className, children }) => {
               const match = /language-(\w+)/.exec(className || '');
-              const language = match ? match[1] : null;
+              const language = match ? match[1] : 'java';
 
-              return inline ? (
-                <code className="bg-[var(--surface-muted)] text-[var(--accent)] px-1.5 py-0.5 rounded text-sm font-mono">
-                  {children}
-                </code>
-              ) : language ? (
+              // Check if this is truly inline code (no language class = inline)
+              const isInline = !className || inline;
+
+              return isInline ? (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '0px',
+                    background: 'var(--surface-muted)',
+                    borderRadius: '0.25rem',
+                  }}
+                >
+                  <SyntaxHighlighter
+                    style={vscDarkPlus}
+                    language={language}
+                    PreTag="span"
+                    customStyle={{
+                      display: 'inline',
+                      paddingLeft: "6px",
+                      paddingRight: "6px",
+                      margin: 0,
+                      background: 'transparent',
+                      fontSize: '0.875rem',
+                      fontFamily: 'monospace',
+                    }}
+                    wrapLines={false}
+                    lineProps={{ style: { display: 'inline', padding: 0, margin: 0 } }}
+                    codeTagProps={{ style: { display: 'inline', background: 'transparent', padding: 0, margin: 0 } }}
+                  >
+                    {String(children).replace(/\n$/, '')}
+                  </SyntaxHighlighter>
+                </span>
+              ) : (
                 <SyntaxHighlighter
                   style={vscDarkPlus}
                   language={language}
@@ -82,7 +110,7 @@ export default function InstructionsPanel({ lesson, testCases = [] }) {
                   className="mb-4 rounded-lg text-sm"
                   customStyle={{
                     margin: 0,
-                    padding: '1rem',
+                    padding: '10px',
                     background: 'var(--surface-muted)',
                     display: 'inline-block',
                     maxWidth: '100%',
@@ -90,10 +118,6 @@ export default function InstructionsPanel({ lesson, testCases = [] }) {
                 >
                   {String(children).replace(/\n$/, '')}
                 </SyntaxHighlighter>
-              ) : (
-                <code className="text-[var(--text)] font-mono text-sm">
-                  {children}
-                </code>
               );
             },
             pre: ({ children }) => <>{children}</>,
