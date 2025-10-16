@@ -10,8 +10,8 @@ import java.util.UUID;
 
 /**
  * DTO for test case data.
- * Note: Expected output is intentionally excluded for security.
- * Users should not see expected output before solving the problem.
+ * Note: This DTO is used for visible test cases and includes expected output.
+ * Hidden test cases are never returned to users.
  */
 @Data
 @Builder
@@ -22,22 +22,23 @@ public class TestCaseDTO {
     private UUID id;
     private UUID lessonId;
     private String input;
+    private String expectedOutput;  // Included for visible test cases to help users
     private Boolean isHidden;
     private Integer weight;
     private Integer displayOrder;
-    // Note: expectedOutput is intentionally excluded for security
 
     /**
-     * Convert TestCase entity to DTO (without expected output).
+     * Convert TestCase entity to DTO (includes expected output for visible test cases).
      *
      * @param testCase The test case entity
-     * @return TestCaseDTO with expected output hidden
+     * @return TestCaseDTO with all fields
      */
     public static TestCaseDTO fromEntity(TestCase testCase) {
         return TestCaseDTO.builder()
                 .id(testCase.getId())
                 .lessonId(testCase.getLesson() != null ? testCase.getLesson().getId() : null)
                 .input(testCase.getInput())
+                .expectedOutput(testCase.getExpectedOutput())
                 .isHidden(testCase.getIsHidden())
                 .weight(testCase.getWeight())
                 .displayOrder(testCase.getDisplayOrder())
