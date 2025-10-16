@@ -25,13 +25,6 @@ public class XpService {
 
     private final UserStatsRepository userStatsRepository;
 
-    // XP calculation constants
-    private static final double EASY_MULTIPLIER = 1.0;
-    private static final double MEDIUM_MULTIPLIER = 1.5;
-    private static final double HARD_MULTIPLIER = 2.0;
-    private static final double FIRST_ATTEMPT_BONUS_MULTIPLIER = 1.25;
-    private static final int XP_PER_STREAK_DAY = 5; // Bonus XP per streak day
-
     // Level progression constants (exponential growth)
     private static final int BASE_XP = 100;
     private static final double LEVEL_EXPONENT = 1.5;
@@ -124,57 +117,20 @@ public class XpService {
                 .leveledUp(leveledUp)
                 .newLevel(newLevel)
                 .xpToNextLevel(stats.getXpToNextLevel() - stats.getTotalXp())
-                .streakBonus(stats.getCurrentStreakDays() * XP_PER_STREAK_DAY)
                 .build();
     }
 
     /**
-     * Calculate XP to award based on lesson difficulty, streak, and first attempt bonus.
+     * Calculate XP to award - simply returns the base XP value from the lesson.
      *
      * @param request Award XP request
-     * @param currentStreakDays Current streak days
-     * @return Total XP to award
+     * @param currentStreakDays Current streak days (unused, kept for backwards compatibility)
+     * @return XP to award (exactly the lesson's xpReward value)
      */
     private long calculateXp(AwardXpRequest request, int currentStreakDays) {
         int baseXp = request.getBaseXp() != null ? request.getBaseXp() : 10;
-
-        // Apply difficulty multiplier
-        double difficultyMultiplier = getDifficultyMultiplier(request.getDifficulty());
-        double xp = baseXp * difficultyMultiplier;
-
-        // Apply first attempt bonus
-        if (Boolean.TRUE.equals(request.getFirstAttempt())) {
-            xp *= FIRST_ATTEMPT_BONUS_MULTIPLIER;
-            log.debug("First attempt bonus applied: {}", FIRST_ATTEMPT_BONUS_MULTIPLIER);
-        }
-
-        // Add streak bonus
-        int streakBonus = currentStreakDays * XP_PER_STREAK_DAY;
-        xp += streakBonus;
-
-        log.debug("XP calculation - Base: {}, Difficulty: {}, First Attempt: {}, Streak Bonus: {}, Total: {}",
-                baseXp, difficultyMultiplier, request.getFirstAttempt(), streakBonus, (long) xp);
-
-        return (long) xp;
-    }
-
-    /**
-     * Get difficulty multiplier based on lesson difficulty.
-     *
-     * @param difficulty Difficulty string (EASY, MEDIUM, HARD)
-     * @return Multiplier value
-     */
-    private double getDifficultyMultiplier(String difficulty) {
-        if (difficulty == null) {
-            return EASY_MULTIPLIER;
-        }
-
-        return switch (difficulty.toUpperCase()) {
-            case "EASY" -> EASY_MULTIPLIER;
-            case "MEDIUM" -> MEDIUM_MULTIPLIER;
-            case "HARD" -> HARD_MULTIPLIER;
-            default -> EASY_MULTIPLIER;
-        };
+        log.debug("XP calculation - awarding exactly: {} XP", baseXp);
+        return (long) baseXp;
     }
 
     /**

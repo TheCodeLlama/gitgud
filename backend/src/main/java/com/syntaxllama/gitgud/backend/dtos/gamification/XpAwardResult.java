@@ -20,5 +20,4 @@ public class XpAwardResult {
     private Boolean leveledUp;
     private Integer newLevel;
     private Long xpToNextLevel;
-    private Integer streakBonus;
 }
