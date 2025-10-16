@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -30,6 +31,7 @@ public class LessonDTO {
     private String starterCode;
     private Integer displayOrder;
     private Boolean isPublished;
+    private List<String> hints;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -50,6 +52,7 @@ public class LessonDTO {
                 .starterCode(lesson.getStarterCode())
                 .displayOrder(lesson.getDisplayOrder())
                 .isPublished(lesson.getIsPublished())
+                .hints(lesson.getHints())
                 .createdAt(lesson.getCreatedAt())
                 .updatedAt(lesson.getUpdatedAt())
                 .build();

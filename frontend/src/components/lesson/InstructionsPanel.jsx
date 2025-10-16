@@ -154,6 +154,37 @@ export default function InstructionsPanel({ lesson, testCases = [] }) {
         </ReactMarkdown>
       </div>
 
+      {/* Hints Section (Expandable) */}
+      {lesson.hints && lesson.hints.length > 0 && (
+        <div className="mb-6 bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg">
+          <button
+            onClick={() => setShowHints(!showHints)}
+            className="flex items-center gap-2 w-full p-4 hover:bg-[var(--surface)] transition-colors rounded-lg"
+          >
+            <BookOpen className="w-5 h-5 text-[var(--accent)]" />
+            <span className="font-semibold text-[var(--text)]">Hints</span>
+            {showHints ? (
+              <ChevronUp className="w-5 h-5 text-[var(--text-muted)] ml-auto" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-[var(--text-muted)] ml-auto" />
+            )}
+          </button>
+
+          {showHints && (
+            <div className="p-4 pt-0">
+              <div className="space-y-2">
+                {lesson.hints.map((hint, index) => (
+                  <div key={index} className="flex gap-2 text-[var(--text)]">
+                    <span className="font-medium text-[var(--accent)] flex-shrink-0">-</span>
+                    <span>{hint}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Test Cases Section */}
       {testCases && testCases.length > 0 && (
         <div className="mb-6 bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg">
@@ -223,34 +254,6 @@ export default function InstructionsPanel({ lesson, testCases = [] }) {
                   Note: Some test cases are hidden and will be used to validate your solution.
                 </p>
               )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Hints Section (Expandable) */}
-      {lesson.hints && lesson.hints.length > 0 && (
-        <div className="mb-6">
-          <button
-            onClick={() => setShowHints(!showHints)}
-            className="flex items-center gap-2 w-full p-4 bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg hover:border-[var(--accent)] transition-colors"
-          >
-            <span className="font-semibold text-[var(--text)]">Hints</span>
-            {showHints ? (
-              <ChevronUp className="w-5 h-5 text-[var(--text-muted)] ml-auto" />
-            ) : (
-              <ChevronDown className="w-5 h-5 text-[var(--text-muted)] ml-auto" />
-            )}
-          </button>
-
-          {showHints && (
-            <div className="mt-3 p-4 bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg space-y-3">
-              {lesson.hints.map((hint, index) => (
-                <div key={index} className="text-[var(--text)]">
-                  <span className="font-medium text-[var(--accent)]">Hint {index + 1}:</span>{' '}
-                  {hint}
-                </div>
-              ))}
             </div>
           )}
         </div>

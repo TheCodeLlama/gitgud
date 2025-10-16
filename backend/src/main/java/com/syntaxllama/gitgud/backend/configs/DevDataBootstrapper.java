@@ -169,19 +169,12 @@ public class DevDataBootstrapper implements ApplicationRunner {
             Hello, World!
             ```
 
-            ### Hints
-
-            - Don't forget the semicolon `;` at the end
-            - Make sure the text is in double quotes: `"Hello, World!"`
-            - Check your spelling and capitalization - it must match exactly
-            - The parentheses must be balanced: `(` and `)`
-
             ### Common Mistakes
 
-            - Missing semicolon: `System.out.println("Hello, World!")`
-            - Single quotes instead of double: `System.out.println('Hello, World!')`
-            - Wrong capitalization: `system.out.println("Hello, World!")`
-            - Correct: `System.out.println("Hello, World!");`
+            - Missing semicolon
+            - Single quotes instead of double
+            - Wrong capitalization
+            - Incorrect Punctuation
 
             ## What's Next?
 
@@ -201,6 +194,12 @@ public class DevDataBootstrapper implements ApplicationRunner {
             1,
             true,
             List.of(
+                "Don't forget the semicolon at the end of your statement",
+                "Make sure the text is in double quotes: \"Hello, World!\"",
+                "Check your spelling and capitalization - it must match exactly",
+                "The parentheses must be balanced: ( and )"
+            ),
+            List.of(
                 new TestCaseData("", "Hello, World!", false, 1, 1)
             )
         );
@@ -217,6 +216,12 @@ public class DevDataBootstrapper implements ApplicationRunner {
             "public class Main {\n    public static void main(String[] args) {\n        String name = \"John\";\n        int age = 25;\n        boolean isStudent = true;\n        System.out.println(name);\n        System.out.println(age);\n        System.out.println(isStudent);\n    }\n}",
             2,
             true,
+            List.of(
+                "Remember that String values must be in double quotes",
+                "int is used for whole numbers without quotes",
+                "boolean values are either true or false (no quotes)",
+                "Use System.out.println() to print each variable on a new line"
+            ),
             List.of(
                 // Visible test case - users can see input but not expected output
                 new TestCaseData("", "John\n25\ntrue", false, 1, 1)
@@ -246,6 +251,12 @@ public class DevDataBootstrapper implements ApplicationRunner {
             "import org.springframework.web.bind.annotation.*;\n\n@RestController\npublic class HelloController {\n    \n    @GetMapping(\"/hello\")\n    public String hello() {\n        return \"Hello from Spring Boot!\";\n    }\n}",
             1,
             true,
+            List.of(
+                "The @RestController annotation goes above the class declaration",
+                "The @GetMapping annotation needs the path in quotes: @GetMapping(\"/hello\")",
+                "Make sure your method returns a String",
+                "The return statement should return exactly: \"Hello from Spring Boot!\""
+            ),
             List.of(
                 // Visible test case - check that the endpoint returns correct string
                 new TestCaseData("", "Hello from Spring Boot!", false, 1, 1)
@@ -368,7 +379,7 @@ public class DevDataBootstrapper implements ApplicationRunner {
     private void createLesson(Module module, String title, String description, String content,
                               Lesson.LessonType lessonType, Integer xpReward, Lesson.Difficulty difficulty,
                               String starterCode, String solutionCode, Integer displayOrder,
-                              Boolean isPublished, List<TestCaseData> testCasesData) {
+                              Boolean isPublished, List<String> hints, List<TestCaseData> testCasesData) {
         Lesson lesson = new Lesson();
         lesson.setModule(module);
         lesson.setTitle(title);
@@ -381,6 +392,7 @@ public class DevDataBootstrapper implements ApplicationRunner {
         lesson.setSolutionCode(solutionCode);
         lesson.setDisplayOrder(displayOrder);
         lesson.setIsPublished(isPublished);
+        lesson.setHints(hints);
         Lesson savedLesson = lessonRepository.save(lesson);
 
         // Create test cases

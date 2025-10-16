@@ -55,6 +55,12 @@ public class Lesson extends BaseEntity {
     @Column(name = "is_published", nullable = false)
     private Boolean isPublished = false;
 
+    @ElementCollection
+    @CollectionTable(name = "lesson_hints", joinColumns = @JoinColumn(name = "lesson_id"))
+    @Column(name = "hint", columnDefinition = "TEXT")
+    @OrderColumn(name = "hint_order")
+    private List<String> hints;
+
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestCase> testCases;
 
