@@ -67,6 +67,10 @@ export default function CodeEditor({
           // Annotations
           [/@[a-zA-Z_]\w*/, 'annotation'],
 
+          // Boolean literals - must come before general keywords
+          [/\b(true)\b/, 'keyword.true'],
+          [/\b(false)\b/, 'keyword.false'],
+
           // Identifiers and keywords
           [/[A-Z]\w*/, 'type'], // Capitalized identifiers (String, System, Integer, etc.)
           [/[a-z_]\w*(?=\s*\()/, { // Lowercase identifiers followed by "(" (methods)
@@ -182,44 +186,52 @@ export default function CodeEditor({
       base: 'vs-dark',
       inherit: true,
       rules: [
-        // Keywords (purple) - public, private, class, if, for, etc.
-        { token: 'keyword', foreground: 'C586C0', fontStyle: 'bold' },
+        // Boolean literals - true, false
+        { token: 'keyword.true', foreground: '569CD6' },
+        { token: 'keyword.false', foreground: '569CD6' },
 
-        // Types and Classes (cyan/teal) - String, Integer, System, etc.
+        // Keywords - public, private, class, if, for, etc.
+        { token: 'keyword', foreground: 'C586C0' },
+
+        // Types and Classes - String, Integer, System, etc.
         { token: 'type', foreground: '4EC9B0' },
         { token: 'class', foreground: 'DCDCAA' },
 
-        // Identifiers (yellow) - method names
+        // Identifiers - method names
         { token: 'identifier', foreground: 'DCDCAA' },
 
-        // Variables (white) - variable names not followed by "("
+        // Variables - variable names not followed by "("
         { token: 'variable', foreground: 'FFFFFF' },
 
-        // Annotations (yellow) - @Override, @Test, etc.
+        // Annotations - @Override, @Test, etc.
         { token: 'annotation', foreground: 'DCDCAA' },
 
-        // Strings (orange)
+        // Strings
         { token: 'string', foreground: 'CE9178' },
         { token: 'string.escape', foreground: 'D7BA7D' },
         { token: 'string.invalid', foreground: 'F44747' },
 
-        // Numbers (light green)
+        // Numbers
         { token: 'number', foreground: 'B5CEA8' },
         { token: 'number.float', foreground: 'B5CEA8' },
         { token: 'number.hex', foreground: 'B5CEA8' },
         { token: 'number.octal', foreground: 'B5CEA8' },
         { token: 'number.binary', foreground: 'B5CEA8' },
 
-        // Comments (green)
+        // Comments
         { token: 'comment', foreground: '6A9955', fontStyle: 'italic' },
         { token: 'comment.doc', foreground: '6A9955', fontStyle: 'italic' },
 
         // Operators and delimiters
         { token: 'operator', foreground: 'D4D4D4' },
-        { token: 'delimiter.curly.java', foreground: 'FFFFFF' },
+        { token: 'delimiter', foreground: 'FFFFFF' },
 
-        // Brackets
+        // Brackets - all types () {} []
         { token: 'delimiter.bracket', foreground: 'FFFFFF' },
+        { token: 'delimiter.parenthesis', foreground: 'FFFFFF' },
+        { token: 'delimiter.curly', foreground: 'FFFFFF' },
+        { token: 'delimiter.square', foreground: 'FFFFFF' },
+        { token: 'delimiter.angle', foreground: 'FFFFFF' },
       ],
       colors: {
         'editor.background': '#161A1E', // matches --surface-muted
