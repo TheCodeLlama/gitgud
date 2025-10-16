@@ -25,7 +25,7 @@ export function useUserStats() {
   const { authenticated, user } = useAuth();
 
   return useQuery({
-    queryKey: user?.id ? queryKeys.gamification.stats(user.id) : ['userStats'],
+    queryKey: user?.uid ? queryKeys.gamification.stats(user.uid) : ['userStats'],
     queryFn: fetchUserStats,
     enabled: authenticated, // Only fetch if user is authenticated
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes

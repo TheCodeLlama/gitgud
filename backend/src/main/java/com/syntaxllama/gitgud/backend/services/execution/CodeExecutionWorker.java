@@ -100,14 +100,15 @@ public class CodeExecutionWorker {
                 return;
             }
 
-            // Update user progress status
-            updateUserProgress(user, lesson, allPassed, passedTests, testCases.size());
-
-            // Award XP if all tests passed
+            // Award XP if all tests passed (MUST be done BEFORE updating progress to COMPLETED)
             int xpAwarded = 0;
             if (allPassed) {
                 xpAwarded = awardXpForCompletion(user, lesson);
+                log.info("XP award result for job {}: {} XP", job.getJobId(), xpAwarded);
             }
+
+            // Update user progress status (done AFTER XP award to avoid double-completion check)
+            updateUserProgress(user, lesson, allPassed, passedTests, testCases.size());
 
             // Build final result
             ExecutionResult result = ExecutionResult.builder()
@@ -122,6 +123,9 @@ public class CodeExecutionWorker {
                     .completedAt(LocalDateTime.now())
                     .xpAwarded(xpAwarded)
                     .build();
+
+            log.info("ExecutionResult for job {}: xpAwarded={}, passed={}",
+                    job.getJobId(), result.getXpAwarded(), result.getPassed());
 
             // Store result in Redis
             executionService.storeResult(job.getJobId(), result);
@@ -393,6 +397,12 @@ public class CodeExecutionWorker {
             log.info("Awarded {} XP to user {} for completing lesson {} (level: {}, leveledUp: {})",
                     xpResult.getXpAwarded(), user.getId(), lesson.getId(),
                     xpResult.getCurrentLevel(), xpResult.getLeveledUp());
+
+            // Handle null xpAwarded value
+            if (xpResult.getXpAwarded() == null) {
+                log.warn("XpAwardResult returned null xpAwarded for user {} and lesson {}", user.getId(), lesson.getId());
+                return 0;
+            }
 
             return xpResult.getXpAwarded().intValue();
 

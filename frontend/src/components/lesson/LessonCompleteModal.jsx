@@ -3,10 +3,12 @@
  * Celebration modal shown when user successfully completes a lesson
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Trophy, Award, Star, ArrowRight, X } from 'lucide-react';
+import { Trophy, Award, Star, ArrowRight, X, TrendingUp } from 'lucide-react';
 import Button from '../ui/Button';
+import ProgressBar from '../ui/ProgressBar';
+import { useUserStats } from '../../hooks/useUserStats';
 
 /**
  * LessonCompleteModal component
@@ -26,6 +28,10 @@ export default function LessonCompleteModal({
   currentLesson = null,
 }) {
   const navigate = useNavigate();
+  const { data: userStats } = useUserStats();
+
+  // State for animated XP progress
+  const [animatedXp, setAnimatedXp] = useState(0);
 
   // Close on Escape key
   useEffect(() => {
@@ -50,6 +56,28 @@ export default function LessonCompleteModal({
       document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
+
+  // Animate XP progress bar when modal opens
+  useEffect(() => {
+    if (isOpen && userStats && xpAwarded !== undefined) {
+      console.log('Modal animation - userStats:', userStats);
+      console.log('Modal animation - xpAwarded:', xpAwarded);
+      console.log('Modal animation - currentLevelXp:', userStats.currentLevelXp);
+
+      // Start from previous XP (before award)
+      const previousXp = Math.max(0, (userStats.currentLevelXp || 0) - xpAwarded);
+      console.log('Modal animation - previousXp:', previousXp);
+      setAnimatedXp(previousXp);
+
+      // Animate to current XP after a short delay
+      const timer = setTimeout(() => {
+        console.log('Modal animation - animating to:', userStats.currentLevelXp);
+        setAnimatedXp(userStats.currentLevelXp || 0);
+      }, 500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, userStats, xpAwarded]);
 
   if (!isOpen) return null;
 
@@ -100,13 +128,36 @@ export default function LessonCompleteModal({
 
         {/* Content */}
         <div className="p-8 space-y-6">
-          {/* XP Awarded */}
-          {xpAwarded > 0 && (
-            <div className="flex items-center justify-center gap-3 p-6 bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-lg animate-in slide-in-from-left duration-500 delay-400">
-              <Star className="w-8 h-8 text-[var(--accent)]" />
-              <div>
-                <p className="text-sm text-[var(--text-muted)]">XP Earned</p>
-                <p className="text-3xl font-bold text-[var(--accent)]">+{xpAwarded}</p>
+          {/* User Stats with Animated Progress Bar */}
+          {userStats && (
+            <div className="space-y-4 animate-in slide-in-from-bottom duration-500 delay-400">
+              {/* Level and XP Info */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-[var(--accent)]" />
+                  <span className="font-semibold text-[var(--text)]">Level {userStats.currentLevel}</span>
+                </div>
+                {xpAwarded > 0 && (
+                  <div className="flex items-center gap-2 px-3 py-1 bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-full">
+                    <Star className="w-4 h-4 text-[var(--accent)]" />
+                    <span className="text-sm font-bold text-[var(--accent)]">+{xpAwarded} XP</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Animated Progress Bar */}
+              <ProgressBar
+                value={animatedXp}
+                max={userStats.xpForCurrentLevel}
+                showLabel={true}
+                label="Progress to Next Level"
+                size="lg"
+                color="accent"
+              />
+
+              {/* Total XP */}
+              <div className="text-center text-sm text-[var(--text-muted)]">
+                Total XP: <span className="font-semibold text-[var(--text)]">{userStats.totalXp?.toLocaleString()}</span>
               </div>
             </div>
           )}
@@ -136,36 +187,17 @@ export default function LessonCompleteModal({
             </div>
           )}
 
-          {/* Next Lesson Suggestion */}
-          {nextLesson && (
-            <div className="animate-in slide-in-from-bottom duration-500 delay-700">
-              <h3 className="font-semibold text-[var(--text)] mb-3">Continue Learning</h3>
-              <div className="p-4 bg-[var(--surface-muted)] border border-[var(--border)] rounded-lg">
-                <p className="font-medium text-[var(--text)] mb-1">{nextLesson.title}</p>
-                <p className="text-sm text-[var(--text-muted)] mb-3">{nextLesson.description}</p>
-                <Button onClick={handleNextLesson} variant="primary" className="w-full">
-                  Next Lesson
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </div>
-          )}
-
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4 animate-in slide-in-from-bottom duration-500 delay-800">
-            {!nextLesson && (
-              <Button onClick={handleBackToModule} variant="primary" fullWidth>
-                Back to Module
-              </Button>
-            )}
-            {nextLesson && (
-              <Button onClick={handleBackToModule} variant="secondary" fullWidth>
-                Back to Module
-              </Button>
-            )}
-            <Button onClick={onClose} variant="ghost" fullWidth>
-              Close
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 animate-in slide-in-from-bottom duration-500 delay-700">
+            <Button onClick={handleBackToModule} variant="secondary" fullWidth>
+              Back to Module
             </Button>
+            {nextLesson && (
+              <Button onClick={handleNextLesson} variant="primary" fullWidth>
+                Next Lesson
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
           </div>
         </div>
       </div>

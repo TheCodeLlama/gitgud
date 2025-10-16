@@ -70,15 +70,43 @@ export function useCodeExecution() {
           }
 
           // Invalidate queries if execution was successful (all tests passed)
-          if (executionResult.passed && executionResult.xpAwarded > 0) {
-            // Invalidate user stats to show updated XP, level, streak
-            if (user?.id) {
-              queryClient.invalidateQueries({
-                queryKey: queryKeys.gamification.stats(user.id),
+          if (executionResult.passed) {
+            console.log('Execution passed! user?.id:', user?.id, 'xpAwarded:', executionResult.xpAwarded);
+
+            // Optimistically update stats cache if XP was awarded
+            if (user?.uid && executionResult.xpAwarded > 0) {
+              const statsKey = queryKeys.gamification.stats(user.uid);
+              console.log('Stats key:', statsKey);
+              const currentStats = queryClient.getQueryData(statsKey);
+              console.log('Current stats from cache:', currentStats);
+
+              if (currentStats) {
+                console.log('Optimistic update - old stats:', currentStats);
+                console.log('Optimistic update - XP to add:', executionResult.xpAwarded);
+
+                // Optimistically update the cache
+                queryClient.setQueryData(statsKey, {
+                  ...currentStats,
+                  totalXp: currentStats.totalXp + executionResult.xpAwarded,
+                  currentLevelXp: currentStats.currentLevelXp + executionResult.xpAwarded,
+                });
+
+                console.log('Optimistic update - new stats:', queryClient.getQueryData(statsKey));
+              } else {
+                console.warn('No currentStats in cache, cannot optimistically update!');
+              }
+            } else {
+              console.warn('Optimistic update skipped - user?.uid:', user?.uid, 'xpAwarded:', executionResult.xpAwarded);
+            }
+
+            // Invalidate user stats to refetch actual values from server
+            if (user?.uid) {
+              await queryClient.invalidateQueries({
+                queryKey: queryKeys.gamification.stats(user.uid),
                 refetchType: 'all' // Refetch even if component is not mounted
               });
               queryClient.invalidateQueries({
-                queryKey: queryKeys.gamification.profile(user.id),
+                queryKey: queryKeys.gamification.profile(user.uid),
                 refetchType: 'all'
               });
             }
