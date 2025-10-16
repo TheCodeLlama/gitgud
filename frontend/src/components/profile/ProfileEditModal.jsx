@@ -1,17 +1,16 @@
 /**
  * Profile Edit Modal
- * Modal for editing user profile information (display name, bio, avatar)
+ * Modal for editing user profile information (bio, avatar)
  */
 
 import { useState, useEffect } from 'react';
-import { X, User, FileText, Image } from 'lucide-react';
+import { X, FileText, Image } from 'lucide-react';
 import { api } from '../../lib/api';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 
 export default function ProfileEditModal({ profile, onClose, onSave }) {
   const [formData, setFormData] = useState({
-    displayName: profile?.displayName || '',
     bio: profile?.bio || '',
     avatarUrl: profile?.avatarUrl || '',
   });
@@ -100,7 +99,7 @@ export default function ProfileEditModal({ profile, onClose, onSave }) {
                   />
                 ) : (
                   <span className="text-2xl font-bold text-white">
-                    {formData.displayName?.charAt(0) || profile?.username?.charAt(0) || 'U'}
+                    {profile?.username?.charAt(0) || 'U'}
                   </span>
                 )}
               </div>
@@ -143,27 +142,6 @@ export default function ProfileEditModal({ profile, onClose, onSave }) {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Display Name */}
-          <div>
-            <label htmlFor="displayName" className="flex items-center gap-2 text-sm font-medium text-[var(--text)] mb-2">
-              <User className="w-4 h-4" />
-              Display Name
-            </label>
-            <input
-              type="text"
-              id="displayName"
-              name="displayName"
-              value={formData.displayName}
-              onChange={handleChange}
-              placeholder="Enter your display name"
-              maxLength={50}
-              className="w-full px-4 py-2 bg-[var(--bg)] border border-[var(--border)] rounded-lg text-[var(--text)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
-            />
-            <p className="text-xs text-[var(--text-muted)] mt-1">
-              {formData.displayName.length}/50 characters
-            </p>
           </div>
 
           {/* Bio */}

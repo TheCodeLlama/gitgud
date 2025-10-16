@@ -63,6 +63,9 @@ public class SecurityConfig {
                         // Note: Firebase handles registration on the client side
                         // No backend /register endpoint needed
 
+                        // Public auth endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/username/check").permitAll()
+
                         // Public API endpoints for unauthenticated users
                         .requestMatchers(HttpMethod.GET, "/api/v1/learning/modules").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/learning/modules/**").permitAll()

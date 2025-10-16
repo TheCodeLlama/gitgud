@@ -124,4 +124,24 @@ public class UserSyncService {
         return userRepository.findByFirebaseUid(firebaseUid)
                 .orElseThrow(() -> new RuntimeException("User not found with firebaseUid: " + firebaseUid));
     }
+
+    /**
+     * Check if a username is available for registration.
+     *
+     * @param username The username to check
+     * @return True if the username is available, false if it's already taken
+     */
+    public boolean isUsernameAvailable(String username) {
+        return !userRepository.existsByUsername(username);
+    }
+
+    /**
+     * Check if a user exists in the database by their Firebase UID.
+     *
+     * @param firebaseUid The Firebase user ID
+     * @return True if the user exists, false otherwise
+     */
+    public boolean userExists(String firebaseUid) {
+        return userRepository.existsByFirebaseUid(firebaseUid);
+    }
 }

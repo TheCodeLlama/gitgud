@@ -176,19 +176,19 @@ export default function ProfilePage() {
                 {profile.avatarUrl ? (
                   <img
                     src={profile.avatarUrl}
-                    alt={profile.displayName}
+                    alt={profile.username}
                     className="w-24 h-24 rounded-full object-cover"
                   />
                 ) : (
                   <span className="text-3xl font-bold text-white">
-                    {profile.displayName?.charAt(0) || profile.username?.charAt(0) || 'U'}
+                    {profile.username?.charAt(0) || 'U'}
                   </span>
                 )}
               </div>
 
-              {/* Display Name */}
+              {/* Username */}
               <h2 className="text-xl font-bold text-[var(--text)] mb-1">
-                {profile.displayName || profile.username}
+                {profile.username}
               </h2>
               <p className="text-sm text-[var(--text-muted)] mb-4">@{profile.username}</p>
 

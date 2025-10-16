@@ -49,24 +49,80 @@ public class AuthController {
         String email = AuthenticationUtil.getCurrentUserEmail()
                 .orElseThrow(() -> new BadRequestException("Email not found in Firebase token"));
 
-        // Get username from request body (for new registrations), or from token, or fall back to email
-        String username;
-        if (request != null && request.containsKey("username")) {
-            username = request.get("username");
-            log.debug("Using username from request: {}", username);
-        } else {
-            username = AuthenticationUtil.getCurrentUsername()
-                    .orElse(email); // Fall back to email if username not available
-            log.debug("Using username from token or email: {}", username);
-        }
+        // Check if user already exists
+        boolean userExists = userSyncService.userExists(firebaseUid);
 
-        // Sync user to database
-        User user = userSyncService.syncUser(firebaseUid, email, username);
+        User user;
+        if (userExists) {
+            // EXISTING USER: Just return their current data, DO NOT update username
+            log.debug("User exists, returning existing user data");
+            user = userSyncService.getUserByFirebaseUid(firebaseUid);
+        } else {
+            // NEW USER: Get username from request body (required for new users)
+            if (request == null || !request.containsKey("username")) {
+                throw new BadRequestException("Username is required for new user registration");
+            }
+            String username = request.get("username");
+            log.debug("Creating new user with username: {}", username);
+
+            // Create new user
+            user = userSyncService.syncUser(firebaseUid, email, username);
+        }
 
         // Convert to DTO
         UserProfileDTO dto = mapUserToDTO(user);
 
         return ApiResponse.success("User synced successfully", dto);
+    }
+
+    /**
+     * Check if a username is available for registration.
+     * This endpoint is public (no authentication required) to allow checking during sign-up.
+     *
+     * @param username The username to check
+     * @return Whether the username is available
+     */
+    @GetMapping("/username/check")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Boolean> checkUsernameAvailability(@RequestParam String username) {
+        log.debug("Checking username availability: {}", username);
+
+        // Validate username format
+        if (username == null || username.trim().isEmpty()) {
+            throw new BadRequestException("Username cannot be empty");
+        }
+
+        if (username.length() < 3) {
+            throw new BadRequestException("Username must be at least 3 characters");
+        }
+
+        if (username.length() > 100) {
+            throw new BadRequestException("Username must be less than 100 characters");
+        }
+
+        // Check if username exists
+        boolean isAvailable = userSyncService.isUsernameAvailable(username);
+
+        return ApiResponse.success(isAvailable);
+    }
+
+    /**
+     * Check if the current authenticated user exists in the database.
+     * Returns true if user exists, false if this is a new user.
+     *
+     * @return Whether the user exists
+     */
+    @GetMapping("/exists")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Boolean> checkUserExists() {
+        log.debug("Checking if user exists");
+
+        String firebaseUid = AuthenticationUtil.getCurrentFirebaseUid()
+                .orElseThrow(() -> new UnauthorizedException("No authenticated user found"));
+
+        boolean exists = userSyncService.userExists(firebaseUid);
+
+        return ApiResponse.success(exists);
     }
 
     /**

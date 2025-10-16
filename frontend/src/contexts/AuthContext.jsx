@@ -12,6 +12,7 @@ import {
 import { auth } from '../config/firebase';
 import { api } from '../lib/api';
 import { queryClient } from '../lib/queryClient';
+import UsernameModal from '../components/auth/UsernameModal';
 
 const AuthContext = createContext(null);
 
@@ -23,6 +24,73 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [pendingFirebaseUser, setPendingFirebaseUser] = useState(null);
+
+  // Complete user sync with backend
+  const completeUserSync = async (firebaseUser, username = null) => {
+    try {
+      const idToken = await firebaseUser.getIdToken();
+
+      // Set token in API client first (needed for sync call)
+      api.defaults.headers.common['Authorization'] = `Bearer ${idToken}`;
+      setToken(idToken);
+
+      // Store token in localStorage (for page refreshes)
+      localStorage.setItem('firebase_token', idToken);
+
+      // Check if this is a new user
+      const existsResponse = await api.get('/v1/auth/exists');
+      const userExists = existsResponse.data.data;
+
+      // If user doesn't exist and no username provided, ALWAYS show username modal
+      if (!userExists && !username) {
+        setPendingFirebaseUser(firebaseUser);
+        setShowUsernameModal(true);
+        setLoading(false);
+        return;
+      }
+
+      // Determine username to send (only when explicitly provided)
+      let syncData = {};
+      if (username) {
+        // User provided username via modal or registration
+        syncData = { username };
+      }
+      // For existing users, send empty object to avoid updating username
+
+      // Sync user with backend
+      const syncResponse = await api.post('/v1/auth/sync', syncData);
+
+      // Use backend user data from sync response
+      const backendUser = syncResponse.data.data;
+      setUser({
+        // Firebase data
+        uid: firebaseUser.uid,
+        photoURL: firebaseUser.photoURL,
+        // Backend data (includes username, displayName, email, etc.)
+        ...backendUser,
+      });
+
+      setAuthenticated(true);
+      setShowUsernameModal(false);
+      setPendingFirebaseUser(null);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to sync user with backend:', error);
+      // Fallback to Firebase data only
+      setUser({
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        displayName: firebaseUser.displayName || firebaseUser.email,
+        photoURL: firebaseUser.photoURL,
+      });
+      setAuthenticated(true);
+      setShowUsernameModal(false);
+      setPendingFirebaseUser(null);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let refreshInterval = null;
@@ -36,44 +104,8 @@ export function AuthProvider({ children }) {
       }
 
       if (firebaseUser) {
-        // User is signed in
-        const idToken = await firebaseUser.getIdToken();
-
-        // Set token in API client first (needed for sync call)
-        api.defaults.headers.common['Authorization'] = `Bearer ${idToken}`;
-        setToken(idToken);
-
-        // Store token in localStorage (for page refreshes)
-        localStorage.setItem('firebase_token', idToken);
-
-        // Sync user with backend (send displayName as username for new users)
-        try {
-          const syncData = firebaseUser.displayName
-            ? { username: firebaseUser.displayName }
-            : {};
-          const syncResponse = await api.post('/v1/auth/sync', syncData);
-
-          // Use backend user data from sync response
-          const backendUser = syncResponse.data.data;
-          setUser({
-            // Firebase data
-            uid: firebaseUser.uid,
-            photoURL: firebaseUser.photoURL,
-            // Backend data (includes username, displayName, email, etc.)
-            ...backendUser,
-          });
-        } catch (error) {
-          console.error('Failed to sync user with backend:', error);
-          // Fallback to Firebase data only
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName || firebaseUser.email,
-            photoURL: firebaseUser.photoURL,
-          });
-        }
-
-        setAuthenticated(true);
+        // User is signed in - complete sync process
+        await completeUserSync(firebaseUser);
 
         // Set up token refresh (Firebase tokens expire after 1 hour)
         // Refresh token every 50 minutes to stay ahead of expiration
@@ -92,14 +124,15 @@ export function AuthProvider({ children }) {
         setUser(null);
         setToken(null);
         setAuthenticated(false);
+        setShowUsernameModal(false);
+        setPendingFirebaseUser(null);
         delete api.defaults.headers.common['Authorization'];
         localStorage.removeItem('firebase_token');
 
         // Clear React Query cache to prevent data leaking between users
         queryClient.clear();
+        setLoading(false);
       }
-
-      setLoading(false);
     });
 
     // Cleanup subscription and interval on unmount
@@ -185,6 +218,8 @@ export function AuthProvider({ children }) {
       setUser(null);
       setToken(null);
       setAuthenticated(false);
+      setShowUsernameModal(false);
+      setPendingFirebaseUser(null);
       delete api.defaults.headers.common['Authorization'];
       localStorage.removeItem('firebase_token');
 
@@ -194,6 +229,29 @@ export function AuthProvider({ children }) {
       console.error('Logout failed:', error);
       throw new Error(error.message || 'Logout failed');
     }
+  };
+
+  /**
+   * Handle username submission from modal
+   */
+  const handleUsernameSubmit = async (username) => {
+    if (!pendingFirebaseUser) {
+      throw new Error('No pending user to complete registration');
+    }
+
+    // Complete the sync with the provided username
+    await completeUserSync(pendingFirebaseUser, username);
+  };
+
+  /**
+   * Handle username modal cancellation
+   */
+  const handleUsernameCancel = async () => {
+    // Sign out the pending user
+    await signOut(auth);
+    setShowUsernameModal(false);
+    setPendingFirebaseUser(null);
+    setLoading(false);
   };
 
   const value = {
@@ -206,9 +264,20 @@ export function AuthProvider({ children }) {
     logout,
     loginWithGoogle,
     loginWithGithub,
+    showUsernameModal,
+    handleUsernameSubmit,
+    handleUsernameCancel,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      {/* Username Modal for new OAuth users */}
+      {showUsernameModal && (
+        <UsernameModal onSubmit={handleUsernameSubmit} onCancel={handleUsernameCancel} />
+      )}
+    </AuthContext.Provider>
+  );
 }
 
 /**
