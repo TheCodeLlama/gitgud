@@ -26,6 +26,8 @@ export default function InstructionsPanel({ lesson, testCases = [] }) {
     );
   }
 
+  vscDarkPlus.keyword.color = "#c586c0";
+
   return (
     <div className="h-full overflow-y-auto p-6 bg-[var(--surface)]">
       {/* Lesson Header */}

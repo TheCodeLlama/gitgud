@@ -68,10 +68,17 @@ export default function CodeEditor({
           [/@[a-zA-Z_]\w*/, 'annotation'],
 
           // Identifiers and keywords
-          [/[a-zA-Z_]\w*/, {
+          [/[A-Z]\w*/, 'type'], // Capitalized identifiers (String, System, Integer, etc.)
+          [/[a-z_]\w*(?=\s*\()/, { // Lowercase identifiers followed by "(" (methods)
             cases: {
               '@keywords': 'keyword',
               '@default': 'identifier'
+            }
+          }],
+          [/[a-z_]\w*/, { // Lowercase identifiers NOT followed by "(" (variables)
+            cases: {
+              '@keywords': 'keyword',
+              '@default': 'variable'
             }
           }],
 
@@ -180,10 +187,13 @@ export default function CodeEditor({
 
         // Types and Classes (cyan/teal) - String, Integer, System, etc.
         { token: 'type', foreground: '4EC9B0' },
-        { token: 'class', foreground: '4EC9B0' },
+        { token: 'class', foreground: 'DCDCAA' },
 
-        // Identifiers (light blue) - variable names, method names
-        { token: 'identifier', foreground: '9CDCFE' },
+        // Identifiers (yellow) - method names
+        { token: 'identifier', foreground: 'DCDCAA' },
+
+        // Variables (white) - variable names not followed by "("
+        { token: 'variable', foreground: 'FFFFFF' },
 
         // Annotations (yellow) - @Override, @Test, etc.
         { token: 'annotation', foreground: 'DCDCAA' },
@@ -206,22 +216,22 @@ export default function CodeEditor({
 
         // Operators and delimiters
         { token: 'operator', foreground: 'D4D4D4' },
-        { token: 'delimiter', foreground: 'D4D4D4' },
+        { token: 'delimiter.curly.java', foreground: 'FFFFFF' },
 
         // Brackets
-        { token: 'delimiter.bracket', foreground: 'FFD700' },
+        { token: 'delimiter.bracket', foreground: 'FFFFFF' },
       ],
       colors: {
-        'editor.background': '#1E1E1E',
-        'editor.foreground': '#D4D4D4',
-        'editorLineNumber.foreground': '#858585',
-        'editorLineNumber.activeForeground': '#C6C6C6',
+        'editor.background': '#161A1E', // matches --surface-muted
+        'editor.foreground': '#F5F6F7', // matches --text
+        'editorLineNumber.foreground': '#9CA3AF', // matches --text-muted
+        'editorLineNumber.activeForeground': '#F5F6F7',
         'editor.selectionBackground': '#264F78',
         'editor.inactiveSelectionBackground': '#3A3D41',
-        'editor.lineHighlightBackground': '#2A2A2A',
-        'editorCursor.foreground': '#AEAFAD',
+        'editor.lineHighlightBackground': '#0B0B0B', // matches --bg
+        'editorCursor.foreground': '#F97316', // matches --accent
         'editor.findMatchBackground': '#515C6A',
-        'editor.findMatchHighlightBackground': '#EA5C0055',
+        'editor.findMatchHighlightBackground': '#F9731655', // accent with transparency
       },
     });
 
