@@ -5,6 +5,8 @@
 
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ChevronDown, ChevronUp, BookOpen, TestTube } from 'lucide-react';
 import Badge from '../ui/Badge';
 
@@ -62,21 +64,37 @@ export default function InstructionsPanel({ lesson, testCases = [] }) {
             p: ({ children }) => (
               <p className="text-[var(--text)] mb-4 leading-relaxed">{children}</p>
             ),
-            code: ({ inline, children }) =>
-              inline ? (
+            code: ({ inline, className, children }) => {
+              const match = /language-(\w+)/.exec(className || '');
+              const language = match ? match[1] : null;
+
+              return inline ? (
                 <code className="bg-[var(--surface-muted)] text-[var(--accent)] px-1.5 py-0.5 rounded text-sm font-mono">
                   {children}
                 </code>
+              ) : language ? (
+                <SyntaxHighlighter
+                  style={vscDarkPlus}
+                  language={language}
+                  PreTag="div"
+                  className="mb-4 rounded-lg text-sm"
+                  customStyle={{
+                    margin: 0,
+                    padding: '1rem',
+                    background: 'var(--surface-muted)',
+                    display: 'inline-block',
+                    maxWidth: '100%',
+                  }}
+                >
+                  {String(children).replace(/\n$/, '')}
+                </SyntaxHighlighter>
               ) : (
                 <code className="text-[var(--text)] font-mono text-sm">
                   {children}
                 </code>
-              ),
-            pre: ({ children }) => (
-              <pre className="mb-4 overflow-x-auto inline-block max-w-full bg-[var(--surface-muted)] p-4 rounded-lg">
-                {children}
-              </pre>
-            ),
+              );
+            },
+            pre: ({ children }) => <>{children}</>,
             ul: ({ children }) => (
               <ul className="list-disc list-inside text-[var(--text)] mb-4 space-y-1">
                 {children}
