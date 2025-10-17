@@ -187,7 +187,7 @@ public class DevDataBootstrapper implements ApplicationRunner {
             Take your time, and don't hesitate to experiment. Programming is learned by doing!
             """,
             Lesson.LessonType.TUTORIAL,
-            10,
+            150,
             Lesson.Difficulty.EASY,
             "public class Main {\n    public static void main(String[] args) {\n        // TODO: Print \"Hello, World!\"\n        \n    }\n}",
             "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}",
