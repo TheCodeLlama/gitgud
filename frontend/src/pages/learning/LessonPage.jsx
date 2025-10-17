@@ -16,7 +16,7 @@ import InstructionsPanel from '../../components/lesson/InstructionsPanel';
 import ConsolePanel from '../../components/lesson/ConsolePanel';
 import LessonCompleteModal from '../../components/lesson/LessonCompleteModal';
 import LessonNavbar from '../../components/lesson/LessonNavbar';
-import Button from '../../components/ui/Button';
+import Button from '../../components/shared/Button';
 import { Skeleton } from '../../components/skeletons/Skeleton';
 import { Play, Send, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 

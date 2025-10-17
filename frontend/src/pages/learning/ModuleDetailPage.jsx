@@ -8,8 +8,8 @@ import { useModuleDetails } from '../../hooks/useModuleDetails';
 import { useModuleLessons } from '../../hooks/useModuleLessons';
 import { useUserProgress } from '../../hooks/useUserProgress';
 import LessonCard from '../../components/learning/LessonCard';
-import Badge from '../../components/ui/Badge';
-import Button from '../../components/ui/Button';
+import Badge from '../../components/shared/Badge';
+import Button from '../../components/shared/Button';
 import { Skeleton } from '../../components/skeletons/Skeleton';
 import { ArrowLeft, BookOpen, Clock } from 'lucide-react';
 

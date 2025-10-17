@@ -142,7 +142,7 @@ export default function LessonNavbar({
             {user?.username}
           </span>
           <div className="h-7 w-7 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--bg)] font-semibold text-sm">
-            {(user?.username?.[0] || 'U').toUpperCase()}
+            {(user?.username?.[0] || 'U')}
           </div>
         </button>
 

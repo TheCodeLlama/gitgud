@@ -5,9 +5,9 @@
 
 import { BookOpen, Rocket, Library, FileText, Swords, Code, Star, Timer, RotateCw } from 'lucide-react';
 import { useUserProgress } from '../../hooks/useUserProgress';
-import Card, { CardBody } from '../ui/Card';
-import Button from '../ui/Button';
-import Badge from '../ui/Badge';
+import Card, { CardBody } from '../shared/Card';
+import Button from '../shared/Button';
+import Badge from '../shared/Badge';
 import { CardSkeleton } from '../skeletons/Skeleton';
 
 export default function ContinueLearning() {

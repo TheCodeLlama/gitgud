@@ -8,7 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ChevronDown, ChevronUp, BookOpen, TestTube } from 'lucide-react';
-import Badge from '../ui/Badge';
+import Badge from '../shared/Badge';
 
 /**
  * InstructionsPanel component

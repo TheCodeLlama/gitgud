@@ -6,8 +6,8 @@
 import { useState, useEffect } from 'react';
 import { X, FileText, Image } from 'lucide-react';
 import { api } from '../../lib/api';
-import Button from '../ui/Button';
-import Card from '../ui/Card';
+import Button from '../shared/Button';
+import Card from '../shared/Card';
 
 export default function ProfileEditModal({ profile, onClose, onSave }) {
   const [formData, setFormData] = useState({

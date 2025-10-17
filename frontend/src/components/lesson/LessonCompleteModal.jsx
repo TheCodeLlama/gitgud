@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { Trophy, Award, Star, ArrowRight, X, TrendingUp, Zap } from 'lucide-react';
-import Button from '../ui/Button';
+import Button from '../shared/Button';
 import { useUserStats } from '../../hooks/useUserStats';
 
 /**

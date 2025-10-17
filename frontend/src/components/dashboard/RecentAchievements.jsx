@@ -6,9 +6,9 @@
 import { Trophy } from 'lucide-react';
 import { Link } from 'react-router';
 import { useUserAchievements } from '../../hooks/useUserAchievements';
-import Card, { CardBody } from '../ui/Card';
-import AchievementCard from '../ui/AchievementCard';
-import Button from '../ui/Button';
+import Card, { CardBody } from '../shared/Card';
+import AchievementCard from '../shared/AchievementCard';
+import Button from '../shared/Button';
 import { ListItemSkeleton } from '../skeletons/Skeleton';
 import { mapIconToComponent } from '../../utils/iconMapping';
 

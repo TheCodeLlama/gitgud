@@ -5,8 +5,8 @@
  */
 
 import { Link } from 'react-router';
-import Card from '../ui/Card';
-import Badge from '../ui/Badge';
+import Card from '../shared/Card';
+import Badge from '../shared/Badge';
 import { BookOpen, Code, CheckCircle2, Circle, Lock } from 'lucide-react';
 
 /**

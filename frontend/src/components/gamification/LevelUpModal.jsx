@@ -5,8 +5,8 @@
 
 import { useState, useEffect } from 'react';
 import { Star, Sparkles, Trophy, Lock, Unlock, X } from 'lucide-react';
-import Button from '../ui/Button';
-import Card from '../ui/Card';
+import Button from '../shared/Button';
+import Card from '../shared/Card';
 
 /**
  * LevelUpModal component

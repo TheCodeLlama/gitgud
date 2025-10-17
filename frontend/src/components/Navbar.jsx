@@ -3,8 +3,8 @@ import { Flame } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useUserStats } from '../hooks/useUserStats';
-import DesktopNavigation from './ui/DesktopNavigation';
-import NavbarStats from './ui/NavbarStats';
+import DesktopNavigation from './shared/DesktopNavigation';
+import NavbarStats from './shared/NavbarStats';
 import { NavbarStatsSkeleton } from './skeletons/Skeleton';
 
 /**

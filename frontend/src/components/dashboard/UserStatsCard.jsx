@@ -6,8 +6,8 @@
 import { Flame, Sparkles } from 'lucide-react';
 import { useUserStats } from '../../hooks/useUserStats';
 import { useLevelProgress } from '../../hooks/useLevelProgress';
-import Card, { CardBody } from '../ui/Card';
-import ProgressBar from '../ui/ProgressBar';
+import Card, { CardBody } from '../shared/Card';
+import ProgressBar from '../shared/ProgressBar';
 import { StatsSkeleton } from '../skeletons/Skeleton';
 
 export default function UserStatsCard() {

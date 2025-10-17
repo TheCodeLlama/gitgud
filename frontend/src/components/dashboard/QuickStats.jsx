@@ -6,7 +6,7 @@
 import { Star, CheckCircle2, Target, Flame } from 'lucide-react';
 import { useUserStats } from '../../hooks/useUserStats';
 import { useUserProgress } from '../../hooks/useUserProgress';
-import StatCard from '../ui/StatCard';
+import StatCard from '../shared/StatCard';
 import { CardSkeleton } from '../skeletons/Skeleton';
 
 export default function QuickStats() {

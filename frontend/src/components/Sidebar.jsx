@@ -9,7 +9,7 @@
 import { LayoutDashboard, Library, User, Trophy, Flame, Lightbulb, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 import { useUserStats } from '../hooks/useUserStats';
-import ProgressBar from './ui/ProgressBar';
+import ProgressBar from './shared/ProgressBar';
 import { StatsSkeleton } from './skeletons/Skeleton';
 
 /**

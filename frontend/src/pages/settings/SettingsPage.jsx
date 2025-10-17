@@ -8,9 +8,9 @@ import { Settings, Lock, Bell, Palette, Trash2, Mail } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { auth } from '../../config/firebase';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
+import Card from '../../components/shared/Card';
+import Button from '../../components/shared/Button';
+import Badge from '../../components/shared/Badge';
 
 export default function SettingsPage() {
   const { user } = useAuth();
