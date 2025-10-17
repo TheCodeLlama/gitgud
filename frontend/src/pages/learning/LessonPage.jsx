@@ -15,9 +15,10 @@ import CodeEditor from '../../components/lesson/CodeEditor';
 import InstructionsPanel from '../../components/lesson/InstructionsPanel';
 import ConsolePanel from '../../components/lesson/ConsolePanel';
 import LessonCompleteModal from '../../components/lesson/LessonCompleteModal';
+import LessonNavbar from '../../components/lesson/LessonNavbar';
 import Button from '../../components/ui/Button';
 import { Skeleton } from '../../components/skeletons/Skeleton';
-import { ArrowLeft, Play, Send, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, Send, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 
 /**
  * Transform submission data to execution result format for ConsolePanel
@@ -171,13 +172,18 @@ export default function LessonPage() {
   // Error state
   if (lessonError) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <Button onClick={() => navigate('/modules')} variant="ghost" className="mb-6">
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Modules
-        </Button>
-        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center">
-          <p className="text-red-600">Failed to load lesson. Please try again later.</p>
+      <div className="h-screen flex flex-col">
+        <LessonNavbar
+          lesson={null}
+          onBack={() => navigate('/modules')}
+          previousLesson={null}
+          nextLesson={null}
+          onNavigateToLesson={() => {}}
+        />
+        <div className="flex-1 flex items-center justify-center p-8">
+          <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-6 text-center max-w-md">
+            <p className="text-red-600">Failed to load lesson. Please try again later.</p>
+          </div>
         </div>
       </div>
     );
@@ -187,9 +193,13 @@ export default function LessonPage() {
   if (lessonLoading || testCasesLoading) {
     return (
       <div className="h-screen flex flex-col">
-        <div className="p-4 border-b border-[var(--border)] bg-[var(--surface)]">
-          <Skeleton className="h-10 w-48" />
-        </div>
+        <LessonNavbar
+          lesson={null}
+          onBack={() => navigate('/modules')}
+          previousLesson={null}
+          nextLesson={null}
+          onNavigateToLesson={() => {}}
+        />
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
           <Skeleton className="h-full" />
           <Skeleton className="h-full" />
@@ -201,48 +211,16 @@ export default function LessonPage() {
   return (
     <>
       <div className="h-screen flex flex-col">
-        {/* Top Navigation Bar */}
-        <div className="p-4 border-b border-[var(--border)] bg-[var(--surface)] flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <Button
-              onClick={() => navigate(lesson?.moduleId ? `/modules/${lesson.moduleId}` : '/modules')}
-              variant="ghost"
-              size="sm"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Module
-            </Button>
-
-            {moduleLessons && currentLessonIndex >= 0 && (
-              <span className="text-sm text-[var(--text-muted)]">
-                Lesson {currentLessonIndex + 1} of {moduleLessons.length}
-              </span>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {previousLesson && (
-              <Button
-                onClick={() => handleNavigateToLesson(previousLesson.id)}
-                variant="ghost"
-                size="sm"
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Previous
-              </Button>
-            )}
-            {nextLesson && (
-              <Button
-                onClick={() => handleNavigateToLesson(nextLesson.id)}
-                variant="ghost"
-                size="sm"
-              >
-                Next
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            )}
-          </div>
-        </div>
+        {/* Slim Navbar */}
+        <LessonNavbar
+          lesson={lesson}
+          currentLessonIndex={currentLessonIndex}
+          totalLessons={moduleLessons?.length}
+          onBack={() => navigate(lesson?.moduleId ? `/modules/${lesson.moduleId}` : '/modules')}
+          previousLesson={previousLesson}
+          nextLesson={nextLesson}
+          onNavigateToLesson={handleNavigateToLesson}
+        />
 
         {/* Main Content: Split View */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
