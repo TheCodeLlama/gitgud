@@ -6,12 +6,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syntaxllama.gitgud.backend.dtos.gamification.AchievementDTO;
 import com.syntaxllama.gitgud.backend.dtos.gamification.UserAchievementDTO;
 import com.syntaxllama.gitgud.backend.models.Achievement;
+import com.syntaxllama.gitgud.backend.models.Module;
 import com.syntaxllama.gitgud.backend.models.User;
 import com.syntaxllama.gitgud.backend.models.UserAchievement;
 import com.syntaxllama.gitgud.backend.models.UserStats;
 import com.syntaxllama.gitgud.backend.repositories.AchievementRepository;
+import com.syntaxllama.gitgud.backend.repositories.LessonRepository;
+import com.syntaxllama.gitgud.backend.repositories.ModuleRepository;
 import com.syntaxllama.gitgud.backend.repositories.UserAchievementRepository;
 import com.syntaxllama.gitgud.backend.repositories.UserProgressRepository;
+import com.syntaxllama.gitgud.backend.repositories.UserStatsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,6 +38,9 @@ public class AchievementService {
     private final AchievementRepository achievementRepository;
     private final UserAchievementRepository userAchievementRepository;
     private final UserProgressRepository userProgressRepository;
+    private final ModuleRepository moduleRepository;
+    private final LessonRepository lessonRepository;
+    private final UserStatsRepository userStatsRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
@@ -97,6 +104,7 @@ public class AchievementService {
 
     /**
      * Award a specific achievement to a user (idempotent).
+     * Also awards the achievement's XP reward to the user's stats.
      *
      * @param user The user
      * @param achievement The achievement to award
@@ -110,13 +118,55 @@ public class AchievementService {
             return null;
         }
 
+        // Create achievement record
         UserAchievement userAchievement = new UserAchievement();
         userAchievement.setUser(user);
         userAchievement.setAchievement(achievement);
         userAchievement.setEarnedAt(LocalDateTime.now());
-
         userAchievement = userAchievementRepository.save(userAchievement);
+
+        // Award XP from achievement
+        if (achievement.getXpReward() != null && achievement.getXpReward() > 0) {
+            UserStats userStats = userStatsRepository.findByUserId(user.getId()).orElse(null);
+            if (userStats != null) {
+                long oldXp = userStats.getTotalXp();
+                long newXp = oldXp + achievement.getXpReward();
+                userStats.setTotalXp(newXp);
+
+                // Check for level up
+                while (userStats.getTotalXp() >= userStats.getXpToNextLevel()) {
+                    userStats.setCurrentLevel(userStats.getCurrentLevel() + 1);
+                    long xpForNextLevel = calculateXpForLevel(userStats.getCurrentLevel() + 1);
+                    userStats.setXpToNextLevel(xpForNextLevel);
+                    log.info("User {} leveled up to {} from achievement '{}'",
+                            user.getId(), userStats.getCurrentLevel(), achievement.getName());
+                }
+
+                userStatsRepository.save(userStats);
+                log.info("Awarded {} XP to user {} from achievement '{}' (total: {})",
+                        achievement.getXpReward(), user.getId(), achievement.getName(), newXp);
+            }
+        }
+
         return UserAchievementDTO.fromEntity(userAchievement);
+    }
+
+    /**
+     * Calculate XP required to reach a specific level.
+     * Formula: BASE_XP * (level - 1) ^ LEVEL_EXPONENT
+     *
+     * @param level Target level
+     * @return Total XP required
+     */
+    private long calculateXpForLevel(int level) {
+        if (level <= 1) {
+            return 0L;
+        }
+        // Exponential growth: 100, 250, 475, 800, 1225, 1750, ...
+        // Using same constants as XpService
+        int BASE_XP = 100;
+        double LEVEL_EXPONENT = 1.5;
+        return (long) (BASE_XP * Math.pow(level - 1, LEVEL_EXPONENT));
     }
 
     /**
@@ -162,10 +212,28 @@ public class AchievementService {
                     );
                 }
                 case "module_complete" -> {
-                    // Module completion check would require more complex logic
-                    // For MVP, we'll implement this later
-                    log.debug("Module completion check not yet implemented");
-                    yield false;
+                    // Check if user has completed all lessons in a specific module
+                    String moduleName = criteria.get("module").asText();
+
+                    // Find the module by name
+                    Module module = moduleRepository.findByTitle(moduleName).orElse(null);
+                    if (module == null) {
+                        log.warn("Module '{}' not found for achievement check", moduleName);
+                        yield false;
+                    }
+
+                    // Count total lessons in the module
+                    long totalLessons = lessonRepository.findByModuleIdOrderByDisplayOrderAsc(module.getId()).size();
+
+                    // Count completed lessons by user in this module
+                    long completedLessons = userProgressRepository.countCompletedLessonsByUserAndModule(
+                            user.getId(), module.getId()
+                    );
+
+                    log.debug("Module '{}' completion check: {}/{} lessons completed",
+                            moduleName, completedLessons, totalLessons);
+
+                    yield totalLessons > 0 && completedLessons >= totalLessons;
                 }
                 default -> {
                     log.warn("Unknown achievement criteria type: {}", type);

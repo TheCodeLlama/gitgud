@@ -27,4 +27,9 @@ public interface ModuleRepository extends JpaRepository<Module, UUID> {
      * Find modules by required level less than or equal to specified level.
      */
     List<Module> findByRequiredLevelLessThanEqualAndIsPublishedTrueOrderByDisplayOrderAsc(Integer level);
+
+    /**
+     * Find module by title.
+     */
+    java.util.Optional<Module> findByTitle(String title);
 }
