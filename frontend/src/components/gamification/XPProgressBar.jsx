@@ -27,38 +27,15 @@ export default function XPProgressBar({
   size = 'md',
   className = '',
 }) {
-  const [displayXP, setDisplayXP] = useState(animated ? 0 : currentXP);
+  const [displayXP, setDisplayXP] = useState(currentXP);
   const [isLevelingUp, setIsLevelingUp] = useState(false);
 
   const percentage = Math.min((currentXP / xpForNextLevel) * 100, 100);
 
-  // Animate XP fill on mount or when XP changes
+  // Update display XP immediately without animation
   useEffect(() => {
-    if (!animated) return;
-
-    const increment = currentXP / 50; // 50 steps
-    let current = 0;
-    const interval = setInterval(() => {
-      current += increment;
-      if (current >= currentXP) {
-        setDisplayXP(currentXP);
-        clearInterval(interval);
-
-        // Check for level up
-        if (currentXP >= xpForNextLevel && onLevelUp) {
-          setIsLevelingUp(true);
-          setTimeout(() => {
-            setIsLevelingUp(false);
-            onLevelUp();
-          }, 1000);
-        }
-      } else {
-        setDisplayXP(Math.floor(current));
-      }
-    }, 20);
-
-    return () => clearInterval(interval);
-  }, [currentXP, xpForNextLevel, animated, onLevelUp]);
+    setDisplayXP(currentXP);
+  }, [currentXP]);
 
   // Size variants
   const sizeStyles = {
@@ -103,7 +80,7 @@ export default function XPProgressBar({
         >
           {/* Progress Fill */}
           <div
-            className={`absolute inset-y-0 left-0 bg-gradient-to-r from-[var(--primary)] to-[var(--accent)] rounded-full transition-all duration-500 ease-out ${
+            className={`absolute inset-y-0 left-0 bg-[var(--accent)] rounded-full ${
               isLevelingUp ? 'animate-pulse' : ''
             }`}
             style={{ width: `${percentage}%` }}
@@ -112,9 +89,6 @@ export default function XPProgressBar({
             aria-valuemin="0"
             aria-valuemax={xpForNextLevel}
           >
-            {/* Shimmer Effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-
             {/* Glow Effect on Level Up */}
             {isLevelingUp && (
               <div className="absolute inset-0 bg-white/50 animate-ping" />

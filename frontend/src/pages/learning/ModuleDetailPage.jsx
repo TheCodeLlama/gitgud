@@ -151,7 +151,7 @@ export default function ModuleDetailPage() {
           </div>
           <div className="w-full bg-[var(--surface-muted)] rounded-full h-3 mb-4">
             <div
-              className="bg-[var(--accent)] h-3 rounded-full transition-all"
+              className="bg-[var(--accent)] h-3 rounded-full"
               style={{ width: `${progress.percentage}%` }}
             />
           </div>

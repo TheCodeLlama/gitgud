@@ -34,10 +34,10 @@ export default function ProgressBar({
   };
 
   const colorStyles = {
-    accent: 'bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)]',
-    success: 'bg-gradient-to-r from-green-500 to-emerald-500',
-    warning: 'bg-gradient-to-r from-yellow-500 to-orange-500',
-    danger: 'bg-gradient-to-r from-red-500 to-rose-500',
+    accent: 'bg-[var(--accent)]',
+    success: 'bg-green-500',
+    warning: 'bg-yellow-500',
+    danger: 'bg-red-500',
   };
 
   const heightClass = sizeStyles[size] || sizeStyles.md;
@@ -61,17 +61,15 @@ export default function ProgressBar({
       >
         {/* Progress fill */}
         <div
-          className={`absolute inset-y-0 left-0 ${colorClass} rounded-full transition-all duration-500 ease-out`}
+          className={`absolute inset-y-0 left-0 ${colorClass} rounded-full`}
           style={{ width: `${percentage}%` }}
           role="progressbar"
           aria-valuenow={value}
           aria-valuemin="0"
           aria-valuemax={max}
           {...props}
-        >
-          {/* Shimmer effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-        </div>
+        />
+
 
         {/* Percentage text */}
         {showPercentage && percentage > 15 && (

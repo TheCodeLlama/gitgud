@@ -39,7 +39,7 @@ export default function NavbarStats({ stats }) {
         <div className="flex flex-col justify-center">
           <div className="w-20 h-1.5 bg-[var(--surface-muted)] rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)] rounded-full transition-all duration-300"
+              className="h-full bg-[var(--accent)] rounded-full"
               style={{ width: `${progressPercent}%` }}
               role="progressbar"
               aria-valuenow={stats.currentLevelXp || 0}

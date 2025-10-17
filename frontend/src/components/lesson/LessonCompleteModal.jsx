@@ -3,7 +3,7 @@
  * Celebration modal shown when user successfully completes a lesson
  */
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { Trophy, Award, Star, ArrowRight, X, TrendingUp, Zap } from 'lucide-react';
 import Button from '../ui/Button';
@@ -52,6 +52,10 @@ export default function LessonCompleteModal({
   const navigate = useNavigate();
   const { data: userStats } = useUserStats();
 
+  // Store animation name in ref to prevent re-creating on re-renders
+  const animationNameRef = useRef(`xp-progress-${Date.now()}`);
+  const wasOpenRef = useRef(false);
+
   // Detect level-up by comparing previous level to current level
   const leveledUp = useMemo(() => {
     if (!userStats || !xpAwarded) return false;
@@ -62,6 +66,16 @@ export default function LessonCompleteModal({
 
     return currentLevel > previousLevel;
   }, [userStats, xpAwarded]);
+
+  // Update animation name only when modal opens for the first time
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
+      animationNameRef.current = `xp-progress-${Date.now()}`;
+      wasOpenRef.current = true;
+    } else if (!isOpen) {
+      wasOpenRef.current = false;
+    }
+  }, [isOpen]);
 
   // Close on Escape key
   useEffect(() => {
@@ -112,8 +126,8 @@ export default function LessonCompleteModal({
   const startPercent = (previousXp / maxXp) * 100;
   const endPercent = (currentXp / maxXp) * 100;
 
-  // Create unique animation name for this modal instance
-  const animationName = `xp-progress-${isOpen ? Date.now() : 0}`;
+  // Use the stored animation name from ref
+  const animationName = animationNameRef.current;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
@@ -230,16 +244,13 @@ export default function LessonCompleteModal({
                 </div>
                 <div className="relative h-4 bg-[var(--surface-muted)] rounded-full overflow-hidden border border-[var(--border)]">
                   <div
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] rounded-full"
+                    className="absolute inset-y-0 left-0 bg-[var(--accent)] rounded-full"
                     style={{
                       animation: `${animationName} 1s ease-out forwards`,
                       animationDelay: '0.3s',
                       width: `${startPercent}%`,
                     }}
-                  >
-                    {/* Shimmer effect */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-                  </div>
+                  />
                 </div>
               </div>
 
