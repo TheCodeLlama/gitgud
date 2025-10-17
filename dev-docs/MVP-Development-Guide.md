@@ -545,23 +545,23 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
   - [x] Animated fill
   - [x] Show current/needed XP
   - [x] Level up animation
-- [x] Build achievement toast/notification:
-  - [x] Slide in from top/corner
-  - [x] Show achievement icon and name
-  - [x] Auto-dismiss after 5 seconds
-  - [x] Click to view achievement details
-- [x] Create streak indicator component:
-  - [x] Fire icon with streak number
-  - [x] Visual feedback for maintaining streak
-  - [x] Warning if streak is at risk
+- [ ] Build achievement toast/notification:
+  - [ ] Slide in from top/corner
+  - [ ] Show achievement icon and name
+  - [ ] Auto-dismiss after 5 seconds
+  - [ ] Click to view achievement details
+- [ ] Create streak indicator component:
+  - [ ] Fire icon with streak number
+  - [ ] Visual feedback for maintaining streak
+  - [ ] Warning if streak is at risk
 - [x] Implement level-up modal:
   - [x] Celebration animation
   - [x] New level display
   - [x] Unlocked content
   - [ ] Shareable image (future)
-- [x] Add XP gain animations:
-  - [x] +XP floating text
-  - [x] Particle effects (optional)
+- [ ] Add XP gain animations:
+  - [ ] +XP floating text
+  - [ ] Particle effects (optional)
 
 ---
 
