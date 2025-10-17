@@ -3,11 +3,34 @@
  * Celebration modal shown when user successfully completes a lesson
  */
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router';
-import { Trophy, Award, Star, ArrowRight, X, TrendingUp } from 'lucide-react';
+import { Trophy, Award, Star, ArrowRight, X, TrendingUp, Zap } from 'lucide-react';
 import Button from '../ui/Button';
 import { useUserStats } from '../../hooks/useUserStats';
+
+/**
+ * Calculate what level a given total XP corresponds to.
+ * Formula matches backend: BASE_XP * (level - 1) ^ LEVEL_EXPONENT
+ */
+function calculateLevelFromXp(totalXp) {
+  if (totalXp <= 0) return 1;
+
+  const BASE_XP = 100;
+  const LEVEL_EXPONENT = 1.5;
+
+  // Find the level by iterating (since we can't easily invert the exponential formula)
+  let level = 1;
+  while (true) {
+    const xpForNextLevel = BASE_XP * Math.pow(level, LEVEL_EXPONENT);
+    if (totalXp < xpForNextLevel) {
+      return level;
+    }
+    level++;
+    // Safety limit to prevent infinite loop
+    if (level > 1000) return 1000;
+  }
+}
 
 /**
  * LessonCompleteModal component
@@ -28,6 +51,17 @@ export default function LessonCompleteModal({
 }) {
   const navigate = useNavigate();
   const { data: userStats } = useUserStats();
+
+  // Detect level-up by comparing previous level to current level
+  const leveledUp = useMemo(() => {
+    if (!userStats || !xpAwarded) return false;
+
+    const previousTotalXp = (userStats.totalXp || 0) - xpAwarded;
+    const previousLevel = calculateLevelFromXp(previousTotalXp);
+    const currentLevel = userStats.currentLevel || 1;
+
+    return currentLevel > previousLevel;
+  }, [userStats, xpAwarded]);
 
   // Close on Escape key
   useEffect(() => {
@@ -95,7 +129,13 @@ export default function LessonCompleteModal({
           }
         `}
       </style>
-      <div className="relative bg-[var(--surface)] border-2 border-[var(--accent)] rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in zoom-in slide-in-from-bottom-4 duration-300">
+      <div
+        className={`relative bg-[var(--surface)] rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in zoom-in slide-in-from-bottom-4 duration-300 ${
+          leveledUp
+            ? 'border-4 border-[var(--accent)] shadow-[0_0_30px_rgba(139,92,246,0.4)]'
+            : 'border-2 border-[var(--accent)]'
+        }`}
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -109,17 +149,42 @@ export default function LessonCompleteModal({
         <div className="p-8 text-center border-b border-[var(--border)]">
           <div className="flex justify-center mb-4 animate-in zoom-in duration-500 delay-100">
             <div className="relative">
-              <Trophy className="w-20 h-20 text-[var(--accent)]" />
-              <div className="absolute inset-0 bg-[var(--accent)] opacity-20 blur-xl rounded-full animate-pulse" />
+              {leveledUp ? (
+                <>
+                  <Zap className="w-20 h-20 text-[var(--accent)]" />
+                  <div className="absolute inset-0 bg-[var(--accent)] opacity-30 blur-2xl rounded-full animate-pulse" />
+                </>
+              ) : (
+                <>
+                  <Trophy className="w-20 h-20 text-[var(--accent)]" />
+                  <div className="absolute inset-0 bg-[var(--accent)] opacity-20 blur-xl rounded-full animate-pulse" />
+                </>
+              )}
             </div>
           </div>
 
-          <h2 className="text-3xl font-bold text-[var(--text)] mb-2 animate-in slide-in-from-bottom duration-500 delay-200">
-            Lesson Complete!
-          </h2>
-          <p className="text-[var(--text-muted)] animate-in slide-in-from-bottom duration-500 delay-300">
-            Great job! You've successfully completed this lesson.
-          </p>
+          {leveledUp ? (
+            <>
+              <h2 className="text-3xl font-bold text-[var(--accent)] mb-2 animate-in slide-in-from-bottom duration-500 delay-200">
+                Level Up!
+              </h2>
+              <p className="text-[var(--text)] text-lg font-semibold mb-1 animate-in slide-in-from-bottom duration-500 delay-250">
+                You've reached Level {userStats?.currentLevel}!
+              </p>
+              <p className="text-[var(--text-muted)] animate-in slide-in-from-bottom duration-500 delay-300">
+                Great job! You've successfully completed this lesson.
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-3xl font-bold text-[var(--text)] mb-2 animate-in slide-in-from-bottom duration-500 delay-200">
+                Lesson Complete!
+              </h2>
+              <p className="text-[var(--text-muted)] animate-in slide-in-from-bottom duration-500 delay-300">
+                Great job! You've successfully completed this lesson.
+              </p>
+            </>
+          )}
         </div>
 
         {/* Content */}
@@ -130,8 +195,22 @@ export default function LessonCompleteModal({
               {/* Level and XP Info */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-[var(--accent)]" />
-                  <span className="font-semibold text-[var(--text)]">Level {userStats.currentLevel}</span>
+                  {leveledUp ? (
+                    <>
+                      <Zap className="w-5 h-5 text-[var(--accent)] animate-pulse" />
+                      <span className="font-bold text-[var(--accent)] text-lg">
+                        Level {userStats.currentLevel}
+                      </span>
+                      <span className="text-xs px-2 py-0.5 bg-[var(--accent)] text-white rounded-full font-semibold animate-in zoom-in duration-300">
+                        NEW!
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <TrendingUp className="w-5 h-5 text-[var(--accent)]" />
+                      <span className="font-semibold text-[var(--text)]">Level {userStats.currentLevel}</span>
+                    </>
+                  )}
                 </div>
                 {xpAwarded > 0 && (
                   <div className="flex items-center gap-2 px-3 py-1 bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-full">
