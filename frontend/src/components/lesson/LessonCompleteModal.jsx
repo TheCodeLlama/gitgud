@@ -3,11 +3,10 @@
  * Celebration modal shown when user successfully completes a lesson
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { Trophy, Award, Star, ArrowRight, X, TrendingUp } from 'lucide-react';
 import Button from '../ui/Button';
-import ProgressBar from '../ui/ProgressBar';
 import { useUserStats } from '../../hooks/useUserStats';
 
 /**
@@ -29,9 +28,6 @@ export default function LessonCompleteModal({
 }) {
   const navigate = useNavigate();
   const { data: userStats } = useUserStats();
-
-  // State for animated XP progress
-  const [animatedXp, setAnimatedXp] = useState(0);
 
   // Close on Escape key
   useEffect(() => {
@@ -57,28 +53,6 @@ export default function LessonCompleteModal({
     };
   }, [isOpen]);
 
-  // Animate XP progress bar when modal opens
-  useEffect(() => {
-    if (isOpen && userStats && xpAwarded !== undefined) {
-      console.log('Modal animation - userStats:', userStats);
-      console.log('Modal animation - xpAwarded:', xpAwarded);
-      console.log('Modal animation - currentLevelXp:', userStats.currentLevelXp);
-
-      // Start from previous XP (before award)
-      const previousXp = Math.max(0, (userStats.currentLevelXp || 0) - xpAwarded);
-      console.log('Modal animation - previousXp:', previousXp);
-      setAnimatedXp(previousXp);
-
-      // Animate to current XP after a short delay
-      const timer = setTimeout(() => {
-        console.log('Modal animation - animating to:', userStats.currentLevelXp);
-        setAnimatedXp(userStats.currentLevelXp || 0);
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, userStats, xpAwarded]);
-
   if (!isOpen) return null;
 
   const handleNextLesson = () => {
@@ -97,8 +71,30 @@ export default function LessonCompleteModal({
     onClose();
   };
 
+  // Calculate XP percentages for animation
+  const previousXp = userStats ? Math.max(0, (userStats.currentLevelXp || 0) - xpAwarded) : 0;
+  const currentXp = userStats?.currentLevelXp || 0;
+  const maxXp = userStats?.xpForCurrentLevel || 1;
+  const startPercent = (previousXp / maxXp) * 100;
+  const endPercent = (currentXp / maxXp) * 100;
+
+  // Create unique animation name for this modal instance
+  const animationName = `xp-progress-${isOpen ? Date.now() : 0}`;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
+      <style>
+        {`
+          @keyframes ${animationName} {
+            from {
+              width: ${startPercent}%;
+            }
+            to {
+              width: ${endPercent}%;
+            }
+          }
+        `}
+      </style>
       <div className="relative bg-[var(--surface)] border-2 border-[var(--accent)] rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto animate-in zoom-in slide-in-from-bottom-4 duration-300">
         {/* Close Button */}
         <button
@@ -146,14 +142,27 @@ export default function LessonCompleteModal({
               </div>
 
               {/* Animated Progress Bar */}
-              <ProgressBar
-                value={animatedXp}
-                max={userStats.xpForCurrentLevel}
-                showLabel={true}
-                label="Progress to Next Level"
-                size="lg"
-                color="accent"
-              />
+              <div>
+                <div className="flex items-center justify-between text-sm mb-2">
+                  <span className="text-[var(--text-muted)]">Progress to Next Level</span>
+                  <span className="font-medium text-[var(--accent)]">
+                    {currentXp} / {maxXp}
+                  </span>
+                </div>
+                <div className="relative h-4 bg-[var(--surface-muted)] rounded-full overflow-hidden border border-[var(--border)]">
+                  <div
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-[var(--accent)] to-[var(--accent-secondary)] rounded-full"
+                    style={{
+                      animation: `${animationName} 1s ease-out forwards`,
+                      animationDelay: '0.3s',
+                      width: `${startPercent}%`,
+                    }}
+                  >
+                    {/* Shimmer effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                  </div>
+                </div>
+              </div>
 
               {/* Total XP */}
               <div className="text-center text-sm text-[var(--text-muted)]">
