@@ -8,6 +8,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import { queryKeys } from '../lib/queryClient';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 /**
  * Hook for code execution workflow
@@ -20,6 +21,7 @@ export function useCodeExecution() {
   const [error, setError] = useState(null);
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { showAchievement } = useToast();
 
   /**
    * Submit code for execution
@@ -60,6 +62,16 @@ export function useCodeExecution() {
         if (executionResult.status === 'COMPLETED' || executionResult.status === 'FAILED') {
           setResult(executionResult);
           setIsExecuting(false);
+
+          // Show achievement toasts if any were earned
+          if (executionResult.achievementsEarned && executionResult.achievementsEarned.length > 0) {
+            executionResult.achievementsEarned.forEach((achievementData, index) => {
+              // Add delay between multiple achievement toasts
+              setTimeout(() => {
+                showAchievement(achievementData.achievement);
+              }, index * 500);
+            });
+          }
 
           // Always invalidate the latest submission query (regardless of pass/fail)
           if (user?.uid) {

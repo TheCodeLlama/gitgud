@@ -101,10 +101,14 @@ public class CodeExecutionWorker {
             }
 
             // Award XP if all tests passed (MUST be done BEFORE updating progress to COMPLETED)
+            XpAwardResult xpResult = null;
             int xpAwarded = 0;
             if (allPassed) {
-                xpAwarded = awardXpForCompletion(user, lesson);
-                log.info("XP award result for job {}: {} XP", job.getJobId(), xpAwarded);
+                xpResult = awardXpForCompletion(user, lesson);
+                xpAwarded = xpResult.getXpAwarded() != null ? xpResult.getXpAwarded().intValue() : 0;
+                log.info("XP award result for job {}: {} XP, {} achievements",
+                        job.getJobId(), xpAwarded,
+                        xpResult.getAchievementsEarned() != null ? xpResult.getAchievementsEarned().size() : 0);
             }
 
             // Update user progress status (done AFTER XP award to avoid double-completion check)
@@ -122,6 +126,7 @@ public class CodeExecutionWorker {
                     .startedAt(job.getSubmittedAt())
                     .completedAt(LocalDateTime.now())
                     .xpAwarded(xpAwarded)
+                    .achievementsEarned(xpResult != null ? xpResult.getAchievementsEarned() : null)
                     .build();
 
             log.info("ExecutionResult for job {}: xpAwarded={}, passed={}",
@@ -366,9 +371,9 @@ public class CodeExecutionWorker {
      *
      * @param user The user who completed the lesson
      * @param lesson The completed lesson
-     * @return XP awarded
+     * @return XpAwardResult with XP and achievements
      */
-    private int awardXpForCompletion(User user, Lesson lesson) {
+    private XpAwardResult awardXpForCompletion(User user, Lesson lesson) {
         try {
             // Check if user has already completed this lesson
             Optional<UserProgress> existingProgress =
@@ -381,7 +386,10 @@ public class CodeExecutionWorker {
             if (!firstCompletion) {
                 log.info("User {} has already completed lesson {}. No XP awarded.",
                         user.getId(), lesson.getId());
-                return 0;
+                return XpAwardResult.builder()
+                        .xpAwarded(0L)
+                        .achievementsEarned(new ArrayList<>())
+                        .build();
             }
 
             // Award XP via XpService (includes difficulty multiplier, streak bonus, etc.)
@@ -394,23 +402,21 @@ public class CodeExecutionWorker {
 
             XpAwardResult xpResult = xpService.awardXp(user, xpRequest);
 
-            log.info("Awarded {} XP to user {} for completing lesson {} (level: {}, leveledUp: {})",
+            log.info("Awarded {} XP to user {} for completing lesson {} (level: {}, leveledUp: {}, achievements: {})",
                     xpResult.getXpAwarded(), user.getId(), lesson.getId(),
-                    xpResult.getCurrentLevel(), xpResult.getLeveledUp());
+                    xpResult.getCurrentLevel(), xpResult.getLeveledUp(),
+                    xpResult.getAchievementsEarned() != null ? xpResult.getAchievementsEarned().size() : 0);
 
-            // Handle null xpAwarded value
-            if (xpResult.getXpAwarded() == null) {
-                log.warn("XpAwardResult returned null xpAwarded for user {} and lesson {}", user.getId(), lesson.getId());
-                return 0;
-            }
-
-            return xpResult.getXpAwarded().intValue();
+            return xpResult;
 
         } catch (Exception e) {
             log.error("Failed to award XP to user {} for lesson {}: {}",
                     user.getId(), lesson.getId(), e.getMessage(), e);
-            // Return 0 instead of failing the job
-            return 0;
+            // Return empty result instead of failing the job
+            return XpAwardResult.builder()
+                    .xpAwarded(0L)
+                    .achievementsEarned(new ArrayList<>())
+                    .build();
         }
     }
 }

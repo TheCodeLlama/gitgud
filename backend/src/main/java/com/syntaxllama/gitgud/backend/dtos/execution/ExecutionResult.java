@@ -1,5 +1,6 @@
 package com.syntaxllama.gitgud.backend.dtos.execution;
 
+import com.syntaxllama.gitgud.backend.dtos.gamification.UserAchievementDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -72,6 +73,11 @@ public class ExecutionResult {
      * XP awarded for this submission (if passed).
      */
     private Integer xpAwarded;
+
+    /**
+     * Achievements earned during this submission.
+     */
+    private List<UserAchievementDTO> achievementsEarned;
 
     /**
      * Timestamp when execution started.

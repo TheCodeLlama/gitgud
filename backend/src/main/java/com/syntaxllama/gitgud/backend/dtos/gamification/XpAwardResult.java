@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 /**
  * Result DTO for XP award operations.
  */
@@ -20,4 +22,5 @@ public class XpAwardResult {
     private Boolean leveledUp;
     private Integer newLevel;
     private Long xpToNextLevel;
+    private List<UserAchievementDTO> achievementsEarned;
 }

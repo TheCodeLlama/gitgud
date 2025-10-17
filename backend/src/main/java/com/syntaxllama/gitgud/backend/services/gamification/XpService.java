@@ -1,6 +1,7 @@
 package com.syntaxllama.gitgud.backend.services.gamification;
 
 import com.syntaxllama.gitgud.backend.dtos.gamification.AwardXpRequest;
+import com.syntaxllama.gitgud.backend.dtos.gamification.UserAchievementDTO;
 import com.syntaxllama.gitgud.backend.dtos.gamification.UserStatsDTO;
 import com.syntaxllama.gitgud.backend.dtos.gamification.XpAwardResult;
 import com.syntaxllama.gitgud.backend.exceptions.ResourceNotFoundException;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Service for managing XP, levels, and streaks.
@@ -24,6 +26,7 @@ import java.time.LocalDateTime;
 public class XpService {
 
     private final UserStatsRepository userStatsRepository;
+    private final AchievementService achievementService;
 
     // Level progression constants (exponential growth)
     private static final int BASE_XP = 100;
@@ -107,7 +110,14 @@ public class XpService {
         }
 
         // Save updated stats
-        userStatsRepository.save(stats);
+        stats = userStatsRepository.save(stats);
+
+        // Check and award achievements after XP update
+        List<UserAchievementDTO> achievementsEarned = achievementService.checkAndAwardAchievements(user, stats);
+
+        if (!achievementsEarned.isEmpty()) {
+            log.info("User {} earned {} new achievement(s)", user.getId(), achievementsEarned.size());
+        }
 
         // Build result
         return XpAwardResult.builder()
@@ -117,6 +127,7 @@ public class XpService {
                 .leveledUp(leveledUp)
                 .newLevel(newLevel)
                 .xpToNextLevel(stats.getXpToNextLevel() - stats.getTotalXp())
+                .achievementsEarned(achievementsEarned)
                 .build();
     }
 

@@ -8,17 +8,20 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from './lib/queryClient';
 import { AppRoutes } from './routes';
 import { AuthProvider } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="min-h-screen bg-[var(--bg)]">
-          <AppRoutes />
-        </div>
+        <ToastProvider>
+          <div className="min-h-screen bg-[var(--bg)]">
+            <AppRoutes />
+          </div>
 
-        {/* React Query Devtools (only in development) */}
-        {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+          {/* React Query Devtools (only in development) */}
+          {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+        </ToastProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
