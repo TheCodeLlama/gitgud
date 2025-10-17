@@ -112,14 +112,7 @@ public class XpService {
         // Save updated stats
         stats = userStatsRepository.save(stats);
 
-        // Check and award achievements after XP update
-        List<UserAchievementDTO> achievementsEarned = achievementService.checkAndAwardAchievements(user, stats);
-
-        if (!achievementsEarned.isEmpty()) {
-            log.info("User {} earned {} new achievement(s)", user.getId(), achievementsEarned.size());
-        }
-
-        // Build result
+        // Build result (achievements will be checked later in the workflow)
         return XpAwardResult.builder()
                 .xpAwarded(xpToAward)
                 .totalXp(stats.getTotalXp())
@@ -127,7 +120,7 @@ public class XpService {
                 .leveledUp(leveledUp)
                 .newLevel(newLevel)
                 .xpToNextLevel(stats.getXpToNextLevel() - stats.getTotalXp())
-                .achievementsEarned(achievementsEarned)
+                .achievementsEarned(null) // Will be populated later after progress update
                 .build();
     }
 

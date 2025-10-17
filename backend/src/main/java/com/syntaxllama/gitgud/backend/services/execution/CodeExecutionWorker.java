@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.syntaxllama.gitgud.backend.configs.RabbitMQConfig;
 import com.syntaxllama.gitgud.backend.dtos.execution.*;
 import com.syntaxllama.gitgud.backend.dtos.gamification.AwardXpRequest;
+import com.syntaxllama.gitgud.backend.dtos.gamification.UserAchievementDTO;
 import com.syntaxllama.gitgud.backend.dtos.gamification.XpAwardResult;
 import com.syntaxllama.gitgud.backend.dtos.learning.UpdateProgressRequest;
 import com.syntaxllama.gitgud.backend.models.Lesson;
@@ -11,11 +12,14 @@ import com.syntaxllama.gitgud.backend.models.Submission;
 import com.syntaxllama.gitgud.backend.models.TestCase;
 import com.syntaxllama.gitgud.backend.models.User;
 import com.syntaxllama.gitgud.backend.models.UserProgress;
+import com.syntaxllama.gitgud.backend.models.UserStats;
 import com.syntaxllama.gitgud.backend.repositories.LessonRepository;
 import com.syntaxllama.gitgud.backend.repositories.SubmissionRepository;
 import com.syntaxllama.gitgud.backend.repositories.TestCaseRepository;
 import com.syntaxllama.gitgud.backend.repositories.UserRepository;
 import com.syntaxllama.gitgud.backend.repositories.UserProgressRepository;
+import com.syntaxllama.gitgud.backend.repositories.UserStatsRepository;
+import com.syntaxllama.gitgud.backend.services.gamification.AchievementService;
 import com.syntaxllama.gitgud.backend.services.gamification.XpService;
 import com.syntaxllama.gitgud.backend.services.learning.ProgressService;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +52,8 @@ public class CodeExecutionWorker {
     private final XpService xpService;
     private final ProgressService progressService;
     private final ObjectMapper objectMapper;
+    private final AchievementService achievementService;
+    private final UserStatsRepository userStatsRepository;
 
     /**
      * Listen for code execution jobs from RabbitMQ queue.
@@ -106,13 +112,25 @@ public class CodeExecutionWorker {
             if (allPassed) {
                 xpResult = awardXpForCompletion(user, lesson);
                 xpAwarded = xpResult.getXpAwarded() != null ? xpResult.getXpAwarded().intValue() : 0;
-                log.info("XP award result for job {}: {} XP, {} achievements",
-                        job.getJobId(), xpAwarded,
-                        xpResult.getAchievementsEarned() != null ? xpResult.getAchievementsEarned().size() : 0);
+                log.info("XP award result for job {}: {} XP (achievements will be checked after progress update)",
+                        job.getJobId(), xpAwarded);
             }
 
             // Update user progress status (done AFTER XP award to avoid double-completion check)
             updateUserProgress(user, lesson, allPassed, passedTests, testCases.size());
+
+            // Check and award achievements AFTER progress is updated to COMPLETED
+            List<UserAchievementDTO> achievementsEarned = new ArrayList<>();
+            if (allPassed) {
+                UserStats userStats = userStatsRepository.findByUserId(user.getId()).orElse(null);
+                if (userStats != null) {
+                    achievementsEarned = achievementService.checkAndAwardAchievements(user, userStats);
+                    if (!achievementsEarned.isEmpty()) {
+                        log.info("User {} earned {} achievement(s) after completing lesson {}",
+                                user.getId(), achievementsEarned.size(), lesson.getId());
+                    }
+                }
+            }
 
             // Build final result
             ExecutionResult result = ExecutionResult.builder()
@@ -126,11 +144,13 @@ public class CodeExecutionWorker {
                     .startedAt(job.getSubmittedAt())
                     .completedAt(LocalDateTime.now())
                     .xpAwarded(xpAwarded)
-                    .achievementsEarned(xpResult != null ? xpResult.getAchievementsEarned() : null)
+                    .achievementsEarned(achievementsEarned)
                     .build();
 
-            log.info("ExecutionResult for job {}: xpAwarded={}, passed={}",
-                    job.getJobId(), result.getXpAwarded(), result.getPassed());
+            log.info("ExecutionResult for job {}: xpAwarded={}, achievements={}, passed={}",
+                    job.getJobId(), result.getXpAwarded(),
+                    result.getAchievementsEarned() != null ? result.getAchievementsEarned().size() : 0,
+                    result.getPassed());
 
             // Store result in Redis
             executionService.storeResult(job.getJobId(), result);
@@ -138,8 +158,8 @@ public class CodeExecutionWorker {
             // Save submission to database
             saveSubmission(job, result);
 
-            log.info("Job {} completed: {}/{} tests passed, {} XP awarded",
-                    job.getJobId(), passedTests, testCases.size(), xpAwarded);
+            log.info("Job {} completed: {}/{} tests passed, {} XP awarded, {} achievement(s) earned",
+                    job.getJobId(), passedTests, testCases.size(), xpAwarded, achievementsEarned.size());
 
         } catch (Exception e) {
             log.error("Error processing job {}", job.getJobId(), e);
