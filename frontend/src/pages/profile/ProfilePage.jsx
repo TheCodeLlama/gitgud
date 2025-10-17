@@ -172,7 +172,7 @@ export default function ProfilePage() {
           <Card className="p-6">
             {/* Avatar */}
             <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--accent)] flex items-center justify-center mb-4">
+              <div className="w-24 h-24 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--bg)] mb-4">
                 {profile.avatarUrl ? (
                   <img
                     src={profile.avatarUrl}
@@ -180,7 +180,7 @@ export default function ProfilePage() {
                     className="w-24 h-24 rounded-full object-cover"
                   />
                 ) : (
-                  <span className="text-3xl font-bold text-white">
+                  <span className="text-3xl font-bold">
                     {profile.username?.charAt(0) || 'U'}
                   </span>
                 )}

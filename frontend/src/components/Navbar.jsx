@@ -118,7 +118,7 @@ export default function Navbar() {
                       {user?.username}
                     </span>
                     <div className="h-8 w-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-[var(--bg)] font-semibold">
-                      {(user?.username?.[0] || 'U').toUpperCase()}
+                      {(user?.username?.[0] || 'U')}
                     </div>
                   </button>
 
