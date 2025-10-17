@@ -57,7 +57,7 @@ export default function LessonNavbar({
             className="flex items-center gap-1 px-2 py-1 text-xs lg:text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] rounded transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Back</span>
+            <span className="hidden sm:inline">Modules</span>
           </button>
 
           {/* Previous lesson button */}
@@ -68,7 +68,7 @@ export default function LessonNavbar({
               title={`Previous: ${previousLesson.title}`}
             >
               <ChevronLeft className="w-4 h-4" />
-              <span className="hidden lg:inline">Prev</span>
+              <span className="hidden lg:inline">Previous Lesson</span>
             </button>
           )}
 
@@ -79,7 +79,7 @@ export default function LessonNavbar({
               className="flex items-center gap-1 px-2 py-1 text-xs lg:text-sm text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-muted)] rounded transition-colors"
               title={`Next: ${nextLesson.title}`}
             >
-              <span className="hidden lg:inline">Next</span>
+              <span className="hidden lg:inline">Next Lesson</span>
               <ChevronRight className="w-4 h-4" />
             </button>
           )}
