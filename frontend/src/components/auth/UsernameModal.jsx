@@ -72,6 +72,7 @@ export default function UsernameModal({ onSubmit, onCancel }) {
                 placeholder="Enter username"
                 disabled={submitting}
                 autoFocus
+                autoComplete="off"
               />
               {checking && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">

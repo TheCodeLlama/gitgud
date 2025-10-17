@@ -276,7 +276,7 @@ export default function SignUp() {
                 <input
                   id="username"
                   type="text"
-                  autoComplete="username"
+                  autoComplete="off"
                   {...register('username', {
                     required: 'Username is required',
                     minLength: {
