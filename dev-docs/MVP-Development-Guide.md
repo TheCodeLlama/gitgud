@@ -550,10 +550,10 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
   - [x] Show achievement icon and name
   - [x] Auto-dismiss after 5 seconds
   - [x] Click to view achievement details
-- [ ] Create streak indicator component:
-  - [ ] Fire icon with streak number
-  - [ ] Visual feedback for maintaining streak
-  - [ ] Warning if streak is at risk
+- [x] Create streak indicator component:
+  - [x] Fire icon with streak number
+  - [x] Visual feedback for maintaining streak
+  - [x] Warning if streak is at risk
 - [x] Implement level-up modal:
   - [x] Celebration animation
   - [x] New level display
