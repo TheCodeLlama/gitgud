@@ -50,13 +50,13 @@ public class DevDataBootstrapper implements ApplicationRunner {
     }
 
     private void clearDatabase() {
+        userAchievementRepository.deleteAll();
         achievementRepository.deleteAll();
         submissionRepository.deleteAll();
         userProgressRepository.deleteAll();
         lessonRepository.deleteAll();
         moduleRepository.deleteAll();
         testCaseRepository.deleteAll();
-        userAchievementRepository.deleteAll();
         userProfileRepository.deleteAll();
         userRepository.deleteAll();
         userStatsRepository.deleteAll();
