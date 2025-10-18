@@ -559,9 +559,9 @@ This guide covers the **MVP Phase 1A: Foundation** - building the core platform 
   - [x] New level display
   - [x] Unlocked content
   - [ ] Shareable image (future)
-- [ ] Add XP gain animations:
-  - [ ] +XP floating text
-  - [ ] Particle effects (optional)
+- [x] Add XP gain animations:
+  - [x] +XP floating text
+  - [x] Particle effects (optional)
 
 ---
 
