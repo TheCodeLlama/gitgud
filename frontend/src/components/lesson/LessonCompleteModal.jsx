@@ -8,6 +8,8 @@ import { useNavigate } from 'react-router';
 import { Trophy, Award, Star, ArrowRight, X, TrendingUp, Zap } from 'lucide-react';
 import Button from '../shared/Button';
 import { useUserStats } from '../../hooks/useUserStats';
+import FloatingXP from '../animations/FloatingXP';
+import ParticleEffect, { ConfettiEffect } from '../animations/ParticleEffect';
 
 /**
  * Calculate what level a given total XP corresponds to.
@@ -167,11 +169,15 @@ export default function LessonCompleteModal({
                 <>
                   <Zap className="w-20 h-20 text-[var(--accent)]" />
                   <div className="absolute inset-0 bg-[var(--accent)] opacity-30 blur-2xl rounded-full animate-pulse" />
+                  {/* Confetti effect for level up */}
+                  <ConfettiEffect count={30} duration={2500} />
                 </>
               ) : (
                 <>
                   <Trophy className="w-20 h-20 text-[var(--accent)]" />
                   <div className="absolute inset-0 bg-[var(--accent)] opacity-20 blur-xl rounded-full animate-pulse" />
+                  {/* Particle effect for lesson complete */}
+                  <ParticleEffect count={12} duration={1500} distance={80} />
                 </>
               )}
             </div>
@@ -227,9 +233,13 @@ export default function LessonCompleteModal({
                   )}
                 </div>
                 {xpAwarded > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-1 bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-full">
+                  <div className="relative flex items-center gap-2 px-3 py-1 bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-full">
                     <Star className="w-4 h-4 text-[var(--accent)]" />
                     <span className="text-sm font-bold text-[var(--accent)]">+{xpAwarded} XP</span>
+                    {/* Floating XP animation */}
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2">
+                      <FloatingXP xp={xpAwarded} delay={500} duration={2000} />
+                    </div>
                   </div>
                 )}
               </div>
