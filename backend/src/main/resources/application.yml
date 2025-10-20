@@ -111,7 +111,7 @@ code:
         mb: ${CODE_EXECUTION_MAX_MEMORY_MB}
     docker:
       host: tcp://localhost:2376
-      timeout: 30
+      timeout: ${CODE_EXECUTION_TIMEOUT_SECONDS}
       image: ${CODE_EXECUTION_DOCKER_IMAGE}
 
 # Logging Configuration

@@ -24,7 +24,7 @@ public class DockerConfig {
     @Value("${code.execution.docker.host:unix:///var/run/docker.sock}")
     private String dockerHost;
 
-    @Value("${code.execution.docker.timeout:30}")
+    @Value("${code.execution.docker.timeout:300}")
     private int dockerTimeoutSeconds;
 
     /**

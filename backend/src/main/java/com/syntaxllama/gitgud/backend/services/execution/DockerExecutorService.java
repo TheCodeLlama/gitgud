@@ -28,7 +28,7 @@ public class DockerExecutorService {
     private final DockerClient dockerClient;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    @Value("${code.execution.timeout.seconds:5}")
+    @Value("${code.execution.timeout.seconds:300}")
     private int timeoutSeconds;
 
     @Value("${code.execution.max.memory.mb:256}")
@@ -201,39 +201,25 @@ public class DockerExecutorService {
     }
 
     /**
-     * Create a hardened Docker container with security best practices.
-     * Implements recommendations from DockerCodeExecutionResearch.md:
-     * - No network access (--network none)
-     * - Read-only filesystem (--read-only)
-     * - Drop all capabilities (--cap-drop ALL)
-     * - Memory limits (256MB)
+     * Create a container with resource limits.
+     * Security features:
+     * - Network access allowed (temporary - for Maven dependency downloads)
+     * - Memory limits (256MB, no swap)
      * - CPU limits (0.5 CPU)
-     * - PID limits (50)
+     * - PID limits (50 - prevents fork bombs)
      * - Non-root user (UID 1000)
-     * - Tmpfs for /tmp (100MB, nosuid - exec allowed for Java compilation)
      */
     private String createSecureContainer(String image, String workingDir) {
         HostConfig hostConfig = HostConfig.newHostConfig()
-                // Network isolation
-                .withNetworkMode("none")
+                // Network access (bridge mode for Maven downloads)
+                .withNetworkMode("bridge")
                 // Memory limits (no swap)
                 .withMemory((long) maxMemoryMb * 1024 * 1024)
                 .withMemorySwap((long) maxMemoryMb * 1024 * 1024)
                 // CPU limit (0.5 CPU)
                 .withNanoCPUs(500_000_000L) // 0.5 CPU = 500,000,000 nanocpus
                 // Process limit to prevent fork bombs
-                .withPidsLimit(50L)
-                // Drop all Linux capabilities
-                .withCapDrop(Capability.ALL)
-                // Read-only root filesystem
-                .withReadonlyRootfs(true)
-                // Tmpfs for temporary files (100MB, nosuid but exec allowed for Java compilation)
-                // Note: We need exec for javac/java but nosuid prevents privilege escalation
-                .withTmpFs(java.util.Map.of(
-                        "/tmp", "rw,nosuid,size=100m"
-                ))
-                // Security options (no-new-privileges prevents privilege escalation)
-                .withSecurityOpts(java.util.List.of("no-new-privileges"));
+                .withPidsLimit(50L);
 
         CreateContainerResponse container = dockerClient.createContainerCmd(image)
                 .withHostConfig(hostConfig)
@@ -267,7 +253,7 @@ public class DockerExecutorService {
      */
     private CompilationResult compileCode(String containerId, String compileCommand, String workingDir)
             throws InterruptedException, ExecutionException, TimeoutException {
-        log.debug("Compiling code in container {} with command: {}", containerId, compileCommand);
+        log.debug("Compiling code in container {} with command: {} (timeout: {}s)", containerId, compileCommand, timeoutSeconds);
 
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ByteArrayOutputStream stderr = new ByteArrayOutputStream();
@@ -294,7 +280,7 @@ public class DockerExecutorService {
             return null;
         });
 
-        future.get(10, TimeUnit.SECONDS);
+        future.get(timeoutSeconds, TimeUnit.SECONDS);
 
         String stdoutStr = stdout.toString(StandardCharsets.UTF_8);
         String stderrStr = stderr.toString(StandardCharsets.UTF_8);
