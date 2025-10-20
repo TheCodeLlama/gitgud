@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useRef } from 'react';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -12,7 +12,6 @@ import {
 import { auth } from '../config/firebase';
 import { api } from '../lib/api';
 import { queryClient } from '../lib/queryClient';
-import UsernameModal from '../components/auth/UsernameModal';
 
 const AuthContext = createContext(null);
 
@@ -24,8 +23,9 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
   const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [showUsernameModal, setShowUsernameModal] = useState(false);
-  const [pendingFirebaseUser, setPendingFirebaseUser] = useState(null);
+
+  // Ref to temporarily store username during registration
+  const pendingUsernameRef = useRef(null);
 
   // Complete user sync with backend
   const completeUserSync = async (firebaseUser, username = null) => {
@@ -39,25 +39,13 @@ export function AuthProvider({ children }) {
       // Store token in localStorage (for page refreshes)
       localStorage.setItem('firebase_token', idToken);
 
-      // Check if this is a new user
-      const existsResponse = await api.get('/v1/auth/exists');
-      const userExists = existsResponse.data.data;
-
-      // If user doesn't exist and no username provided, ALWAYS show username modal
-      if (!userExists && !username) {
-        setPendingFirebaseUser(firebaseUser);
-        setShowUsernameModal(true);
-        setLoading(false);
-        return;
-      }
-
       // Determine username to send (only when explicitly provided)
       let syncData = {};
       if (username) {
-        // User provided username via modal or registration
+        // User provided username explicitly (via modal or registration)
         syncData = { username };
       }
-      // For existing users, send empty object to avoid updating username
+      // For existing users or OAuth users without username, send empty object
 
       // Sync user with backend
       const syncResponse = await api.post('/v1/auth/sync', syncData);
@@ -73,8 +61,6 @@ export function AuthProvider({ children }) {
       });
 
       setAuthenticated(true);
-      setShowUsernameModal(false);
-      setPendingFirebaseUser(null);
       setLoading(false);
     } catch (error) {
       console.error('Failed to sync user with backend:', error);
@@ -86,8 +72,6 @@ export function AuthProvider({ children }) {
         photoURL: firebaseUser.photoURL,
       });
       setAuthenticated(true);
-      setShowUsernameModal(false);
-      setPendingFirebaseUser(null);
       setLoading(false);
     }
   };
@@ -105,7 +89,11 @@ export function AuthProvider({ children }) {
 
       if (firebaseUser) {
         // User is signed in - complete sync process
-        await completeUserSync(firebaseUser);
+        // Check if we have a pending username from registration
+        const username = pendingUsernameRef.current;
+        pendingUsernameRef.current = null; // Clear after reading
+
+        await completeUserSync(firebaseUser, username);
 
         // Set up token refresh (Firebase tokens expire after 1 hour)
         // Refresh token every 50 minutes to stay ahead of expiration
@@ -124,8 +112,6 @@ export function AuthProvider({ children }) {
         setUser(null);
         setToken(null);
         setAuthenticated(false);
-        setShowUsernameModal(false);
-        setPendingFirebaseUser(null);
         delete api.defaults.headers.common['Authorization'];
         localStorage.removeItem('firebase_token');
 
@@ -149,9 +135,15 @@ export function AuthProvider({ children }) {
    */
   const register = async (email, password, username) => {
     try {
+      // Store username in ref so onAuthStateChanged can pass it to completeUserSync
+      if (username) {
+        pendingUsernameRef.current = username;
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-      // Set the username as the display name on Firebase profile
+      // Optionally set username as display name for Firebase profile
+      // (This is NOT used for backend sync - we use the ref instead)
       if (username) {
         await updateProfile(userCredential.user, {
           displayName: username,
@@ -164,6 +156,8 @@ export function AuthProvider({ children }) {
       return userCredential.user;
     } catch (error) {
       console.error('Registration failed:', error);
+      // Clear the pending username on error
+      pendingUsernameRef.current = null;
       throw new Error(error.message || 'Registration failed');
     }
   };
@@ -218,8 +212,6 @@ export function AuthProvider({ children }) {
       setUser(null);
       setToken(null);
       setAuthenticated(false);
-      setShowUsernameModal(false);
-      setPendingFirebaseUser(null);
       delete api.defaults.headers.common['Authorization'];
       localStorage.removeItem('firebase_token');
 
@@ -229,29 +221,6 @@ export function AuthProvider({ children }) {
       console.error('Logout failed:', error);
       throw new Error(error.message || 'Logout failed');
     }
-  };
-
-  /**
-   * Handle username submission from modal
-   */
-  const handleUsernameSubmit = async (username) => {
-    if (!pendingFirebaseUser) {
-      throw new Error('No pending user to complete registration');
-    }
-
-    // Complete the sync with the provided username
-    await completeUserSync(pendingFirebaseUser, username);
-  };
-
-  /**
-   * Handle username modal cancellation
-   */
-  const handleUsernameCancel = async () => {
-    // Sign out the pending user
-    await signOut(auth);
-    setShowUsernameModal(false);
-    setPendingFirebaseUser(null);
-    setLoading(false);
   };
 
   const value = {
@@ -264,18 +233,11 @@ export function AuthProvider({ children }) {
     logout,
     loginWithGoogle,
     loginWithGithub,
-    showUsernameModal,
-    handleUsernameSubmit,
-    handleUsernameCancel,
   };
 
   return (
     <AuthContext.Provider value={value}>
       {children}
-      {/* Username Modal for new OAuth users */}
-      {showUsernameModal && (
-        <UsernameModal onSubmit={handleUsernameSubmit} onCancel={handleUsernameCancel} />
-      )}
     </AuthContext.Provider>
   );
 }

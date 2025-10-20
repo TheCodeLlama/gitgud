@@ -97,21 +97,24 @@ export default function UsernameModal({ onSubmit, onCancel }) {
 
           {/* Action Buttons */}
           <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={onCancel}
-              disabled={submitting}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
+            {/* Only show cancel button if onCancel is provided */}
+            {onCancel && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onCancel}
+                disabled={submitting}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            )}
             <Button
               type="submit"
               variant="primary"
               disabled={submitting || checking || !username || available === false}
               loading={submitting}
-              className="flex-1"
+              className={onCancel ? "flex-1" : "w-full"}
             >
               {submitting ? 'Creating Account...' : 'Continue'}
             </Button>
