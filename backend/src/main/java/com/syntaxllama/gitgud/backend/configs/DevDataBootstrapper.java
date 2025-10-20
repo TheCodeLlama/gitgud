@@ -25,6 +25,7 @@ public class DevDataBootstrapper implements ApplicationRunner {
 
     private final AchievementRepository achievementRepository;
     private final LessonRepository lessonRepository;
+    private final LessonFileRepository lessonFileRepository;
     private final ModuleRepository moduleRepository;
     private final SubmissionRepository submissionRepository;
     private final TestCaseRepository testCaseRepository;
@@ -239,16 +240,40 @@ public class DevDataBootstrapper implements ApplicationRunner {
             true
         );
 
-        createLesson(
+        createLessonWithFiles(
             springBootBasics,
             "Your First REST Controller",
             "Create a simple REST controller that returns a greeting",
-            "# Your First REST Controller\n\nLearn how to create a REST controller in Spring Boot.\n\n## Instructions\n\n1. Create a class annotated with `@RestController`\n2. Add a method annotated with `@GetMapping(\"/hello\")`\n3. Return the string \"Hello from Spring Boot!\"\n\n## What You'll Learn\n\n- `@RestController` annotation\n- `@GetMapping` for GET requests\n- Returning simple String responses",
+            """
+            # Your First REST Controller
+
+            Learn how to create a REST controller in Spring Boot.
+
+            ## Instructions
+
+            1. Add the `@RestController` annotation to the HelloController class
+            2. Add a method annotated with `@GetMapping("/hello")`
+            3. Return the string "Hello from Spring Boot!"
+
+            ## What You'll Learn
+
+            - `@RestController` annotation
+            - `@GetMapping` for GET requests
+            - Returning simple String responses
+            - Basic Spring Boot project structure with Maven
+
+            ## Files in this project
+
+            - **HelloController.java** - Your REST controller (EDIT THIS FILE)
+            - **pom.xml** - Maven project configuration (read-only)
+            """,
             Lesson.LessonType.TUTORIAL,
-            20,
+            30,
             Lesson.Difficulty.EASY,
-            "import org.springframework.web.bind.annotation.*;\n\n// TODO: Add @RestController annotation\npublic class HelloController {\n    \n    // TODO: Add @GetMapping(\"/hello\") and return greeting\n    \n}",
-            "import org.springframework.web.bind.annotation.*;\n\n@RestController\npublic class HelloController {\n    \n    @GetMapping(\"/hello\")\n    public String hello() {\n        return \"Hello from Spring Boot!\";\n    }\n}",
+            "gitgud-spring-boot:latest",
+            "mvn compile",
+            "mvn exec:java -Dexec.mainClass=HelloController",
+            "/workspace",
             1,
             true,
             List.of(
@@ -258,7 +283,112 @@ public class DevDataBootstrapper implements ApplicationRunner {
                 "The return statement should return exactly: \"Hello from Spring Boot!\""
             ),
             List.of(
-                // Visible test case - check that the endpoint returns correct string
+                new LessonFileData(
+                    "HelloController.java",
+                    "HelloController.java",
+                    """
+                    import org.springframework.web.bind.annotation.*;
+
+                    // TODO: Add @RestController annotation
+                    public class HelloController {
+
+                        // TODO: Add @GetMapping("/hello") and return greeting
+
+                        public static void main(String[] args) {
+                            // Simple main method for testing (Spring Boot not needed for this lesson)
+                            HelloController controller = new HelloController();
+                            System.out.println(controller.hello());
+                        }
+                    }
+                    """,
+                    """
+                    import org.springframework.web.bind.annotation.*;
+
+                    @RestController
+                    public class HelloController {
+
+                        @GetMapping("/hello")
+                        public String hello() {
+                            return "Hello from Spring Boot!";
+                        }
+
+                        public static void main(String[] args) {
+                            // Simple main method for testing (Spring Boot not needed for this lesson)
+                            HelloController controller = new HelloController();
+                            System.out.println(controller.hello());
+                        }
+                    }
+                    """,
+                    true,  // editable
+                    true,  // visible
+                    1,
+                    LessonFile.FileType.JAVA
+                ),
+                new LessonFileData(
+                    "pom.xml",
+                    "pom.xml",
+                    """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <project xmlns="http://maven.apache.org/POM/4.0.0"
+                             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                             xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                        <modelVersion>4.0.0</modelVersion>
+
+                        <groupId>com.gitgud</groupId>
+                        <artifactId>spring-lesson</artifactId>
+                        <version>1.0.0</version>
+
+                        <properties>
+                            <maven.compiler.source>21</maven.compiler.source>
+                            <maven.compiler.target>21</maven.compiler.target>
+                            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                        </properties>
+
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.springframework</groupId>
+                                <artifactId>spring-web</artifactId>
+                                <version>6.2.1</version>
+                            </dependency>
+                        </dependencies>
+                    </project>
+                    """,
+                    """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <project xmlns="http://maven.apache.org/POM/4.0.0"
+                             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                             xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+                        <modelVersion>4.0.0</modelVersion>
+
+                        <groupId>com.gitgud</groupId>
+                        <artifactId>spring-lesson</artifactId>
+                        <version>1.0.0</version>
+
+                        <properties>
+                            <maven.compiler.source>21</maven.compiler.source>
+                            <maven.compiler.target>21</maven.compiler.target>
+                            <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+                        </properties>
+
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.springframework</groupId>
+                                <artifactId>spring-web</artifactId>
+                                <version>6.2.1</version>
+                            </dependency>
+                        </dependencies>
+                    </project>
+                    """,
+                    true,  // editable (can modify dependencies, etc.)
+                    true,  // visible
+                    2,
+                    LessonFile.FileType.XML
+                )
+            ),
+            List.of(
+                // Test case - run the main method which calls the hello() method
                 new TestCaseData("", "Hello from Spring Boot!", false, 1, 1)
             )
         );
@@ -420,8 +550,67 @@ public class DevDataBootstrapper implements ApplicationRunner {
         achievementRepository.save(achievement);
     }
 
+    /**
+     * Create a lesson with multiple files (for Spring Boot, Maven projects, etc.)
+     */
+    private void createLessonWithFiles(Module module, String title, String description, String content,
+                                       Lesson.LessonType lessonType, Integer xpReward, Lesson.Difficulty difficulty,
+                                       String dockerImage, String buildCommand, String runCommand, String workingDirectory,
+                                       Integer displayOrder, Boolean isPublished, List<String> hints,
+                                       List<LessonFileData> filesData, List<TestCaseData> testCasesData) {
+        Lesson lesson = new Lesson();
+        lesson.setModule(module);
+        lesson.setTitle(title);
+        lesson.setDescription(description);
+        lesson.setContent(content);
+        lesson.setLessonType(lessonType);
+        lesson.setXpReward(xpReward);
+        lesson.setDifficulty(difficulty);
+        lesson.setDockerImage(dockerImage);
+        lesson.setBuildCommand(buildCommand);
+        lesson.setRunCommand(runCommand);
+        lesson.setWorkingDirectory(workingDirectory);
+        lesson.setDisplayOrder(displayOrder);
+        lesson.setIsPublished(isPublished);
+        lesson.setHints(hints);
+        Lesson savedLesson = lessonRepository.save(lesson);
+
+        // Create lesson files
+        for (LessonFileData fileData : filesData) {
+            LessonFile lessonFile = new LessonFile();
+            lessonFile.setLesson(savedLesson);
+            lessonFile.setFilename(fileData.filename);
+            lessonFile.setPath(fileData.path);
+            lessonFile.setStarterContent(fileData.starterContent);
+            lessonFile.setSolutionContent(fileData.solutionContent);
+            lessonFile.setEditable(fileData.editable);
+            lessonFile.setVisible(fileData.visible);
+            lessonFile.setDisplayOrder(fileData.displayOrder);
+            lessonFile.setFileType(fileData.fileType);
+            lessonFileRepository.save(lessonFile);
+        }
+
+        // Create test cases
+        for (TestCaseData data : testCasesData) {
+            TestCase testCase = new TestCase();
+            testCase.setLesson(savedLesson);
+            testCase.setInput(data.input);
+            testCase.setExpectedOutput(data.expectedOutput);
+            testCase.setIsHidden(data.isHidden);
+            testCase.setWeight(data.weight);
+            testCase.setDisplayOrder(data.displayOrder);
+            testCaseRepository.save(testCase);
+        }
+    }
+
     // Helper record for test case data
     private record TestCaseData(String input, String expectedOutput, Boolean isHidden,
                                 Integer weight, Integer displayOrder) {
+    }
+
+    // Helper record for lesson file data
+    private record LessonFileData(String filename, String path, String starterContent, String solutionContent,
+                                  Boolean editable, Boolean visible, Integer displayOrder,
+                                  LessonFile.FileType fileType) {
     }
 }

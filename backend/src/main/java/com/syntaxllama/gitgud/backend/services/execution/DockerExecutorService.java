@@ -41,39 +41,81 @@ public class DockerExecutorService {
     private static final int MAX_OUTPUT_SIZE = 10 * 1024;
 
     /**
-     * Execute Java code in a secure Docker container.
-     * Returns execution output and errors.
+     * Execute Java code in a secure Docker container (single-file legacy method).
+     * @deprecated Use executeCode() with file map for multi-file support.
      */
+    @Deprecated
     public ExecutionOutput executeJavaCode(String sourceCode, String input) throws ExecutionException {
+        // Backwards compatibility: wrap single file in a map
+        return executeCode(
+                java.util.Map.of("Main.java", sourceCode),
+                input,
+                dockerImage,
+                null, // Will default to "javac Main.java"
+                null, // Will default to "java Main"
+                "/tmp"
+        );
+    }
+
+    /**
+     * Execute code in a secure Docker container with multi-file support.
+     *
+     * @param files Map of file paths to file contents
+     * @param input Input data for the program
+     * @param dockerImageName Docker image to use for execution
+     * @param buildCommand Custom build command (e.g., "mvn compile"). If null, defaults to javac for single .java file.
+     * @param runCommand Custom run command (e.g., "mvn spring-boot:run"). If null, defaults to "java Main".
+     * @param workingDir Working directory in container where files are placed
+     * @return ExecutionOutput with results
+     * @throws ExecutionException If execution fails
+     */
+    public ExecutionOutput executeCode(
+            java.util.Map<String, String> files,
+            String input,
+            String dockerImageName,
+            String buildCommand,
+            String runCommand,
+            String workingDir
+    ) throws ExecutionException {
         String containerId = null;
         long startTime = System.currentTimeMillis();
 
+        // Use provided docker image or fall back to default
+        String imageToUse = dockerImageName != null ? dockerImageName : dockerImage;
+        String workingDirectory = workingDir != null ? workingDir : "/tmp";
+
+        // Determine build and run commands
+        String finalBuildCommand = determineBuildCommand(files, buildCommand);
+        String finalRunCommand = determineRunCommand(files, runCommand);
+
         try {
-            // Create secure container
-            containerId = createSecureContainer();
-            log.debug("Created container: {}", containerId);
+            // Create secure container with specified image
+            containerId = createSecureContainer(imageToUse, workingDirectory);
+            log.debug("Created container {} with image {}", containerId, imageToUse);
 
             // Start container
             dockerClient.startContainerCmd(containerId).exec();
             log.debug("Started container: {}", containerId);
 
-            // Write source code to container
-            writeSourceCode(containerId, sourceCode);
+            // Write all files to container
+            writeFiles(containerId, files, workingDirectory);
 
-            // Compile the code
-            CompilationResult compilationResult = compileCode(containerId);
-            if (!compilationResult.isSuccess()) {
-                return ExecutionOutput.builder()
-                        .success(false)
-                        .compilationError(true)
-                        .output(compilationResult.getOutput())
-                        .error(compilationResult.getError())
-                        .executionTimeMs(System.currentTimeMillis() - startTime)
-                        .build();
+            // Compile the code if build command provided
+            if (finalBuildCommand != null && !finalBuildCommand.isEmpty()) {
+                CompilationResult compilationResult = compileCode(containerId, finalBuildCommand, workingDirectory);
+                if (!compilationResult.isSuccess()) {
+                    return ExecutionOutput.builder()
+                            .success(false)
+                            .compilationError(true)
+                            .output(compilationResult.getOutput())
+                            .error(compilationResult.getError())
+                            .executionTimeMs(System.currentTimeMillis() - startTime)
+                            .build();
+                }
             }
 
             // Execute the code with timeout
-            ExecutionOutput output = runCode(containerId, input, timeoutSeconds);
+            ExecutionOutput output = runCode(containerId, input, timeoutSeconds, finalRunCommand, workingDirectory);
             output.setExecutionTimeMs(System.currentTimeMillis() - startTime);
 
             return output;
@@ -104,6 +146,61 @@ public class DockerExecutorService {
     }
 
     /**
+     * Determine build command based on files and provided command.
+     */
+    private String determineBuildCommand(java.util.Map<String, String> files, String buildCommand) {
+        if (buildCommand != null && !buildCommand.isEmpty()) {
+            return buildCommand;
+        }
+
+        // For single Java file, default to javac
+        if (files.size() == 1 && files.keySet().iterator().next().endsWith(".java")) {
+            String filename = files.keySet().iterator().next();
+            return "javac " + filename;
+        }
+
+        // For multi-file projects, assume build command is provided or not needed
+        return null;
+    }
+
+    /**
+     * Determine run command based on files and provided command.
+     */
+    private String determineRunCommand(java.util.Map<String, String> files, String runCommand) {
+        if (runCommand != null && !runCommand.isEmpty()) {
+            return runCommand;
+        }
+
+        // Default to "java Main" for backwards compatibility
+        return "java Main";
+    }
+
+    /**
+     * Write multiple files to container.
+     */
+    private void writeFiles(String containerId, java.util.Map<String, String> files, String workingDirectory)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        for (java.util.Map.Entry<String, String> entry : files.entrySet()) {
+            String filePath = entry.getKey();
+            String content = entry.getValue();
+
+            // Create directory structure if needed
+            String dirPath = filePath.contains("/") ?
+                    filePath.substring(0, filePath.lastIndexOf("/")) : "";
+            if (!dirPath.isEmpty()) {
+                executeCommand(containerId, "mkdir -p " + dirPath, 5, workingDirectory);
+            }
+
+            // Write file using base64 encoding to avoid shell escaping issues
+            String base64Content = Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8));
+            String command = String.format("echo '%s' | base64 -d > %s", base64Content, filePath);
+            executeCommand(containerId, command, 5, workingDirectory);
+
+            log.debug("Wrote file {} to container {}", filePath, containerId);
+        }
+    }
+
+    /**
      * Create a hardened Docker container with security best practices.
      * Implements recommendations from DockerCodeExecutionResearch.md:
      * - No network access (--network none)
@@ -115,7 +212,7 @@ public class DockerExecutorService {
      * - Non-root user (UID 1000)
      * - Tmpfs for /tmp (100MB, nosuid - exec allowed for Java compilation)
      */
-    private String createSecureContainer() {
+    private String createSecureContainer(String image, String workingDir) {
         HostConfig hostConfig = HostConfig.newHostConfig()
                 // Network isolation
                 .withNetworkMode("none")
@@ -138,11 +235,11 @@ public class DockerExecutorService {
                 // Security options (no-new-privileges prevents privilege escalation)
                 .withSecurityOpts(java.util.List.of("no-new-privileges"));
 
-        CreateContainerResponse container = dockerClient.createContainerCmd(dockerImage)
+        CreateContainerResponse container = dockerClient.createContainerCmd(image)
                 .withHostConfig(hostConfig)
                 // Run as non-root user (UID 1000)
                 .withUser("1000:1000")
-                .withWorkingDir("/tmp")
+                .withWorkingDir(workingDir)
                 .withCmd("sleep", "3600") // Keep container alive
                 .exec();
 
@@ -151,32 +248,38 @@ public class DockerExecutorService {
 
     /**
      * Write source code to container using base64 encoding to avoid shell escaping issues.
+     * @deprecated Use writeFiles() instead for multi-file support.
      */
+    @Deprecated
     private void writeSourceCode(String containerId, String sourceCode) throws InterruptedException, ExecutionException, TimeoutException {
         // Encode source code to base64 to safely pass through shell
         String base64Code = Base64.getEncoder().encodeToString(sourceCode.getBytes(StandardCharsets.UTF_8));
 
         // Decode and write to Main.java (working directory is /tmp)
         String command = String.format("echo '%s' | base64 -d > Main.java", base64Code);
-        executeCommand(containerId, command, 5);
+        executeCommand(containerId, command, 5, "/tmp");
 
         log.debug("Wrote source code to Main.java in container {}", containerId);
     }
 
     /**
-     * Compile Java code inside container.
+     * Compile Java code inside container with custom command.
      */
-    private CompilationResult compileCode(String containerId) throws InterruptedException, ExecutionException, TimeoutException {
-        log.debug("Compiling code in container {}", containerId);
+    private CompilationResult compileCode(String containerId, String compileCommand, String workingDir)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        log.debug("Compiling code in container {} with command: {}", containerId, compileCommand);
 
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
+        // Parse command into tokens (simple split by space - more complex commands may need shell)
+        String[] cmdTokens = compileCommand.split("\\s+");
+
         ExecCreateCmdResponse execCreateCmd = dockerClient.execCreateCmd(containerId)
-                .withCmd("javac", "Main.java")
+                .withCmd(cmdTokens)
                 .withAttachStdout(true)
                 .withAttachStderr(true)
-                .withWorkingDir("/tmp")
+                .withWorkingDir(workingDir)
                 .exec();
 
         Future<Void> future = executorService.submit(() -> {
@@ -206,22 +309,25 @@ public class DockerExecutorService {
     }
 
     /**
-     * Run compiled Java code with input.
+     * Run compiled Java code with input and custom command.
      */
-    private ExecutionOutput runCode(String containerId, String input, int timeoutSeconds)
+    private ExecutionOutput runCode(String containerId, String input, int timeoutSeconds, String runCommand, String workingDir)
             throws InterruptedException, ExecutionException, TimeoutException {
-        log.debug("Running code in container {} with timeout {} seconds", containerId, timeoutSeconds);
+        log.debug("Running code in container {} with command: {} (timeout: {} seconds)", containerId, runCommand, timeoutSeconds);
 
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         ByteArrayOutputStream stderr = new ByteArrayOutputStream();
 
-        // Create execution command (run from /tmp directory where Main.class is)
+        // Parse run command into tokens
+        String[] cmdTokens = runCommand.split("\\s+");
+
+        // Create execution command
         ExecCreateCmdResponse execCreateCmd = dockerClient.execCreateCmd(containerId)
-                .withCmd("java", "Main")
+                .withCmd(cmdTokens)
                 .withAttachStdout(true)
                 .withAttachStderr(true)
                 .withAttachStdin(input != null && !input.isEmpty())
-                .withWorkingDir("/tmp")
+                .withWorkingDir(workingDir)
                 .exec();
 
         // Execute with timeout
@@ -276,15 +382,16 @@ public class DockerExecutorService {
     }
 
     /**
-     * Execute a command in container with timeout.
+     * Execute a command in container with timeout and working directory.
      */
-    private void executeCommand(String containerId, String command, int timeoutSeconds)
+    private void executeCommand(String containerId, String command, int timeoutSeconds, String workingDir)
             throws InterruptedException, ExecutionException, TimeoutException {
 
         ExecCreateCmdResponse execCreateCmd = dockerClient.execCreateCmd(containerId)
                 .withCmd("sh", "-c", command)
                 .withAttachStdout(true)
                 .withAttachStderr(true)
+                .withWorkingDir(workingDir)
                 .exec();
 
         Future<Void> future = executorService.submit(() -> {

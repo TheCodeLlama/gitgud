@@ -12,6 +12,7 @@ import { useCodeExecution } from '../../hooks/useCodeExecution';
 import { useUserProgress } from '../../hooks/useUserProgress';
 import { useLatestSubmission } from '../../hooks/useLatestSubmission';
 import CodeEditor from '../../components/lesson/CodeEditor';
+import MultiFileEditor from '../../components/lesson/MultiFileEditor';
 import InstructionsPanel from '../../components/lesson/InstructionsPanel';
 import ConsolePanel from '../../components/lesson/ConsolePanel';
 import LessonCompleteModal from '../../components/lesson/LessonCompleteModal';
@@ -55,7 +56,10 @@ export default function LessonPage() {
   // Code execution hook
   const { executeCode, isExecuting, result, error: executionError } = useCodeExecution();
 
-  // State
+  // Determine if this is a multi-file lesson
+  const isMultiFile = lesson?.files && lesson.files.length > 0;
+
+  // State - code can be string (single-file) or object (multi-file)
   const [code, setCode] = useState('');
   const [showConsole, setShowConsole] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
@@ -64,14 +68,18 @@ export default function LessonPage() {
   // Load code from latest submission or starter code
   useEffect(() => {
     if (lesson && !submissionLoading) {
-      // Priority: latest submission code -> starter code
-      if (latestSubmission?.code) {
-        setCode(latestSubmission.code);
-      } else if (lesson.starterCode) {
-        setCode(lesson.starterCode);
+      // For multi-file lessons, code state is managed by MultiFileEditor
+      // For single-file lessons, load from submission or starter code
+      if (!isMultiFile) {
+        // Priority: latest submission code -> starter code
+        if (latestSubmission?.code) {
+          setCode(latestSubmission.code);
+        } else if (lesson.starterCode) {
+          setCode(lesson.starterCode);
+        }
       }
     }
-  }, [lesson, latestSubmission, submissionLoading]);
+  }, [lesson, latestSubmission, submissionLoading, isMultiFile]);
 
   // Reset state when lesson changes
   useEffect(() => {
@@ -133,7 +141,12 @@ export default function LessonPage() {
 
   // Handlers
   const handleRunCode = async () => {
-    if (!code.trim()) {
+    // For multi-file, code is object; for single-file, it's string
+    const hasCode = isMultiFile
+      ? (code && typeof code === 'object' && Object.keys(code).length > 0)
+      : (code && code.trim());
+
+    if (!hasCode) {
       alert('Please write some code first!');
       return;
     }
@@ -146,7 +159,12 @@ export default function LessonPage() {
   };
 
   const handleSubmit = async () => {
-    if (!code.trim()) {
+    // For multi-file, code is object; for single-file, it's string
+    const hasCode = isMultiFile
+      ? (code && typeof code === 'object' && Object.keys(code).length > 0)
+      : (code && code.trim());
+
+    if (!hasCode) {
       alert('Please write some code first!');
       return;
     }
@@ -159,6 +177,11 @@ export default function LessonPage() {
   };
 
   const handleResetCode = () => {
+    // Reset is handled by MultiFileEditor for multi-file lessons
+    if (isMultiFile) {
+      return;
+    }
+
     if (confirm('Are you sure you want to reset your code to the starter template?')) {
       const starterCode = lesson?.starterCode || '';
       setCode(starterCode);
@@ -233,39 +256,77 @@ export default function LessonPage() {
           <div className="flex flex-col overflow-hidden">
             {/* Code Editor */}
             <div className={`${showConsole ? 'h-1/2' : 'flex-1'} flex flex-col border-b border-[var(--border)]`}>
-              <div className="p-3 bg-[var(--surface)] border-b border-[var(--border)] flex items-center justify-between">
-                <h3 className="font-semibold text-[var(--text)]">Code Editor</h3>
-                <div className="flex items-center gap-2">
-                  <Button onClick={handleResetCode} variant="ghost" size="sm">
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Reset
-                  </Button>
-                  <Button
-                    onClick={handleRunCode}
-                    variant="secondary"
-                    size="sm"
-                    disabled={isExecuting}
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Run Code
-                  </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    variant="primary"
-                    size="sm"
-                    disabled={isExecuting}
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    Submit
-                  </Button>
+              {/* Header with actions - only show for single-file lessons */}
+              {!isMultiFile && (
+                <div className="p-3 bg-[var(--surface)] border-b border-[var(--border)] flex items-center justify-between">
+                  <h3 className="font-semibold text-[var(--text)]">Code Editor</h3>
+                  <div className="flex items-center gap-2">
+                    <Button onClick={handleResetCode} variant="ghost" size="sm">
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Reset
+                    </Button>
+                    <Button
+                      onClick={handleRunCode}
+                      variant="secondary"
+                      size="sm"
+                      disabled={isExecuting}
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      Run Code
+                    </Button>
+                    <Button
+                      onClick={handleSubmit}
+                      variant="primary"
+                      size="sm"
+                      disabled={isExecuting}
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Submit
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Multi-file editor header - integrated into MultiFileEditor */}
+              {isMultiFile && (
+                <div className="p-3 bg-[var(--surface)] border-b border-[var(--border)] flex items-center justify-between">
+                  <h3 className="font-semibold text-[var(--text)]">Code Editor</h3>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      onClick={handleRunCode}
+                      variant="secondary"
+                      size="sm"
+                      disabled={isExecuting}
+                    >
+                      <Play className="w-4 h-4 mr-2" />
+                      Run Code
+                    </Button>
+                    <Button
+                      onClick={handleSubmit}
+                      variant="primary"
+                      size="sm"
+                      disabled={isExecuting}
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      Submit
+                    </Button>
+                  </div>
+                </div>
+              )}
 
               <div className="flex-1 overflow-hidden">
-                <CodeEditor
-                  value={code}
-                  onChange={setCode}
-                />
+                {isMultiFile ? (
+                  <MultiFileEditor
+                    lessonId={lessonId}
+                    files={lesson.files}
+                    onCodeChange={setCode}
+                  />
+                ) : (
+                  <CodeEditor
+                    value={code}
+                    onChange={setCode}
+                  />
+                )}
               </div>
             </div>
 

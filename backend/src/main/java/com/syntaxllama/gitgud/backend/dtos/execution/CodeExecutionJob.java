@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -41,9 +42,17 @@ public class CodeExecutionJob implements Serializable {
     private String language;
 
     /**
-     * Source code to execute.
+     * Source code to execute (single-file, deprecated).
+     * @deprecated Use files map for multi-file support.
      */
+    @Deprecated
     private String sourceCode;
+
+    /**
+     * Map of file paths to file contents (multi-file support).
+     * Example: {"src/main/java/HelloController.java": "...", "pom.xml": "..."}
+     */
+    private Map<String, String> files;
 
     /**
      * Test case IDs to run against.

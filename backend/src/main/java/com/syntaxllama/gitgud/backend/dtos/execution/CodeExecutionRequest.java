@@ -9,10 +9,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * DTO for code execution submission request.
+ * Supports both single-file (sourceCode) and multi-file (files) submissions.
  */
 @Data
 @Builder
@@ -27,11 +29,17 @@ public class CodeExecutionRequest {
     private String language;
 
     /**
-     * Source code to be executed.
+     * Source code to be executed (for single-file lessons).
+     * @deprecated Use files map for multi-file support. Kept for backwards compatibility.
      */
-    @NotBlank(message = "Source code is required")
     @Size(max = 50000, message = "Source code must not exceed 50,000 characters")
     private String sourceCode;
+
+    /**
+     * Map of file paths to file contents (for multi-file lessons).
+     * Example: {"src/main/java/HelloController.java": "public class HelloController {...}", "pom.xml": "..."}
+     */
+    private Map<String, String> files;
 
     /**
      * ID of the lesson this code is for.

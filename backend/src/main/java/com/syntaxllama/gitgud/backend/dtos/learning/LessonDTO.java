@@ -28,12 +28,21 @@ public class LessonDTO {
     private Lesson.LessonType lessonType;
     private Integer xpReward;
     private Lesson.Difficulty difficulty;
-    private String starterCode;
+    private String starterCode; // Deprecated - use files instead
     private Integer displayOrder;
     private Boolean isPublished;
     private List<String> hints;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Multi-file support
+    private List<LessonFileDTO> files;
+
+    // Docker execution configuration
+    private String dockerImage;
+    private String buildCommand;
+    private String runCommand;
+    private String workingDirectory;
 
     /**
      * Convert Lesson entity to DTO.
@@ -55,6 +64,16 @@ public class LessonDTO {
                 .hints(lesson.getHints())
                 .createdAt(lesson.getCreatedAt())
                 .updatedAt(lesson.getUpdatedAt())
+                // Multi-file support
+                .files(lesson.getFiles() != null ?
+                        lesson.getFiles().stream()
+                                .map(LessonFileDTO::fromEntity)
+                                .toList() : null)
+                // Docker execution configuration
+                .dockerImage(lesson.getDockerImage())
+                .buildCommand(lesson.getBuildCommand())
+                .runCommand(lesson.getRunCommand())
+                .workingDirectory(lesson.getWorkingDirectory())
                 .build();
     }
 }

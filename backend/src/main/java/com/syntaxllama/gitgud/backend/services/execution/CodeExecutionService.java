@@ -73,7 +73,8 @@ public class CodeExecutionService {
                 .userId(user.getId())
                 .lessonId(request.getLessonId())
                 .language(request.getLanguage().toLowerCase())
-                .sourceCode(request.getSourceCode())
+                .sourceCode(request.getSourceCode()) // Backwards compatibility for single-file lessons
+                .files(request.getFiles()) // Multi-file support
                 .testCaseIds(testCaseIds)
                 .submittedAt(LocalDateTime.now())
                 .build();

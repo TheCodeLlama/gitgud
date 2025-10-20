@@ -25,20 +25,26 @@ export function useCodeExecution() {
 
   /**
    * Submit code for execution
-   * @param {string} sourceCode - Java source code
+   * @param {string|Object} codeOrFiles - Either source code string (legacy) or files object (multi-file)
    * @param {string} lessonId - Lesson UUID
    * @param {Array} testCaseIds - Optional array of test case UUIDs
    */
-  const executeCode = useCallback(async (sourceCode, lessonId, testCaseIds = null) => {
+  const executeCode = useCallback(async (codeOrFiles, lessonId, testCaseIds = null) => {
     setIsExecuting(true);
     setError(null);
     setResult(null);
 
     try {
+      // Determine if this is a multi-file or single-file submission
+      const isMultiFile = typeof codeOrFiles === 'object' && !Array.isArray(codeOrFiles);
+
       // 1. Submit code for execution
       const submitResponse = await api.post('/v1/execute/run', {
         language: 'java',
-        sourceCode,
+        ...(isMultiFile
+          ? { files: codeOrFiles }  // Multi-file: send files object
+          : { sourceCode: codeOrFiles }  // Single-file: send sourceCode string
+        ),
         lessonId,
         testCaseIds,
       });

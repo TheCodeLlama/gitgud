@@ -77,13 +77,39 @@ public class CodeExecutionWorker {
 
             log.info("Running {} test cases for job {}", testCases.size(), job.getJobId());
 
+            // Load lesson to get Docker configuration
+            Lesson lesson = lessonRepository.findById(job.getLessonId()).orElse(null);
+            if (lesson == null) {
+                failJob(job.getJobId(), "Lesson not found");
+                return;
+            }
+
+            // Determine files map (multi-file or backwards-compatible single file)
+            java.util.Map<String, String> filesToExecute;
+            if (job.getFiles() != null && !job.getFiles().isEmpty()) {
+                filesToExecute = job.getFiles();
+            } else if (job.getSourceCode() != null) {
+                // Backwards compatibility: wrap single source code in map
+                filesToExecute = java.util.Map.of("Main.java", job.getSourceCode());
+            } else {
+                failJob(job.getJobId(), "No source code or files provided");
+                return;
+            }
+
             // Execute code against each test case
             List<TestCaseResult> testCaseResults = new ArrayList<>();
             int passedTests = 0;
             long totalExecutionTime = 0;
 
             for (TestCase testCase : testCases) {
-                TestCaseResult result = executeTestCase(job.getSourceCode(), testCase);
+                TestCaseResult result = executeTestCase(
+                        filesToExecute,
+                        testCase,
+                        lesson.getDockerImage(),
+                        lesson.getBuildCommand(),
+                        lesson.getRunCommand(),
+                        lesson.getWorkingDirectory()
+                );
                 testCaseResults.add(result);
 
                 if (result.getPassed()) {
@@ -97,12 +123,10 @@ public class CodeExecutionWorker {
             boolean allPassed = passedTests == testCases.size();
             ExecutionStatus status = allPassed ? ExecutionStatus.COMPLETED : ExecutionStatus.FAILED;
 
-            // Load user and lesson for XP/progress updates
+            // Load user for XP/progress updates
             User user = userRepository.findById(job.getUserId()).orElse(null);
-            Lesson lesson = lessonRepository.findById(job.getLessonId()).orElse(null);
-
-            if (user == null || lesson == null) {
-                failJob(job.getJobId(), "User or lesson not found");
+            if (user == null) {
+                failJob(job.getJobId(), "User not found");
                 return;
             }
 
@@ -168,17 +192,31 @@ public class CodeExecutionWorker {
     }
 
     /**
-     * Execute code against a single test case.
+     * Execute code against a single test case with multi-file support.
      */
-    private TestCaseResult executeTestCase(String sourceCode, TestCase testCase) {
-        log.debug("Executing test case {}", testCase.getId());
+    private TestCaseResult executeTestCase(
+            java.util.Map<String, String> files,
+            TestCase testCase,
+            String dockerImage,
+            String buildCommand,
+            String runCommand,
+            String workingDirectory
+    ) {
+        log.debug("Executing test case {} with {} files", testCase.getId(), files.size());
 
         long startTime = System.currentTimeMillis();
 
         try {
-            // Execute code with test case input
+            // Execute code with test case input using new multi-file method
             DockerExecutorService.ExecutionOutput output =
-                    dockerExecutor.executeJavaCode(sourceCode, testCase.getInput());
+                    dockerExecutor.executeCode(
+                            files,
+                            testCase.getInput(),
+                            dockerImage,
+                            buildCommand,
+                            runCommand,
+                            workingDirectory
+                    );
 
             long executionTime = System.currentTimeMillis() - startTime;
 
@@ -315,11 +353,26 @@ public class CodeExecutionWorker {
                 }
             }
 
+            // Determine code to save (backwards compatible with single file or serialize multi-file)
+            String codeToSave;
+            if (job.getFiles() != null && !job.getFiles().isEmpty()) {
+                // Multi-file: serialize to JSON
+                try {
+                    codeToSave = objectMapper.writeValueAsString(job.getFiles());
+                } catch (Exception e) {
+                    log.warn("Failed to serialize files for job {}: {}", job.getJobId(), e.getMessage());
+                    codeToSave = job.getFiles().toString();
+                }
+            } else {
+                // Single file: use sourceCode directly
+                codeToSave = job.getSourceCode();
+            }
+
             // Create submission entity
             Submission submission = new Submission();
             submission.setUser(user);
             submission.setLesson(lesson);
-            submission.setCode(job.getSourceCode());
+            submission.setCode(codeToSave);
             submission.setStatus(status);
             submission.setPassedTests(result.getTestsPassed());
             submission.setTotalTests(result.getTotalTests());
