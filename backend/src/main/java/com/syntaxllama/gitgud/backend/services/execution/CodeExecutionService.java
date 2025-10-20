@@ -40,6 +40,7 @@ public class CodeExecutionService {
     /**
      * Submit code for execution.
      * Creates a job, enqueues it to RabbitMQ, and stores initial status in Redis.
+     * Supports both single-file and multi-file submissions.
      */
     public CodeExecutionResponse submitCode(CodeExecutionRequest request, User user) {
         log.info("Submitting code execution for user {} and lesson {}", user.getId(), request.getLessonId());
@@ -53,30 +54,43 @@ public class CodeExecutionService {
             throw new BadRequestException("Unsupported language: " + request.getLanguage() + ". Only Java is currently supported.");
         }
 
-        // Get test case IDs (use all if not specified)
-        List<UUID> testCaseIds = request.getTestCaseIds();
-        if (testCaseIds == null || testCaseIds.isEmpty()) {
-            testCaseIds = testCaseRepository.findByLessonIdOrderByDisplayOrderAsc(request.getLessonId())
-                    .stream()
-                    .map(TestCase::getId)
-                    .toList();
-
-            if (testCaseIds.isEmpty()) {
-                throw new BadRequestException("No test cases found for lesson: " + request.getLessonId());
-            }
+        // Validate submission format
+        if (!request.isSingleFile() && !request.isMultiFile()) {
+            throw new BadRequestException("Either sourceCode or projectFiles must be provided");
         }
 
         // Create job with unique ID
         String jobId = UUID.randomUUID().toString();
-        CodeExecutionJob job = CodeExecutionJob.builder()
+        CodeExecutionJob.CodeExecutionJobBuilder jobBuilder = CodeExecutionJob.builder()
                 .jobId(jobId)
                 .userId(user.getId())
                 .lessonId(request.getLessonId())
                 .language(request.getLanguage().toLowerCase())
-                .sourceCode(request.getSourceCode())
-                .testCaseIds(testCaseIds)
-                .submittedAt(LocalDateTime.now())
-                .build();
+                .submittedAt(LocalDateTime.now());
+
+        // Handle single-file vs multi-file submissions
+        if (request.isSingleFile()) {
+            // Single-file lesson (legacy)
+            List<UUID> testCaseIds = request.getTestCaseIds();
+            if (testCaseIds == null || testCaseIds.isEmpty()) {
+                testCaseIds = testCaseRepository.findByLessonIdOrderByDisplayOrderAsc(request.getLessonId())
+                        .stream()
+                        .map(TestCase::getId)
+                        .toList();
+
+                if (testCaseIds.isEmpty()) {
+                    throw new BadRequestException("No test cases found for lesson: " + request.getLessonId());
+                }
+            }
+
+            jobBuilder.sourceCode(request.getSourceCode())
+                    .testCaseIds(testCaseIds);
+        } else {
+            // Multi-file lesson (Spring Boot)
+            jobBuilder.projectFiles(request.getProjectFiles());
+        }
+
+        CodeExecutionJob job = jobBuilder.build();
 
         // Store initial status in Redis
         ExecutionResult initialResult = ExecutionResult.builder()

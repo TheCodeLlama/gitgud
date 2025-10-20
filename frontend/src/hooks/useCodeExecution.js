@@ -25,23 +25,37 @@ export function useCodeExecution() {
 
   /**
    * Submit code for execution
-   * @param {string} sourceCode - Java source code
+   * @param {string|Object} codeOrFiles - Java source code (string) OR project files (object)
    * @param {string} lessonId - Lesson UUID
-   * @param {Array} testCaseIds - Optional array of test case UUIDs
+   * @param {Array} testCaseIds - Optional array of test case UUIDs (only for single-file)
    */
-  const executeCode = useCallback(async (sourceCode, lessonId, testCaseIds = null) => {
+  const executeCode = useCallback(async (codeOrFiles, lessonId, testCaseIds = null) => {
     setIsExecuting(true);
     setError(null);
     setResult(null);
 
     try {
-      // 1. Submit code for execution
-      const submitResponse = await api.post('/v1/execute/run', {
+      // Determine if this is a single-file or multi-file submission
+      const isSingleFile = typeof codeOrFiles === 'string';
+      const isMultiFile = typeof codeOrFiles === 'object' && !Array.isArray(codeOrFiles);
+
+      // Build submission payload
+      const payload = {
         language: 'java',
-        sourceCode,
         lessonId,
-        testCaseIds,
-      });
+      };
+
+      if (isSingleFile) {
+        payload.sourceCode = codeOrFiles;
+        payload.testCaseIds = testCaseIds;
+      } else if (isMultiFile) {
+        payload.projectFiles = codeOrFiles;
+      } else {
+        throw new Error('Invalid code submission format');
+      }
+
+      // 1. Submit code for execution
+      const submitResponse = await api.post('/v1/execute/run', payload);
 
       const jobId = submitResponse.data.data.jobId;
 

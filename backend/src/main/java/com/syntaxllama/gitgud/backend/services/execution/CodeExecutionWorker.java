@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,6 +69,24 @@ public class CodeExecutionWorker {
             // Update status to RUNNING
             executionService.updateJobStatus(job.getJobId(), ExecutionStatus.RUNNING);
 
+            // Route to appropriate execution method based on job type
+            if (job.isMultiFile()) {
+                processMultiFileJob(job);
+            } else {
+                processSingleFileJob(job);
+            }
+
+        } catch (Exception e) {
+            log.error("Error processing job {}", job.getJobId(), e);
+            failJob(job.getJobId(), "Execution error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Process a single-file Java lesson (legacy format).
+     */
+    private void processSingleFileJob(CodeExecutionJob job) {
+        try {
             // Load test cases
             List<TestCase> testCases = testCaseRepository.findAllById(job.getTestCaseIds());
             if (testCases.isEmpty()) {
@@ -162,7 +181,128 @@ public class CodeExecutionWorker {
                     job.getJobId(), passedTests, testCases.size(), xpAwarded, achievementsEarned.size());
 
         } catch (Exception e) {
-            log.error("Error processing job {}", job.getJobId(), e);
+            log.error("Error processing single-file job {}", job.getJobId(), e);
+            failJob(job.getJobId(), "Execution error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Process a multi-file Spring Boot project lesson.
+     */
+    private void processMultiFileJob(CodeExecutionJob job) {
+        try {
+            log.info("Processing multi-file Spring Boot job {} with {} files",
+                    job.getJobId(), job.getProjectFiles().size());
+
+            // Execute Spring Boot tests
+            DockerExecutorService.SpringTestExecutionOutput output =
+                    dockerExecutor.executeSpringBootTests(job.getProjectFiles());
+
+            // Handle compilation errors
+            if (output.isCompilationError()) {
+                ExecutionResult result = ExecutionResult.builder()
+                        .jobId(job.getJobId())
+                        .status(ExecutionStatus.FAILED)
+                        .passed(false)
+                        .errorMessage("Compilation failed: " + output.getErrorMessage())
+                        .consoleOutput(output.getBuildOutput())
+                        .executionTimeMs(output.getExecutionTimeMs())
+                        .completedAt(LocalDateTime.now())
+                        .build();
+
+                executionService.storeResult(job.getJobId(), result);
+                saveSubmission(job, result);
+                return;
+            }
+
+            // Handle timeout
+            if (output.isTimeout()) {
+                ExecutionResult result = ExecutionResult.builder()
+                        .jobId(job.getJobId())
+                        .status(ExecutionStatus.FAILED)
+                        .passed(false)
+                        .errorMessage("Test execution timed out")
+                        .completedAt(LocalDateTime.now())
+                        .build();
+
+                executionService.storeResult(job.getJobId(), result);
+                saveSubmission(job, result);
+                return;
+            }
+
+            // Get Spring test results (defensive null check)
+            List<SpringTestResult> springTestResults = output.getTestResults();
+            if (springTestResults == null) {
+                springTestResults = Collections.emptyList();
+            }
+
+            // Calculate results
+            long passedTests = springTestResults.stream()
+                    .filter(com.syntaxllama.gitgud.backend.dtos.execution.SpringTestResult::getPassed)
+                    .count();
+            int totalTests = springTestResults.size();
+            boolean allPassed = output.isSuccess();
+
+            // Load user and lesson
+            User user = userRepository.findById(job.getUserId()).orElse(null);
+            Lesson lesson = lessonRepository.findById(job.getLessonId()).orElse(null);
+
+            if (user == null || lesson == null) {
+                failJob(job.getJobId(), "User or lesson not found");
+                return;
+            }
+
+            // Award XP if all tests passed
+            XpAwardResult xpResult = null;
+            int xpAwarded = 0;
+            if (allPassed) {
+                xpResult = awardXpForCompletion(user, lesson);
+                xpAwarded = xpResult.getXpAwarded() != null ? xpResult.getXpAwarded().intValue() : 0;
+                log.info("XP award result for job {}: {} XP", job.getJobId(), xpAwarded);
+            }
+
+            // Update user progress
+            updateUserProgress(user, lesson, allPassed, (int) passedTests, totalTests);
+
+            // Check and award achievements
+            List<UserAchievementDTO> achievementsEarned = new ArrayList<>();
+            if (allPassed) {
+                UserStats userStats = userStatsRepository.findByUserId(user.getId()).orElse(null);
+                if (userStats != null) {
+                    achievementsEarned = achievementService.checkAndAwardAchievements(user, userStats);
+                    if (!achievementsEarned.isEmpty()) {
+                        log.info("User {} earned {} achievement(s)", user.getId(), achievementsEarned.size());
+                    }
+                }
+            }
+
+            // Build final result
+            ExecutionResult result = ExecutionResult.builder()
+                    .jobId(job.getJobId())
+                    .status(allPassed ? ExecutionStatus.COMPLETED : ExecutionStatus.FAILED)
+                    .passed(allPassed)
+                    .testsPassed((int) passedTests)
+                    .totalTests(totalTests)
+                    .springTestResults(springTestResults)
+                    .consoleOutput(output.getBuildOutput())
+                    .executionTimeMs(output.getExecutionTimeMs())
+                    .startedAt(job.getSubmittedAt())
+                    .completedAt(LocalDateTime.now())
+                    .xpAwarded(xpAwarded)
+                    .achievementsEarned(achievementsEarned)
+                    .build();
+
+            // Store result in Redis
+            executionService.storeResult(job.getJobId(), result);
+
+            // Save submission to database
+            saveSubmission(job, result);
+
+            log.info("Multi-file job {} completed: {}/{} tests passed, {} XP awarded",
+                    job.getJobId(), passedTests, totalTests, xpAwarded);
+
+        } catch (Exception e) {
+            log.error("Error processing multi-file job {}", job.getJobId(), e);
             failJob(job.getJobId(), "Execution error: " + e.getMessage());
         }
     }
@@ -276,6 +416,7 @@ public class CodeExecutionWorker {
     /**
      * Save submission to database for historical tracking.
      * Stores user code, execution results, and metadata.
+     * Supports both single-file and multi-file submissions.
      *
      * @param job The execution job
      * @param result The execution result
@@ -315,11 +456,26 @@ public class CodeExecutionWorker {
                 }
             }
 
+            // Determine code to store (single-file vs multi-file)
+            String codeToStore;
+            if (job.isMultiFile()) {
+                // For multi-file submissions, serialize project files to JSON
+                try {
+                    codeToStore = objectMapper.writeValueAsString(job.getProjectFiles());
+                } catch (Exception e) {
+                    log.warn("Failed to serialize project files for job {}: {}", job.getJobId(), e.getMessage());
+                    codeToStore = "{\"error\": \"Failed to serialize project files\"}";
+                }
+            } else {
+                // For single-file submissions, store the source code directly
+                codeToStore = job.getSourceCode();
+            }
+
             // Create submission entity
             Submission submission = new Submission();
             submission.setUser(user);
             submission.setLesson(lesson);
-            submission.setCode(job.getSourceCode());
+            submission.setCode(codeToStore);
             submission.setStatus(status);
             submission.setPassedTests(result.getTestsPassed());
             submission.setTotalTests(result.getTotalTests());
@@ -333,8 +489,8 @@ public class CodeExecutionWorker {
             // Save to database
             submissionRepository.save(submission);
 
-            log.info("Saved submission for user {} and lesson {} (status: {})",
-                    user.getId(), lesson.getId(), status);
+            log.info("Saved submission for user {} and lesson {} (status: {}, multiFile: {})",
+                    user.getId(), lesson.getId(), status, job.isMultiFile());
 
         } catch (Exception e) {
             // Don't fail the job if submission save fails - result is already in Redis

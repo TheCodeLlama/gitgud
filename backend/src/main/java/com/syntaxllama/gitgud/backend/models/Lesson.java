@@ -43,11 +43,15 @@ public class Lesson extends BaseEntity {
     @Column(nullable = false, length = 50)
     private Difficulty difficulty;
 
-    @Column(name = "starter_code", columnDefinition = "TEXT")
-    private String starterCode;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "project_type", nullable = false, length = 50)
+    private ProjectType projectType = ProjectType.JAVA_SINGLE_FILE;
 
-    @Column(name = "solution_code", columnDefinition = "TEXT")
-    private String solutionCode;
+    @Column(name = "project_configuration", columnDefinition = "TEXT")
+    private String projectConfiguration;
+
+    @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectFile> projectFiles;
 
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder = 0;
@@ -74,5 +78,29 @@ public class Lesson extends BaseEntity {
         EASY,
         MEDIUM,
         HARD
+    }
+
+    public enum ProjectType {
+        /**
+         * Legacy single-file Java lessons (backward compatibility).
+         * Uses a single Main.java file with stdin/stdout testing.
+         */
+        JAVA_SINGLE_FILE,
+
+        /**
+         * Full Spring Boot project with multiple files and Spring Test execution.
+         * Uses MockMVC, @SpringBootTest, and JUnit assertions.
+         */
+        SPRING_BOOT,
+
+        /**
+         * Spring MVC project without full Spring Boot (lighter weight).
+         */
+        SPRING_MVC,
+
+        /**
+         * Spring REST API project focusing on endpoint development.
+         */
+        SPRING_REST_API
     }
 }

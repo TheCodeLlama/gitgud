@@ -26,9 +26,10 @@ public class LessonDTO {
     private String description;
     private String content;
     private Lesson.LessonType lessonType;
+    private Lesson.ProjectType projectType;
     private Integer xpReward;
     private Lesson.Difficulty difficulty;
-    private String starterCode;
+    private String starterCode; // DEPRECATED: Only for backward compatibility, use projectFiles instead
     private Integer displayOrder;
     private Boolean isPublished;
     private List<String> hints;
@@ -38,8 +39,17 @@ public class LessonDTO {
     /**
      * Convert Lesson entity to DTO.
      * Note: Solution code is intentionally excluded for security.
+     * For single-file lessons, starterCode is populated from the first project file.
+     * For multi-file lessons, use the /files endpoint to get project files.
      */
     public static LessonDTO fromEntity(Lesson lesson) {
+        // For single-file lessons, get starter code from first project file
+        String starterCode = null;
+        if (lesson.getProjectType() == Lesson.ProjectType.JAVA_SINGLE_FILE &&
+            lesson.getProjectFiles() != null && !lesson.getProjectFiles().isEmpty()) {
+            starterCode = lesson.getProjectFiles().get(0).getStarterContent();
+        }
+
         return LessonDTO.builder()
                 .id(lesson.getId())
                 .moduleId(lesson.getModule() != null ? lesson.getModule().getId() : null)
@@ -47,9 +57,10 @@ public class LessonDTO {
                 .description(lesson.getDescription())
                 .content(lesson.getContent())
                 .lessonType(lesson.getLessonType())
+                .projectType(lesson.getProjectType())
                 .xpReward(lesson.getXpReward())
                 .difficulty(lesson.getDifficulty())
-                .starterCode(lesson.getStarterCode())
+                .starterCode(starterCode)
                 .displayOrder(lesson.getDisplayOrder())
                 .isPublished(lesson.getIsPublished())
                 .hints(lesson.getHints())

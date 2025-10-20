@@ -1,10 +1,12 @@
 /**
  * ConsolePanel Component
  * Displays code execution output, results, and errors
+ * Supports both single-file (TestCaseResults) and multi-file (SpringTestResults) displays
  */
 
 import { Terminal, CheckCircle2, XCircle, Clock, Award, Loader2, AlertTriangle } from 'lucide-react';
 import TestCaseResults from './TestCaseResults';
+import SpringTestResults from './SpringTestResults';
 
 /**
  * ConsolePanel component
@@ -99,11 +101,19 @@ export default function ConsolePanel({ result, isExecuting, error }) {
             </div>
           )}
 
-          {/* Test Case Results */}
+          {/* Test Case Results (single-file lessons) */}
           {result.testCaseResults && result.testCaseResults.length > 0 && (
             <div>
               <h4 className="font-semibold text-[var(--text)] mb-3">Detailed Results:</h4>
               <TestCaseResults testCaseResults={result.testCaseResults} />
+            </div>
+          )}
+
+          {/* Spring Test Results (multi-file lessons) */}
+          {result.springTestResults && result.springTestResults.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-[var(--text)] mb-3">Spring Test Results:</h4>
+              <SpringTestResults testResults={result.springTestResults} />
             </div>
           )}
 

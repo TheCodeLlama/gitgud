@@ -8,11 +8,13 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Internal DTO representing a code execution job.
  * This is the message sent to RabbitMQ queue for processing.
+ * Supports both single-file and multi-file submissions.
  */
 @Data
 @Builder
@@ -41,12 +43,18 @@ public class CodeExecutionJob implements Serializable {
     private String language;
 
     /**
-     * Source code to execute.
+     * Source code to execute (for single-file lessons).
      */
     private String sourceCode;
 
     /**
-     * Test case IDs to run against.
+     * Project files for multi-file lessons.
+     * Map of file path to file content.
+     */
+    private Map<String, String> projectFiles;
+
+    /**
+     * Test case IDs to run against (for single-file lessons).
      */
     private List<UUID> testCaseIds;
 
@@ -54,4 +62,18 @@ public class CodeExecutionJob implements Serializable {
      * Timestamp when job was submitted.
      */
     private LocalDateTime submittedAt;
+
+    /**
+     * Check if this is a single-file job.
+     */
+    public boolean isSingleFile() {
+        return sourceCode != null && !sourceCode.isBlank();
+    }
+
+    /**
+     * Check if this is a multi-file job.
+     */
+    public boolean isMultiFile() {
+        return projectFiles != null && !projectFiles.isEmpty();
+    }
 }

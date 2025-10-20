@@ -3,7 +3,7 @@
  * Main lesson page with split view: instructions, code editor, and console
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useLesson } from '../../hooks/useLesson';
 import { useLessonTestCases } from '../../hooks/useLessonTestCases';
@@ -12,6 +12,7 @@ import { useCodeExecution } from '../../hooks/useCodeExecution';
 import { useUserProgress } from '../../hooks/useUserProgress';
 import { useLatestSubmission } from '../../hooks/useLatestSubmission';
 import CodeEditor from '../../components/lesson/CodeEditor';
+import MultiFileEditor from '../../components/lesson/MultiFileEditor';
 import InstructionsPanel from '../../components/lesson/InstructionsPanel';
 import ConsolePanel from '../../components/lesson/ConsolePanel';
 import LessonCompleteModal from '../../components/lesson/LessonCompleteModal';
@@ -55,8 +56,15 @@ export default function LessonPage() {
   // Code execution hook
   const { executeCode, isExecuting, result, error: executionError } = useCodeExecution();
 
+  // Determine lesson type
+  const isMultiFile = lesson?.projectType && lesson.projectType !== 'JAVA_SINGLE_FILE';
+  const isSingleFile = !lesson?.projectType || lesson.projectType === 'JAVA_SINGLE_FILE';
+
+  // Ref for accessing MultiFileEditor instance
+  const multiFileEditorRef = useRef(null);
+
   // State
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(''); // For single-file lessons only
   const [showConsole, setShowConsole] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [displayedResult, setDisplayedResult] = useState(null);
@@ -133,26 +141,60 @@ export default function LessonPage() {
 
   // Handlers
   const handleRunCode = async () => {
-    if (!code.trim()) {
-      alert('Please write some code first!');
-      return;
-    }
-
     try {
-      await executeCode(code, lessonId, null);
+      if (isMultiFile) {
+        // Multi-file lesson: Get all file contents from MultiFileEditor
+        if (!multiFileEditorRef.current) {
+          alert('Editor not ready. Please try again.');
+          return;
+        }
+
+        const fileContents = multiFileEditorRef.current.getAllFileContents();
+        if (!fileContents || Object.keys(fileContents).length === 0) {
+          alert('No files to execute!');
+          return;
+        }
+
+        await executeCode(fileContents, lessonId, null);
+      } else {
+        // Single-file lesson: Use code state
+        if (!code.trim()) {
+          alert('Please write some code first!');
+          return;
+        }
+
+        await executeCode(code, lessonId, null);
+      }
     } catch (err) {
       console.error('Execution failed:', err);
     }
   };
 
   const handleSubmit = async () => {
-    if (!code.trim()) {
-      alert('Please write some code first!');
-      return;
-    }
-
     try {
-      await executeCode(code, lessonId, null);
+      if (isMultiFile) {
+        // Multi-file lesson: Get all file contents from MultiFileEditor
+        if (!multiFileEditorRef.current) {
+          alert('Editor not ready. Please try again.');
+          return;
+        }
+
+        const fileContents = multiFileEditorRef.current.getAllFileContents();
+        if (!fileContents || Object.keys(fileContents).length === 0) {
+          alert('No files to submit!');
+          return;
+        }
+
+        await executeCode(fileContents, lessonId, null);
+      } else {
+        // Single-file lesson: Use code state
+        if (!code.trim()) {
+          alert('Please write some code first!');
+          return;
+        }
+
+        await executeCode(code, lessonId, null);
+      }
     } catch (err) {
       console.error('Submission failed:', err);
     }
@@ -231,42 +273,81 @@ export default function LessonPage() {
 
           {/* Right Panel: Code Editor + Console */}
           <div className="flex flex-col overflow-hidden">
-            {/* Code Editor */}
+            {/* Code Editor / Multi-File Editor */}
             <div className={`${showConsole ? 'h-1/2' : 'flex-1'} flex flex-col border-b border-[var(--border)]`}>
-              <div className="p-3 bg-[var(--surface)] border-b border-[var(--border)] flex items-center justify-between">
-                <h3 className="font-semibold text-[var(--text)]">Code Editor</h3>
-                <div className="flex items-center gap-2">
-                  <Button onClick={handleResetCode} variant="ghost" size="sm">
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Reset
-                  </Button>
-                  <Button
-                    onClick={handleRunCode}
-                    variant="secondary"
-                    size="sm"
-                    disabled={isExecuting}
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Run Code
-                  </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    variant="primary"
-                    size="sm"
-                    disabled={isExecuting}
-                  >
-                    <Send className="w-4 h-4 mr-2" />
-                    Submit
-                  </Button>
-                </div>
-              </div>
+              {!isMultiFile && (
+                <>
+                  <div className="p-3 bg-[var(--surface)] border-b border-[var(--border)] flex items-center justify-between">
+                    <h3 className="font-semibold text-[var(--text)]">Code Editor</h3>
+                    <div className="flex items-center gap-2">
+                      <Button onClick={handleResetCode} variant="ghost" size="sm">
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                        Reset
+                      </Button>
+                      <Button
+                        onClick={handleRunCode}
+                        variant="secondary"
+                        size="sm"
+                        disabled={isExecuting}
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        Run Code
+                      </Button>
+                      <Button
+                        onClick={handleSubmit}
+                        variant="primary"
+                        size="sm"
+                        disabled={isExecuting}
+                      >
+                        <Send className="w-4 h-4 mr-2" />
+                        Submit
+                      </Button>
+                    </div>
+                  </div>
 
-              <div className="flex-1 overflow-hidden">
-                <CodeEditor
-                  value={code}
-                  onChange={setCode}
-                />
-              </div>
+                  <div className="flex-1 overflow-hidden">
+                    <CodeEditor
+                      value={code}
+                      onChange={setCode}
+                    />
+                  </div>
+                </>
+              )}
+
+              {isMultiFile && (
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="p-3 bg-[var(--surface)] border-b border-[var(--border)] flex items-center justify-between">
+                    <h3 className="font-semibold text-[var(--text)]">Spring Boot Project</h3>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={handleRunCode}
+                        variant="secondary"
+                        size="sm"
+                        disabled={isExecuting}
+                      >
+                        <Play className="w-4 h-4 mr-2" />
+                        Run Tests
+                      </Button>
+                      <Button
+                        onClick={handleSubmit}
+                        variant="primary"
+                        size="sm"
+                        disabled={isExecuting}
+                      >
+                        <Send className="w-4 h-4 mr-2" />
+                        Submit
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 overflow-hidden">
+                    <MultiFileEditor
+                      ref={multiFileEditorRef}
+                      lessonId={lessonId}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Console Panel (Toggleable) */}

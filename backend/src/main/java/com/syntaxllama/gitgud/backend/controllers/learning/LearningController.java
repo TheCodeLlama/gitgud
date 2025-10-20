@@ -1,11 +1,15 @@
 package com.syntaxllama.gitgud.backend.controllers.learning;
 
 import com.syntaxllama.gitgud.backend.dtos.ApiResponse;
+import com.syntaxllama.gitgud.backend.dtos.learning.CreateFileRequest;
 import com.syntaxllama.gitgud.backend.dtos.learning.LessonDTO;
 import com.syntaxllama.gitgud.backend.dtos.learning.ModuleDTO;
 import com.syntaxllama.gitgud.backend.dtos.learning.ModuleDetailDTO;
 import com.syntaxllama.gitgud.backend.dtos.learning.OverallProgressDTO;
+import com.syntaxllama.gitgud.backend.dtos.learning.ProjectFileDTO;
+import com.syntaxllama.gitgud.backend.dtos.learning.RenameFileRequest;
 import com.syntaxllama.gitgud.backend.dtos.learning.TestCaseDTO;
+import com.syntaxllama.gitgud.backend.dtos.learning.UpdateFileRequest;
 import com.syntaxllama.gitgud.backend.dtos.learning.UpdateProgressRequest;
 import com.syntaxllama.gitgud.backend.dtos.learning.UserProgressDTO;
 import com.syntaxllama.gitgud.backend.models.Module;
@@ -35,6 +39,7 @@ public class LearningController {
     private final LessonService lessonService;
     private final com.syntaxllama.gitgud.backend.services.learning.ProgressService progressService;
     private final com.syntaxllama.gitgud.backend.services.UserSyncService userSyncService;
+    private final com.syntaxllama.gitgud.backend.services.learning.ProjectFileService projectFileService;
 
     /**
      * Get all published modules.
@@ -220,5 +225,116 @@ public class LearningController {
 
         UUID lessonId = progressService.getContinueLesson(currentUser);
         return ResponseEntity.ok(ApiResponse.success(lessonId));
+    }
+
+    // ========== Project File Management Endpoints ==========
+
+    /**
+     * Get all visible project files for a lesson.
+     * Public endpoint - returns only user-visible files (excludes hidden test files).
+     *
+     * @param lessonId Lesson ID
+     * @return List of visible project files
+     */
+    @GetMapping("/lessons/{lessonId}/files")
+    public ResponseEntity<ApiResponse<List<ProjectFileDTO>>> getProjectFiles(@PathVariable UUID lessonId) {
+        log.info("GET /api/v1/learning/lessons/{}/files", lessonId);
+
+        List<ProjectFileDTO> files = projectFileService.getVisibleProjectFiles(lessonId);
+        return ResponseEntity.ok(ApiResponse.success(files));
+    }
+
+    /**
+     * Get a single project file by ID.
+     * Public endpoint - no authentication required.
+     *
+     * @param lessonId Lesson ID
+     * @param fileId File ID
+     * @return Project file details with content
+     */
+    @GetMapping("/lessons/{lessonId}/files/{fileId}")
+    public ResponseEntity<ApiResponse<ProjectFileDTO>> getProjectFile(
+            @PathVariable UUID lessonId,
+            @PathVariable UUID fileId) {
+        log.info("GET /api/v1/learning/lessons/{}/files/{}", lessonId, fileId);
+
+        ProjectFileDTO file = projectFileService.getProjectFile(fileId);
+        return ResponseEntity.ok(ApiResponse.success(file));
+    }
+
+    /**
+     * Create a new file in a lesson's project.
+     * Public endpoint - checks file permissions via service layer.
+     *
+     * @param lessonId Lesson ID
+     * @param request Create file request
+     * @return Created project file
+     */
+    @PostMapping("/lessons/{lessonId}/files")
+    public ResponseEntity<ApiResponse<ProjectFileDTO>> createFile(
+            @PathVariable UUID lessonId,
+            @RequestBody CreateFileRequest request) {
+        log.info("POST /api/v1/learning/lessons/{}/files - path: {}", lessonId, request.getPath());
+
+        ProjectFileDTO createdFile = projectFileService.createFile(lessonId, request);
+        return ResponseEntity.ok(ApiResponse.success("File created successfully", createdFile));
+    }
+
+    /**
+     * Update a project file's content.
+     * Public endpoint - checks if file is editable via service layer.
+     *
+     * @param lessonId Lesson ID
+     * @param fileId File ID
+     * @param request Update file request
+     * @return Updated project file
+     */
+    @PutMapping("/lessons/{lessonId}/files/{fileId}")
+    public ResponseEntity<ApiResponse<ProjectFileDTO>> updateFile(
+            @PathVariable UUID lessonId,
+            @PathVariable UUID fileId,
+            @RequestBody UpdateFileRequest request) {
+        log.info("PUT /api/v1/learning/lessons/{}/files/{}", lessonId, fileId);
+
+        ProjectFileDTO updatedFile = projectFileService.updateFile(fileId, request);
+        return ResponseEntity.ok(ApiResponse.success("File updated successfully", updatedFile));
+    }
+
+    /**
+     * Rename a project file.
+     * Public endpoint - checks if file is renameable via service layer.
+     *
+     * @param lessonId Lesson ID
+     * @param fileId File ID
+     * @param request Rename file request
+     * @return Renamed project file
+     */
+    @PutMapping("/lessons/{lessonId}/files/{fileId}/rename")
+    public ResponseEntity<ApiResponse<ProjectFileDTO>> renameFile(
+            @PathVariable UUID lessonId,
+            @PathVariable UUID fileId,
+            @RequestBody RenameFileRequest request) {
+        log.info("PUT /api/v1/learning/lessons/{}/files/{}/rename - newPath: {}", lessonId, fileId, request.getNewPath());
+
+        ProjectFileDTO renamedFile = projectFileService.renameFile(fileId, request);
+        return ResponseEntity.ok(ApiResponse.success("File renamed successfully", renamedFile));
+    }
+
+    /**
+     * Delete a project file.
+     * Public endpoint - checks if file is deletable via service layer.
+     *
+     * @param lessonId Lesson ID
+     * @param fileId File ID
+     * @return Success message
+     */
+    @DeleteMapping("/lessons/{lessonId}/files/{fileId}")
+    public ResponseEntity<ApiResponse<Void>> deleteFile(
+            @PathVariable UUID lessonId,
+            @PathVariable UUID fileId) {
+        log.info("DELETE /api/v1/learning/lessons/{}/files/{}", lessonId, fileId);
+
+        projectFileService.deleteFile(fileId);
+        return ResponseEntity.ok(ApiResponse.success("File deleted successfully"));
     }
 }

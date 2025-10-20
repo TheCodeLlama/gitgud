@@ -45,9 +45,14 @@ public class ExecutionResult {
     private Integer totalTests;
 
     /**
-     * Individual test case results.
+     * Individual test case results (for single-file lessons).
      */
     private List<TestCaseResult> testCaseResults;
+
+    /**
+     * Spring test results (for multi-file lessons).
+     */
+    private List<SpringTestResult> springTestResults;
 
     /**
      * Compilation output (if compilation failed).

@@ -11,9 +11,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.syntaxllama.gitgud.backend.dtos.execution.SpringTestResult;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -30,6 +37,9 @@ public class DockerExecutorService {
 
     @Value("${code.execution.timeout.seconds:5}")
     private int timeoutSeconds;
+
+    @Value("${code.execution.spring.test.timeout.seconds:300}")
+    private int springTestTimeoutSeconds;
 
     @Value("${code.execution.max.memory.mb:256}")
     private int maxMemoryMb;
@@ -101,6 +111,487 @@ public class DockerExecutorService {
                 cleanupContainer(containerId);
             }
         }
+    }
+
+    /**
+     * Execute Spring Boot project tests in a secure Docker container.
+     * Writes all project files, runs Maven tests, and parses JUnit XML reports.
+     *
+     * @param projectFiles Map of file paths to file contents
+     * @return SpringTestExecutionOutput with test results
+     * @throws ExecutionException if execution fails
+     */
+    public SpringTestExecutionOutput executeSpringBootTests(Map<String, String> projectFiles) throws ExecutionException {
+        String containerId = null;
+        long startTime = System.currentTimeMillis();
+
+        try {
+            // Create secure container for Maven execution
+            containerId = createMavenContainer();
+            log.debug("Created Maven container: {}", containerId);
+
+            // Start container
+            dockerClient.startContainerCmd(containerId).exec();
+            log.debug("Started container: {}", containerId);
+
+            // Write all project files to container
+            // (tmpfs mounted with uid=1000,gid=1000, so user can write directly)
+            writeProjectFiles(containerId, projectFiles);
+
+            // Run Maven tests with configured timeout (default 5 minutes for dependency download + build + tests)
+            MavenExecutionResult mavenResult = runMavenTests(containerId, springTestTimeoutSeconds);
+
+            if (!mavenResult.isSuccess() && mavenResult.isCompilationError()) {
+                // Compilation failed
+                return SpringTestExecutionOutput.builder()
+                        .success(false)
+                        .compilationError(true)
+                        .testResults(Collections.emptyList())
+                        .buildOutput(mavenResult.getBuildOutput())
+                        .errorMessage(mavenResult.getErrorMessage())
+                        .executionTimeMs(System.currentTimeMillis() - startTime)
+                        .build();
+            }
+
+            // Read and parse JUnit XML reports
+            List<SpringTestResult> testResults = parseJUnitReports(containerId);
+
+            // Calculate overall success (all tests passed)
+            long passedTests = testResults.stream().filter(SpringTestResult::getPassed).count();
+            boolean allPassed = passedTests == testResults.size() && !testResults.isEmpty();
+
+            return SpringTestExecutionOutput.builder()
+                    .success(allPassed)
+                    .compilationError(false)
+                    .testResults(testResults)
+                    .buildOutput(mavenResult.getBuildOutput())
+                    .executionTimeMs(System.currentTimeMillis() - startTime)
+                    .build();
+
+        } catch (TimeoutException e) {
+            log.warn("Spring Boot test execution timed out");
+            return SpringTestExecutionOutput.builder()
+                    .success(false)
+                    .timeout(true)
+                    .testResults(Collections.emptyList())
+                    .errorMessage("Test execution timed out")
+                    .executionTimeMs(System.currentTimeMillis() - startTime)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Error executing Spring Boot tests in Docker", e);
+            return SpringTestExecutionOutput.builder()
+                    .success(false)
+                    .testResults(Collections.emptyList())
+                    .errorMessage("System error: " + e.getMessage())
+                    .executionTimeMs(System.currentTimeMillis() - startTime)
+                    .build();
+
+        } finally {
+            // Always cleanup container
+            if (containerId != null) {
+                cleanupContainer(containerId);
+            }
+        }
+    }
+
+    /**
+     * Create a hardened Docker container with Maven support for Spring Boot testing.
+     * Similar security constraints as single-file execution but with Maven installed.
+     */
+    private String createMavenContainer() {
+        HostConfig hostConfig = HostConfig.newHostConfig()
+                // Network isolation (no external dependencies allowed)
+                .withNetworkMode("none")
+                // Higher memory limits for Maven (512MB)
+                .withMemory(512L * 1024 * 1024)
+                .withMemorySwap(512L * 1024 * 1024)
+                // CPU limit (1.0 CPU for faster builds)
+                .withNanoCPUs(1_000_000_000L)
+                // Process limit
+                .withPidsLimit(100L)
+                // Drop all Linux capabilities
+                .withCapDrop(Capability.ALL)
+                // Read-only root filesystem
+                .withReadonlyRootfs(true)
+                // Tmpfs for Maven build and dependencies (1GB for /tmp to hold .m2, 500MB for /project)
+                // Mount with uid=1000,gid=1000 so user can write without chown
+                .withTmpFs(java.util.Map.of(
+                        "/tmp", "rw,noexec,size=1g,uid=1000,gid=1000",
+                        "/project", "rw,noexec,size=500m,uid=1000,gid=1000"
+                ))
+                // Security options
+                .withSecurityOpts(java.util.List.of("no-new-privileges"));
+
+        CreateContainerResponse container = dockerClient.createContainerCmd(dockerImage)
+                .withHostConfig(hostConfig)
+                .withUser("1000:1000")
+                .withWorkingDir("/project")
+                .withEnv(
+                        "MAVEN_OPTS=-Djansi.force=false -Djansi.passthrough=true",
+                        "TERM=dumb"
+                )
+                .withCmd("sleep", "3600")
+                .exec();
+
+        return container.getId();
+    }
+
+    /**
+     * Write all project files to the container using exec with stdin streaming.
+     * This works with read-only root filesystems (files written to tmpfs /project).
+     */
+    private void writeProjectFiles(String containerId, Map<String, String> projectFiles)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        log.debug("Writing {} project files to container using stdin streaming", projectFiles.size());
+
+        for (Map.Entry<String, String> entry : projectFiles.entrySet()) {
+            String filePath = entry.getKey();
+            String content = entry.getValue();
+            byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
+
+            // Create directory structure first
+            String directory = getDirectoryPath(filePath);
+            if (directory != null && !directory.isEmpty()) {
+                String mkdirCommand = "mkdir -p /project/" + directory;
+                executeCommandWithOutput(containerId, mkdirCommand, 5);
+                log.debug("Created directory: /project/{}", directory);
+            }
+
+            // Write file using cat with stdin (no command-line length limits)
+            String catCommand = "cat > /project/" + filePath;
+
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+
+            ExecCreateCmdResponse execCreateCmd = dockerClient.execCreateCmd(containerId)
+                    .withCmd("sh", "-c", catCommand)
+                    .withAttachStdin(true)
+                    .withAttachStdout(true)
+                    .withAttachStderr(true)
+                    .exec();
+
+            ByteArrayInputStream contentStream = new ByteArrayInputStream(contentBytes);
+
+            Future<Integer> future = executorService.submit(() -> {
+                try {
+                    dockerClient.execStartCmd(execCreateCmd.getId())
+                            .withStdIn(contentStream)
+                            .exec(new ExecStartResultCallback(stdout, stderr))
+                            .awaitCompletion();
+
+                    // Get exit code
+                    return dockerClient.inspectExecCmd(execCreateCmd.getId())
+                            .exec()
+                            .getExitCodeLong()
+                            .intValue();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
+                }
+            });
+
+            Integer exitCode = future.get(10, TimeUnit.SECONDS);
+
+            if (exitCode != 0) {
+                String errorOutput = stderr.toString(StandardCharsets.UTF_8);
+                String stdOutput = stdout.toString(StandardCharsets.UTF_8);
+                log.error("Failed to write file {}: exit code {}, stderr: {}, stdout: {}",
+                          filePath, exitCode, errorOutput, stdOutput);
+                throw new RuntimeException("Failed to write file " + filePath + ": " + errorOutput);
+            }
+
+            log.debug("Wrote file via stdin: {} ({} bytes)", filePath, contentBytes.length);
+        }
+
+        log.info("Successfully wrote all {} project files to container", projectFiles.size());
+
+        // Verify files were written by listing directory
+        verifyFilesWritten(containerId, projectFiles.keySet());
+    }
+
+    /**
+     * Verify that files were actually written to the container.
+     */
+    private void verifyFilesWritten(String containerId, Set<String> expectedFiles)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        log.debug("Verifying {} files were written to container", expectedFiles.size());
+
+        String lsOutput = executeCommandWithOutput(containerId, "find /project -type f", 10);
+        log.debug("Files in /project:\n{}", lsOutput);
+
+        for (String expectedFile : expectedFiles) {
+            if (!lsOutput.contains(expectedFile)) {
+                log.error("File {} was not found in container!", expectedFile);
+                throw new RuntimeException("File verification failed: " + expectedFile + " not found");
+            }
+        }
+
+        log.info("Verified all {} files exist in container", expectedFiles.size());
+    }
+
+    /**
+     * Execute command and return stdout output.
+     */
+    private String executeCommandWithOutput(String containerId, String command, int timeoutSeconds)
+            throws InterruptedException, ExecutionException, TimeoutException {
+
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+
+        ExecCreateCmdResponse execCreateCmd = dockerClient.execCreateCmd(containerId)
+                .withCmd("sh", "-c", command)
+                .withAttachStdout(true)
+                .withAttachStderr(true)
+                .exec();
+
+        Future<Integer> future = executorService.submit(() -> {
+            try {
+                dockerClient.execStartCmd(execCreateCmd.getId())
+                        .exec(new ExecStartResultCallback(stdout, stderr))
+                        .awaitCompletion();
+
+                return dockerClient.inspectExecCmd(execCreateCmd.getId())
+                        .exec()
+                        .getExitCodeLong()
+                        .intValue();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+        });
+
+        Integer exitCode = future.get(timeoutSeconds, TimeUnit.SECONDS);
+        String stdoutStr = stdout.toString(StandardCharsets.UTF_8);
+        String stderrStr = stderr.toString(StandardCharsets.UTF_8);
+
+        if (exitCode != 0) {
+            log.warn("Command '{}' exited with code {}, stderr: {}", command, exitCode, stderrStr);
+        }
+
+        return stdoutStr;
+    }
+
+
+    /**
+     * Run Maven tests and capture output.
+     */
+    private MavenExecutionResult runMavenTests(String containerId, int timeoutSeconds)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        log.info("Running Maven tests in container {} with timeout {} seconds (first run may take 2-3 minutes to download dependencies)",
+                 containerId, timeoutSeconds);
+
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+
+        // Run mvn clean test with local repository in /tmp (read-only filesystem workaround)
+        ExecCreateCmdResponse execCreateCmd = dockerClient.execCreateCmd(containerId)
+                .withCmd("mvn", "clean", "test", "-B",
+                        "-Dmaven.repo.local=/tmp/.m2/repository")
+                .withAttachStdout(true)
+                .withAttachStderr(true)
+                .withWorkingDir("/project")
+                .exec();
+
+        Future<Integer> future = executorService.submit(() -> {
+            try {
+                // Use a logging callback to stream output in real-time
+                LoggingExecStartResultCallback callback = new LoggingExecStartResultCallback(stdout, stderr);
+                dockerClient.execStartCmd(execCreateCmd.getId())
+                        .exec(callback)
+                        .awaitCompletion();
+
+                return dockerClient.inspectExecCmd(execCreateCmd.getId())
+                        .exec()
+                        .getExitCodeLong()
+                        .intValue();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException(e);
+            }
+        });
+
+        try {
+            Integer exitCode = future.get(timeoutSeconds, TimeUnit.SECONDS);
+
+            String buildOutput = stdout.toString(StandardCharsets.UTF_8);
+            String errorOutput = stderr.toString(StandardCharsets.UTF_8);
+
+            // Check for compilation errors
+            boolean compilationError = buildOutput.contains("[ERROR] COMPILATION ERROR") ||
+                                     buildOutput.contains("BUILD FAILURE") && buildOutput.contains("compilation failed");
+
+            return MavenExecutionResult.builder()
+                    .success(exitCode == 0)
+                    .buildOutput(truncateOutput(buildOutput + "\n" + errorOutput))
+                    .errorMessage(compilationError ? "Compilation failed" : null)
+                    .compilationError(compilationError)
+                    .build();
+
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            dockerClient.killContainerCmd(containerId).exec();
+            throw e;
+        }
+    }
+
+    /**
+     * Parse JUnit XML reports from Surefire output directory.
+     * Reads XML files from /project/target/surefire-reports/*.xml
+     */
+    private List<SpringTestResult> parseJUnitReports(String containerId)
+            throws InterruptedException, ExecutionException, TimeoutException {
+        List<SpringTestResult> results = new ArrayList<>();
+
+        try {
+            // List all XML files in surefire-reports
+            String listCommand = "find /project/target/surefire-reports -name 'TEST-*.xml' 2>/dev/null || true";
+            ByteArrayOutputStream listOutput = new ByteArrayOutputStream();
+
+            ExecCreateCmdResponse listExec = dockerClient.execCreateCmd(containerId)
+                    .withCmd("sh", "-c", listCommand)
+                    .withAttachStdout(true)
+                    .exec();
+
+            Future<Void> listFuture = executorService.submit(() -> {
+                try {
+                    dockerClient.execStartCmd(listExec.getId())
+                            .exec(new ExecStartResultCallback(listOutput, new ByteArrayOutputStream()))
+                            .awaitCompletion();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException(e);
+                }
+                return null;
+            });
+
+            listFuture.get(10, TimeUnit.SECONDS);
+
+            String xmlFiles = listOutput.toString(StandardCharsets.UTF_8).trim();
+            if (xmlFiles.isEmpty()) {
+                log.warn("No JUnit XML reports found in container");
+                return results;
+            }
+
+            // Read and parse each XML file
+            String[] files = xmlFiles.split("\n");
+            for (String file : files) {
+                if (file.trim().isEmpty()) continue;
+
+                String catCommand = "cat " + file.trim();
+                ByteArrayOutputStream xmlContent = new ByteArrayOutputStream();
+
+                ExecCreateCmdResponse catExec = dockerClient.execCreateCmd(containerId)
+                        .withCmd("sh", "-c", catCommand)
+                        .withAttachStdout(true)
+                        .exec();
+
+                Future<Void> catFuture = executorService.submit(() -> {
+                    try {
+                        dockerClient.execStartCmd(catExec.getId())
+                                .exec(new ExecStartResultCallback(xmlContent, new ByteArrayOutputStream()))
+                                .awaitCompletion();
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException(e);
+                    }
+                    return null;
+                });
+
+                catFuture.get(10, TimeUnit.SECONDS);
+
+                // Parse XML
+                List<SpringTestResult> fileResults = parseJUnitXml(xmlContent.toByteArray());
+                results.addAll(fileResults);
+            }
+
+        } catch (Exception e) {
+            log.error("Error parsing JUnit reports", e);
+        }
+
+        return results;
+    }
+
+    /**
+     * Parse a single JUnit XML file into test results.
+     */
+    private List<SpringTestResult> parseJUnitXml(byte[] xmlData) {
+        List<SpringTestResult> results = new ArrayList<>();
+
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new ByteArrayInputStream(xmlData));
+
+            String className = doc.getDocumentElement().getAttribute("name");
+
+            // Parse test cases
+            NodeList testCases = doc.getElementsByTagName("testcase");
+            for (int i = 0; i < testCases.getLength(); i++) {
+                Element testCase = (Element) testCases.item(i);
+
+                String methodName = testCase.getAttribute("name");
+                String testClassName = testCase.getAttribute("classname");
+                String timeStr = testCase.getAttribute("time");
+
+                long executionTimeMs = 0;
+                if (timeStr != null && !timeStr.isEmpty()) {
+                    try {
+                        executionTimeMs = (long) (Double.parseDouble(timeStr) * 1000);
+                    } catch (NumberFormatException e) {
+                        // Ignore
+                    }
+                }
+
+                // Check for failures or errors
+                NodeList failures = testCase.getElementsByTagName("failure");
+                NodeList errors = testCase.getElementsByTagName("error");
+
+                boolean passed = failures.getLength() == 0 && errors.getLength() == 0;
+                String errorMessage = null;
+                String stackTrace = null;
+                String errorType = null;
+
+                if (!passed) {
+                    Element errorElement = failures.getLength() > 0 ?
+                            (Element) failures.item(0) : (Element) errors.item(0);
+
+                    errorType = errorElement.getAttribute("type");
+                    errorMessage = errorElement.getAttribute("message");
+                    stackTrace = errorElement.getTextContent();
+                }
+
+                SpringTestResult result = SpringTestResult.builder()
+                        .className(testClassName != null && !testClassName.isEmpty() ? testClassName : className)
+                        .methodName(methodName)
+                        .testName((testClassName != null ? testClassName : className) + "." + methodName)
+                        .passed(passed)
+                        .executionTimeMs(executionTimeMs)
+                        .errorMessage(errorMessage)
+                        .stackTrace(stackTrace)
+                        .errorType(errorType)
+                        .build();
+
+                results.add(result);
+            }
+
+        } catch (Exception e) {
+            log.error("Error parsing JUnit XML", e);
+        }
+
+        return results;
+    }
+
+    /**
+     * Extract directory path from file path.
+     * Example: "src/main/java/com/example/User.java" -> "src/main/java/com/example"
+     */
+    private String getDirectoryPath(String filePath) {
+        int lastSlash = filePath.lastIndexOf('/');
+        if (lastSlash > 0) {
+            return filePath.substring(0, lastSlash);
+        }
+        return null;
     }
 
     /**
@@ -331,6 +822,84 @@ public class DockerExecutorService {
     }
 
     /**
+     * Custom callback that logs Maven output in real-time while also capturing it to ByteArrayOutputStream.
+     */
+    private class LoggingExecStartResultCallback extends com.github.dockerjava.api.async.ResultCallback.Adapter<com.github.dockerjava.api.model.Frame> {
+        private final ByteArrayOutputStream stdout;
+        private final ByteArrayOutputStream stderr;
+        private StringBuilder lineBuffer = new StringBuilder();
+        private boolean lastWasCarriageReturn = false;
+
+        public LoggingExecStartResultCallback(ByteArrayOutputStream stdout, ByteArrayOutputStream stderr) {
+            this.stdout = stdout;
+            this.stderr = stderr;
+        }
+
+        @Override
+        public void onNext(com.github.dockerjava.api.model.Frame frame) {
+            try {
+                byte[] payload = frame.getPayload();
+                if (payload == null || payload.length == 0) {
+                    return;
+                }
+
+                // Write to appropriate stream
+                if (frame.getStreamType() == com.github.dockerjava.api.model.StreamType.STDOUT) {
+                    stdout.write(payload);
+                } else if (frame.getStreamType() == com.github.dockerjava.api.model.StreamType.STDERR) {
+                    stderr.write(payload);
+                }
+
+                // Log line by line
+                String text = new String(payload, StandardCharsets.UTF_8);
+                for (char c : text.toCharArray()) {
+                    if (c == '\n') {
+                        String line = lineBuffer.toString();
+                        if (!line.trim().isEmpty()) {
+                            // Log important Maven output
+                            if (line.contains("Downloading") || line.contains("Downloaded") ||
+                                line.contains("Building") || line.contains("SUCCESS") ||
+                                line.contains("FAILURE") || line.contains("ERROR") ||
+                                line.contains("Tests run:")) {
+                                log.info("[Maven] {}", line);
+                            } else {
+                                log.debug("[Maven] {}", line);
+                            }
+                        }
+                        lineBuffer = new StringBuilder();
+                        lastWasCarriageReturn = false;
+                    } else if (c == '\r') {
+                        // Handle carriage return (for progress indicators)
+                        lastWasCarriageReturn = true;
+                        String line = lineBuffer.toString();
+                        if (!line.trim().isEmpty() && line.contains("Progress")) {
+                            log.debug("[Maven] {}", line);
+                        }
+                        lineBuffer = new StringBuilder();
+                    } else {
+                        lineBuffer.append(c);
+                        lastWasCarriageReturn = false;
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Error processing frame", e);
+            }
+        }
+
+        @Override
+        public void onComplete() {
+            // Log any remaining buffer
+            if (lineBuffer.length() > 0) {
+                String line = lineBuffer.toString();
+                if (!line.trim().isEmpty()) {
+                    log.debug("[Maven] {}", line);
+                }
+            }
+            super.onComplete();
+        }
+    }
+
+    /**
      * Result of code compilation.
      */
     @lombok.Data
@@ -353,6 +922,34 @@ public class DockerExecutorService {
         private Integer exitCode;
         private boolean timeout;
         private boolean compilationError;
+        private Long executionTimeMs;
+    }
+
+    /**
+     * Result of Maven execution.
+     */
+    @lombok.Data
+    @lombok.Builder
+    public static class MavenExecutionResult {
+        private boolean success;
+        private String buildOutput;
+        private String errorMessage;
+        private boolean compilationError;
+    }
+
+    /**
+     * Result of Spring Boot test execution.
+     */
+    @lombok.Data
+    @lombok.Builder
+    public static class SpringTestExecutionOutput {
+        private boolean success;
+        private boolean compilationError;
+        private boolean timeout;
+        @lombok.Builder.Default
+        private List<SpringTestResult> testResults = new ArrayList<>();
+        private String buildOutput;
+        private String errorMessage;
         private Long executionTimeMs;
     }
 }
